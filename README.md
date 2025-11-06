@@ -1,36 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SiBubur Frontend
 
-## Getting Started
+Frontend aplikasi SiBubur Point of Sale System yang dibangun dengan Next.js, TypeScript, dan Tailwind CSS.
 
-First, run the development server:
+## Fitur
+
+- **Autentikasi**: Sistem login dengan JWT token
+- **Dashboard**: Ringkasan data penjualan, pesanan, dan produksi
+- **Produksi Harian**: Pencatatan produksi bubur per toko dengan data cuaca
+- **Pesanan**: Sistem pencatatan pesanan dengan nomor order yang dapat dicetak
+- **Transaksi**: Pencatatan pembayaran pelanggan
+- **Persediaan**: Manajemen stok bahan baku
+- **Pengeluaran**: Pencatatan pengeluaran operasional
+- **Karyawan**: Manajemen data karyawan dan absensi
+- **Laporan**: Laporan harian, bulanan, dan tahunan dengan rekomendasi produksi
+- **Data Master**: Pengelolaan produk, addon, toko, kategori, dll.
+
+## Teknologi
+
+- **Next.js 16**: React framework dengan App Router
+- **TypeScript**: Type safety untuk kode yang lebih robust
+- **Tailwind CSS**: Utility-first CSS framework untuk styling
+- **Axios**: HTTP client untuk komunikasi dengan backend API
+
+## Prasyarat
+
+- Node.js 18+ 
+- npm atau yarn
+- Backend API berjalan di `http://localhost:3000`
+
+## Instalasi
+
+1. Clone repository atau navigasi ke folder frontend
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Buat file `.env.local` di root project:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+4. Jalankan development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Buka browser di `http://localhost:3001` (atau port yang ditampilkan di terminal)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Struktur Project
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+frontend/
+├── app/                    # Next.js App Router pages
+│   ├── login/             # Halaman login
+│   ├── layout.tsx         # Root layout dengan AuthProvider
+│   └── page.tsx           # Dashboard
+├── components/            # React components
+│   ├── Auth/             # Komponen autentikasi
+│   └── Layout/           # Komponen layout (Sidebar, Header)
+├── contexts/              # React contexts
+│   └── AuthContext.tsx   # Context untuk autentikasi
+├── lib/                   # Utility functions
+│   ├── api.ts            # Axios client configuration
+│   └── auth.ts           # Auth service functions
+└── types/                 # TypeScript type definitions
+    └── index.ts          # Semua type definitions
+```
 
-## Learn More
+## API Integration
 
-To learn more about Next.js, take a look at the following resources:
+Backend API tersedia di:
+- **Development**: `http://localhost:3000`
+- **Swagger Docs**: `http://localhost:3000/api`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Frontend menggunakan Axios untuk komunikasi dengan backend. Token JWT disimpan di localStorage dan otomatis ditambahkan ke setiap request.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+- `npm run dev` - Jalankan development server
+- `npm run build` - Build untuk production
+- `npm run start` - Jalankan production server
+- `npm run lint` - Lint kode
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Alur Aplikasi
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Persiapan Data**: Setup produk, addon, karyawan, toko, persediaan, kategori pengeluaran
+2. **Produksi Harian**: Record produksi bubur per toko dengan data cuaca
+3. **Pesanan**: Cashier mencatat pesanan dan generate nomor order (print 2x: dapur & customer)
+4. **Pembayaran**: Customer membayar setelah selesai makan, data transaksi dicatat
+5. **Restock**: Owner restock persediaan yang rendah dan input pengeluaran
+6. **Absensi**: Owner mencatat absensi karyawan
+7. **Laporan Harian**: Generate laporan dari data produksi, cuaca, pengeluaran, dan transaksi
+8. **Rekomendasi**: Laporan harian digunakan untuk rekomendasi produksi ke depan
+9. **Laporan Akumulasi**: Dari laporan harian, bisa dibuat laporan bulanan dan tahunan
+
+## Development
+
+### Menambah Halaman Baru
+
+1. Buat file di `app/[nama-halaman]/page.tsx`
+2. Gunakan `ProtectedRoute` untuk halaman yang memerlukan autentikasi
+3. Gunakan `MainLayout` untuk layout dengan sidebar dan header
+
+Contoh:
+
+```tsx
+'use client';
+
+import ProtectedRoute from '@/components/Auth/ProtectedRoute';
+import MainLayout from '@/components/Layout/MainLayout';
+
+export default function MyPage() {
+  return (
+    <ProtectedRoute>
+      <MainLayout>
+        <div>Konten halaman</div>
+      </MainLayout>
+    </ProtectedRoute>
+  );
+}
+```
+
+### Menggunakan API
+
+```tsx
+import apiClient from '@/lib/api';
+import { Product } from '@/types';
+
+// GET request
+const products = await apiClient.get<Product[]>('/products');
+
+// POST request
+const newProduct = await apiClient.post<Product>('/products', productData);
+```
+
+## Catatan
+
+- Pastikan backend API sudah berjalan sebelum menggunakan frontend
+- Token JWT akan otomatis dihapus jika mendapat response 401 (Unauthorized)
+- Semua halaman kecuali `/login` memerlukan autentikasi
