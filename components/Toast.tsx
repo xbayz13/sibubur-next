@@ -19,9 +19,9 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
   }, [duration, onClose]);
 
   const bgColor = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+    error: 'bg-rose-50 border-rose-200 text-rose-800',
+    info: 'bg-indigo-50 border-indigo-200 text-indigo-800',
   }[type];
 
   const icon = {
@@ -38,7 +38,7 @@ export default function Toast({ message, type, onClose, duration = 5000 }: Toast
       <p className="flex-1">{message}</p>
       <button
         onClick={onClose}
-        className="text-gray-500 hover:text-gray-700 font-bold text-lg"
+        className="text-slate-500 hover:text-slate-700 font-bold text-lg"
       >
         ×
       </button>

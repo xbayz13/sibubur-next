@@ -19,8 +19,8 @@ export default function MasterDataPage() {
       <MainLayout>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Data Master</h1>
-            <p className="text-gray-600">Pengelolaan data master aplikasi</p>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">Data Master</h1>
+            <p className="text-slate-600">Pengelolaan data master aplikasi</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -28,12 +28,12 @@ export default function MasterDataPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+                className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-4">
                   <div className="text-4xl">{item.icon}</div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{item.name}</h3>
+                    <h3 className="text-lg font-semibold text-slate-800">{item.name}</h3>
                   </div>
                 </div>
               </Link>

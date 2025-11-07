@@ -18,6 +18,8 @@ export const authService = {
     let user: User = {
       id: 0,
       username: credentials.username,
+      name: credentials.username,
+      roleId: 0,
     };
 
     try {
@@ -28,9 +30,11 @@ export const authService = {
         user = {
           id: payload.sub || 0,
           username: payload.username || credentials.username,
+          name: payload.name || credentials.username,
+          roleId: payload.roleId || 0,
           role: payload.roleId ? {
             id: payload.roleId,
-            name: 'User', // Role name can be fetched separately if needed
+            name: payload.roleName || 'User',
           } : undefined,
         };
       }
@@ -43,6 +47,7 @@ export const authService = {
       const profileResponse = await apiClient.post<User | {
         id: number;
         username: string;
+        name?: string;
         roleId?: number;
       }>('/auth/profile', {});
       
@@ -51,6 +56,8 @@ export const authService = {
         user = {
           id: profileResponse.data.id || user.id,
           username: profileResponse.data.username || user.username,
+          name: profileResponse.data.name || user.name,
+          roleId: (profileResponse.data as any).roleId || user.roleId,
           role: (profileResponse.data as any).role || user.role,
         };
       }

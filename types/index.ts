@@ -12,21 +12,31 @@ export interface LoginResponse {
 export interface User {
   id: number;
   username: string;
-  email?: string;
+  name: string;
+  roleId: number;
   role?: Role;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Role {
   id: number;
   name: string;
   permissions?: Permission[];
+  rolePermissions?: Array<{
+    permission: Permission;
+  }>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Permission {
   id: number;
-  name: string;
-  resource: string;
+  module: string;
   action: string;
+  slug: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Store Types
@@ -69,10 +79,13 @@ export interface ProductAddon {
 export interface Order {
   id: number;
   orderNumber: string;
+  customerName?: string;
   store: Store;
-  items: OrderItem[];
+  orderItems: OrderItem[];
   status: OrderStatus;
-  total: number;
+  subtotalAmount: number;
+  taxAmount: number;
+  totalAmount: number;
   createdAt: string;
   updatedAt?: string;
 }
@@ -81,27 +94,50 @@ export interface OrderItem {
   id: number;
   product: Product;
   quantity: number;
-  price: number;
-  addons?: OrderItemAddon[];
-  subtotal: number;
+  unitPrice: number;
+  lineTotal: number;
+  orderItemAddons?: OrderItemAddon[];
 }
 
 export interface OrderItemAddon {
-  id: number;
+  orderItemId: number;
+  addonId: number;
   addon: ProductAddon;
   quantity: number;
-  price: number;
+  addonPrice: number;
 }
 
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+export type OrderStatus = 'open' | 'canceled' | 'paid';
+
+export interface CreateOrderDto {
+  storeId: number;
+  customerName?: string;
+  items: Array<{
+    productId: number;
+    quantity: number;
+    addons?: Array<{
+      addonId: number;
+      price: number;
+      quantity: number;
+    }>;
+  }>;
+}
+
+export interface UpdateOrderDto {
+  customerName?: string;
+  status?: OrderStatus;
+}
 
 // Transaction Types
 export interface Transaction {
   id: number;
+  transactionNumber: string;
   order: Order;
   paymentMethod: PaymentMethod;
   amount: number;
   change?: number;
+  status: 'paid' | 'canceled';
+  store?: Store;
   createdAt: string;
 }
 
@@ -115,10 +151,10 @@ export interface PaymentMethod {
 export interface Employee {
   id: number;
   name: string;
-  email?: string;
-  phone?: string;
-  position?: string;
+  storeId?: number;
   store?: Store;
+  status: 'active' | 'inactive';
+  dailySalary?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -126,10 +162,9 @@ export interface Employee {
 export interface Attendance {
   id: number;
   employee: Employee;
+  employeeId: number;
   date: string;
-  checkIn?: string;
-  checkOut?: string;
-  status: 'present' | 'absent' | 'late';
+  status: 'present' | 'absent';
 }
 
 // Supply Types
@@ -137,7 +172,7 @@ export interface Supply {
   id: number;
   name: string;
   unit: string;
-  currentStock: number;
+  stock: number;
   minStock: number;
   price?: number;
   createdAt?: string;
@@ -149,9 +184,17 @@ export interface Production {
   id: number;
   store: Store;
   date: string;
-  product: Product;
-  quantity: number;
+  porridgeAmount?: number;
   weather?: Weather;
+  author?: {
+    id: number;
+    username: string;
+  };
+  productionSupplies?: Array<{
+    id: number;
+    supply: Supply;
+    quantity: number;
+  }>;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -159,7 +202,16 @@ export interface Production {
 export interface Weather {
   id: number;
   date: string;
-  condition: WeatherCondition;
+  locationName?: string;
+  locationCode?: string;
+  weatherJson?: {
+    condition?: WeatherCondition;
+    temperature?: number;
+    description?: string;
+    [key: string]: any;
+  };
+  // Computed/transformed fields for easier access
+  condition?: WeatherCondition;
   temperature?: number;
   description?: string;
 }
@@ -169,11 +221,12 @@ export type WeatherCondition = 'sunny' | 'cloudy' | 'rainy' | 'stormy';
 // Expense Types
 export interface Expense {
   id: number;
+  expenseCategoryId: number;
   category: ExpenseCategory;
-  description: string;
-  amount: number;
-  date: string;
-  createdAt?: string;
+  storeId: number;
+  store?: Store;
+  totalAmount: number;
+  createdAt: string;
   updatedAt?: string;
 }
 
@@ -186,38 +239,72 @@ export interface ExpenseCategory {
 // Report Types
 export interface DailyReport {
   date: string;
-  store: Store;
-  production: Production[];
-  transactions: Transaction[];
-  expenses: Expense[];
-  weather: Weather;
-  totalRevenue: number;
-  totalExpenses: number;
+  revenue: {
+    total: number;
+    transactions: number;
+    transactionsDetail?: Transaction[];
+  };
+  orders: {
+    total: number;
+    items: number;
+    ordersDetail?: any[];
+  };
+  expenses: {
+    total: number;
+    expensesDetail?: Expense[];
+  };
+  production?: Production | null;
+  weather?: Weather | null;
+  attendance: {
+    present: number;
+    absent: number;
+    total: number;
+    attendancesDetail?: any[];
+  };
   netProfit: number;
-  recommendations?: string[];
+  recommendations?: any;
 }
 
 export interface MonthlyReport {
-  month: string;
   year: number;
-  store: Store;
-  totalRevenue: number;
-  totalExpenses: number;
+  month: number;
+  revenue: {
+    total: number;
+    transactions: number;
+  };
+  expenses: {
+    total: number;
+    count: number;
+  };
+  orders: {
+    total: number;
+  };
+  productions: {
+    total: number;
+  };
   netProfit: number;
-  averageDailyRevenue: number;
-  averageDailyExpenses: number;
-  daysWithData: number;
+  averageDailyRevenue?: number;
+  averageDailyExpenses?: number;
+  daysWithData?: number;
 }
 
 export interface YearlyReport {
   year: number;
-  store: Store;
-  totalRevenue: number;
-  totalExpenses: number;
+  revenue: {
+    total: number;
+    transactions: number;
+  };
+  expenses: {
+    total: number;
+    count: number;
+  };
+  orders: {
+    total: number;
+  };
   netProfit: number;
-  averageMonthlyRevenue: number;
-  averageMonthlyExpenses: number;
-  monthsWithData: number;
+  averageMonthlyRevenue?: number;
+  averageMonthlyExpenses?: number;
+  monthsWithData?: number;
 }
 
 // API Response Types
