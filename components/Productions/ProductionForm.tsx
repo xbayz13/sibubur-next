@@ -161,7 +161,7 @@ export default function ProductionForm({
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-slate-700">
-                  Jumlah Bubur yang Diproduksi (porsi)
+                  Jumlah Bubur yang Diproduksi (kg)
                 </label>
                 {recommendations && (
                   <button
@@ -169,7 +169,7 @@ export default function ProductionForm({
                     onClick={applyRecommendation}
                     className="text-xs text-blue-600 hover:text-blue-700 underline"
                   >
-                    Gunakan Rekomendasi ({recommendations.recommendedAmount} porsi)
+                    Gunakan Rekomendasi ({recommendations.recommendedAmount} kg)
                   </button>
                 )}
               </div>
@@ -180,7 +180,7 @@ export default function ProductionForm({
                 min="0"
                 step="0.5"
                 className="w-full border border-slate-300 rounded-lg px-4 py-2"
-                placeholder="Masukkan jumlah porsi"
+                placeholder="Masukkan jumlah dalam kg"
               />
             </div>
 

@@ -66,7 +66,7 @@ export default function ProductionsPage() {
     };
 
     loadProductions();
-  }, [selectedStoreId, filterDate, showToast]);
+  }, [selectedStoreId, showToast]);
 
   useEffect(() => {
     if (selectedDate && selectedStoreId) {

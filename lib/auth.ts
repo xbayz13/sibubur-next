@@ -32,6 +32,7 @@ export const authService = {
           username: payload.username || credentials.username,
           name: payload.name || credentials.username,
           roleId: payload.roleId || 0,
+          storeId: payload.storeId || null,
           role: payload.roleId ? {
             id: payload.roleId,
             name: payload.roleName || 'User',
@@ -44,12 +45,12 @@ export const authService = {
 
     // Try to fetch full user profile (optional - if it fails, we still have basic info)
     try {
-      const profileResponse = await apiClient.post<User | {
+      const profileResponse = await apiClient.get<User | {
         id: number;
         username: string;
         name?: string;
         roleId?: number;
-      }>('/auth/profile', {});
+      }>('/auth/profile');
       
       // Update user with profile data if available
       if (profileResponse.data) {
@@ -58,6 +59,7 @@ export const authService = {
           username: profileResponse.data.username || user.username,
           name: profileResponse.data.name || user.name,
           roleId: (profileResponse.data as any).roleId || user.roleId,
+          storeId: (profileResponse.data as any).storeId ?? user.storeId,
           role: (profileResponse.data as any).role || user.role,
         };
       }

@@ -28,8 +28,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
+    // Handle 401 Unauthorized or 404 Not Found (when user doesn't exist)
+    if (error.response?.status === 401 || 
+        (error.response?.status === 404 && error.response?.config?.url?.includes('/auth/profile'))) {
+      // Unauthorized or user not found - clear token and redirect to login
       // Only redirect if we're not already on the login page
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
         localStorage.removeItem('token');

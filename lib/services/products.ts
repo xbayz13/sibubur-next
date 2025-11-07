@@ -3,17 +3,25 @@ import { Product, ProductCategory, ProductAddon } from '@/types';
 
 export const productsService = {
   async getAll(): Promise<Product[]> {
-    const response = await apiClient.get<Product[]>('/products');
-    // Transform productAddons to addons for easier use
-    return response.data.map((product: any) => ({
-      ...product,
-      addons: product.productAddons?.map((pap: any) => ({
-        id: pap.addon.id,
-        name: pap.addon.name,
-        price: pap.addonPriceOverride || pap.addon.price,
-        description: pap.addon.description,
-      })) || [],
-    }));
+    try {
+      const response = await apiClient.get<Product[]>('/products');
+      console.log('Products API response:', response.data);
+      // Transform productAddons to addons for easier use
+      const transformed = (response.data || []).map((product: any) => ({
+        ...product,
+        addons: product.productAddons?.map((pap: any) => ({
+          id: pap.addon?.id,
+          name: pap.addon?.name,
+          price: pap.addonPriceOverride || pap.addon?.price,
+          description: pap.addon?.description,
+        })) || [],
+      }));
+      console.log('Transformed products:', transformed);
+      return transformed;
+    } catch (error: any) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
   },
 
   async getById(id: number): Promise<Product> {

@@ -6,42 +6,25 @@ export const permissionsService = {
   // Get user permissions (from role)
   async getUserPermissions(): Promise<string[]> {
     try {
-      // First, get current user from profile (includes roleName from JWT)
-      const profileResponse = await apiClient.post('/auth/profile', {});
+      // Get user profile which now includes permissions
+      const profileResponse = await apiClient.get('/auth/profile');
       const profileData = profileResponse.data;
       
-      // Check if SuperAdmin from JWT token
-      if (profileData.roleName === 'SuperAdmin') {
-        return ['superadmin:*'];
+      // Check if SuperAdmin or Owner - they have all permissions
+      if (profileData.roleName === 'SuperAdmin' || profileData.roleName === 'Owner') {
+        if (profileData.roleName === 'SuperAdmin') {
+          return ['superadmin:*'];
+        }
+        // Owner has all permissions (returned from backend)
       }
 
-      const userId = profileData.id || profileData.sub;
-      if (!userId) {
-        return [];
-      }
-
-      // Get user with role and permissions
-      const userResponse = await apiClient.get(`/users/${userId}`);
-      const user = userResponse.data;
-
-      // If user is SuperAdmin, return all permissions
-      if (user.role?.name === 'SuperAdmin') {
-        return ['superadmin:*'];
-      }
-
-      // Extract permission slugs from role
-      const permissions: string[] = [];
-      if (user.role?.rolePermissions) {
-        user.role.rolePermissions.forEach((rp: any) => {
-          if (rp.permission?.slug) {
-            permissions.push(rp.permission.slug);
-          }
-        });
-      }
-
-      return permissions;
-    } catch (error) {
+      // Return permissions from profile response
+      return profileData.permissions || [];
+    } catch (error: any) {
       console.error('Failed to fetch user permissions:', error);
+      
+      // If 401 or 404, the user doesn't exist (token is invalid)
+      // The API interceptor should handle redirecting to login
       // Return empty array on error
       return [];
     }
@@ -64,13 +47,16 @@ export const permissionsService = {
     }
   },
 
-  // Check if user has SuperAdmin role (bypasses all permission checks)
+  // Check if user has SuperAdmin or Owner role (bypasses all permission checks)
   async isSuperAdmin(): Promise<boolean> {
     try {
-      const profileResponse = await apiClient.post('/auth/profile', {});
+      const profileResponse = await apiClient.get('/auth/profile');
       const roleName = profileResponse.data.roleName;
-      return roleName === 'SuperAdmin';
-    } catch (error) {
+      return roleName === 'SuperAdmin' || roleName === 'Owner';
+    } catch (error: any) {
+      // If 401 or 404, the user doesn't exist (token is invalid)
+      // The API interceptor should handle redirecting to login
+      console.error('Failed to check SuperAdmin status:', error);
       return false;
     }
   },

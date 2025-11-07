@@ -73,7 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasPermission = (permission: string): boolean => {
-    if (isSuperAdmin) {
+    // SuperAdmin and Owner have all permissions
+    if (isSuperAdmin || user?.role?.name === 'Owner') {
       return true;
     }
     return permissions.includes(permission);

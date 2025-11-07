@@ -15,6 +15,8 @@ export interface User {
   name: string;
   roleId: number;
   role?: Role;
+  storeId?: number | null;
+  store?: Store | null;
   createdAt?: string;
   updatedAt?: string;
 }

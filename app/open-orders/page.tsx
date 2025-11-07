@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useToast } from '@/components/ToastContainer';
+import { useAuth } from '@/contexts/AuthContext';
 import { ordersService } from '@/lib/services/orders';
 import { storesService } from '@/lib/services/stores';
 import { transactionsService, CreateTransactionDto } from '@/lib/services/transactions';
@@ -13,10 +14,13 @@ import Link from 'next/link';
 
 export default function OpenOrdersPage() {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
+  const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(
+    user?.storeId || undefined
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -28,10 +32,13 @@ export default function OpenOrdersPage() {
   }, []);
 
   useEffect(() => {
-    if (stores.length > 0 && !selectedStoreId) {
+    // Auto-set store for cashier users, otherwise use first store
+    if (user?.storeId) {
+      setSelectedStoreId(user.storeId);
+    } else if (stores.length > 0 && !selectedStoreId) {
       setSelectedStoreId(stores[0].id);
     }
-  }, [stores]);
+  }, [stores, user?.storeId]);
 
   useEffect(() => {
     if (selectedStoreId) {
@@ -142,22 +149,34 @@ export default function OpenOrdersPage() {
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Toko
-                </label>
-                <select
-                  value={selectedStoreId || ''}
-                  onChange={(e) => setSelectedStoreId(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {stores.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {!user?.storeId && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Toko
+                  </label>
+                  <select
+                    value={selectedStoreId || ''}
+                    onChange={(e) => setSelectedStoreId(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {stores.map((store) => (
+                      <option key={store.id} value={store.id}>
+                        {store.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {user?.storeId && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Toko
+                  </label>
+                  <div className="w-full px-3 py-2 bg-slate-100 rounded-lg text-slate-700 font-medium">
+                    {stores.find((s) => s.id === user.storeId)?.name || 'Toko Anda'}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">

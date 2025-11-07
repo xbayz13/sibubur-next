@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import Sidebar from '@/components/Layout/Sidebar';
 import { useToast } from '@/components/ToastContainer';
@@ -27,10 +27,13 @@ interface CartItem {
 
 export default function CashierPage() {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
+  const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>(
+    user?.storeId || undefined
+  );
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [showPayment, setShowPayment] = useState(false);
@@ -41,42 +44,87 @@ export default function CashierPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentOrder, setCurrentOrder] = useState<any>(null); // Store the created order
   const [openOrders, setOpenOrders] = useState<any[]>([]); // Store open orders for payment
+  const [loading, setLoading] = useState(true);
+  const storeSetRef = useRef(false); // Track if store has been set
 
+  // Load products, stores, and payment methods on mount (these don't depend on selectedStoreId)
   useEffect(() => {
-    loadData();
-    loadOpenOrders();
-  }, [selectedStoreId]);
+    const loadStaticData = async () => {
+      try {
+        setLoading(true);
+        console.log('Loading products, stores, and payment methods...');
+        const [productsData, storesData, paymentMethodsData] = await Promise.all([
+          productsService.getAll(),
+          storesService.getAll(),
+          paymentMethodsService.getAll(),
+        ]);
 
-  const loadData = async () => {
-    try {
-      const [productsData, storesData, paymentMethodsData] = await Promise.all([
-        productsService.getAll(),
-        storesService.getAll(),
-        paymentMethodsService.getAll(),
-      ]);
+        console.log('Products loaded:', productsData.length, productsData);
+        console.log('Stores loaded:', storesData.length, storesData);
+        console.log('Payment methods loaded:', paymentMethodsData.length, paymentMethodsData);
 
-      setProducts(productsData);
-      setStores(storesData);
-      setPaymentMethods(paymentMethodsData);
+        setProducts(productsData);
+        setStores(storesData);
+        setPaymentMethods(paymentMethodsData);
 
-      if (storesData.length > 0 && !selectedStoreId) {
-        setSelectedStoreId(storesData[0].id);
+        // Clear cart if it contains invalid product IDs
+        setCart((currentCart) => {
+          const validCart = currentCart.filter((item) =>
+            productsData.some((p) => p.id === item.productId)
+          );
+          if (validCart.length !== currentCart.length) {
+            console.warn('Removed invalid products from cart');
+            showToast('Keranjang telah dibersihkan karena ada produk yang tidak valid', 'info');
+          }
+          return validCart;
+        });
+
+        // Auto-set store: prioritize user.storeId, then first store
+        if (!storeSetRef.current && storesData.length > 0) {
+          const storeToSet = user?.storeId || storesData[0].id;
+          console.log('Setting initial store:', storeToSet);
+          setSelectedStoreId(storeToSet);
+          storeSetRef.current = true;
+        }
+      } catch (error: any) {
+        console.error('Error loading static data:', error);
+        showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+      } finally {
+        setLoading(false);
       }
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
-    }
-  };
+    };
 
-  const loadOpenOrders = async () => {
+    loadStaticData();
+  }, []); // Run only once on mount
+
+  // Auto-set store from user when user data is loaded (if stores are already loaded)
+  useEffect(() => {
+    if (user?.storeId && stores.length > 0 && !storeSetRef.current) {
+      console.log('Setting store from user:', user.storeId);
+      setSelectedStoreId(user.storeId);
+      storeSetRef.current = true;
+    }
+  }, [user?.storeId, stores.length]);
+
+  // Load open orders when selectedStoreId changes
+  const loadOpenOrders = useCallback(async () => {
     if (!selectedStoreId) return;
     try {
+      console.log('Loading open orders for store:', selectedStoreId);
       const orders = await ordersService.getAll(selectedStoreId);
       const open = orders.filter((o) => o.status === 'open');
+      console.log('Open orders loaded:', open.length);
       setOpenOrders(open);
     } catch (error: any) {
       console.error('Failed to load open orders:', error);
     }
-  };
+  }, [selectedStoreId]);
+
+  useEffect(() => {
+    if (selectedStoreId) {
+      loadOpenOrders();
+    }
+  }, [selectedStoreId, loadOpenOrders]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -234,6 +282,22 @@ export default function CashierPage() {
       return;
     }
 
+    // Validate that all products in cart still exist
+    const invalidItems = cart.filter((item) => {
+      const productExists = products.some((p) => p.id === item.productId);
+      return !productExists;
+    });
+
+    if (invalidItems.length > 0) {
+      showToast(
+        `Produk tidak valid ditemukan di keranjang. Silakan refresh halaman dan tambahkan produk kembali.`,
+        'error'
+      );
+      // Remove invalid items from cart
+      setCart(cart.filter((item) => products.some((p) => p.id === item.productId)));
+      return;
+    }
+
     try {
       const orderData: CreateOrderDto = {
         storeId: selectedStoreId,
@@ -252,6 +316,7 @@ export default function CashierPage() {
         })),
       };
 
+      console.log('Creating order with data:', orderData);
       const newOrder = await ordersService.create(orderData);
       setCurrentOrder(newOrder);
       
@@ -268,8 +333,17 @@ export default function CashierPage() {
       // Clear cart but keep customer name for next order
       setCart([]);
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal membuat pesanan', 'error');
+      const errorMessage = error.response?.data?.message || 'Gagal membuat pesanan';
+      showToast(errorMessage, 'error');
       console.error('Error creating order:', error);
+      console.error('Order data that failed:', {
+        storeId: selectedStoreId,
+        items: cart.map((item) => ({
+          productId: item.productId,
+          productName: item.product.name,
+          quantity: item.quantity,
+        })),
+      });
     }
   };
 
@@ -336,7 +410,7 @@ export default function CashierPage() {
               <p className="text-sm text-slate-600">Sistem Point of Sale</p>
             </div>
             <div className="flex items-center gap-4">
-              {stores.length > 0 && (
+              {stores.length > 0 && !user?.storeId && (
                 <select
                   value={selectedStoreId || ''}
                   onChange={(e) => setSelectedStoreId(Number(e.target.value))}
@@ -348,6 +422,11 @@ export default function CashierPage() {
                     </option>
                   ))}
                 </select>
+              )}
+              {user?.storeId && (
+                <div className="px-4 py-2 bg-slate-100 rounded-lg text-slate-700 font-medium">
+                  {stores.find((s) => s.id === user.storeId)?.name || 'Toko Anda'}
+                </div>
               )}
               <div className="text-right">
                 <div className="text-xs text-slate-500">Total</div>
@@ -398,41 +477,53 @@ export default function CashierPage() {
               </div>
 
               {/* Products Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {filteredProducts.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => addToCart(product)}
-                    className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 hover:shadow-md hover:border-indigo-300 transition-all text-left group"
-                  >
-                    {product.imageUrl && (
-                      <div className="w-full h-32 mb-3 rounded-lg overflow-hidden bg-slate-100">
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        />
-                      </div>
-                    )}
-                    <div className="font-semibold text-slate-900 mb-1 line-clamp-2">
-                      {product.name}
-                    </div>
-                    <div className="text-lg font-bold text-emerald-600">
-                      Rp {Number(product.price).toLocaleString('id-ID')}
-                    </div>
-                    {product.addons && product.addons.length > 0 && (
-                      <div className="text-xs text-slate-500 mt-1">
-                        +{product.addons.length} addon
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {filteredProducts.length === 0 && (
+              {loading ? (
                 <div className="text-center py-12">
-                  <p className="text-slate-500">Tidak ada produk ditemukan</p>
+                  <p className="text-slate-500">Memuat produk...</p>
                 </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {filteredProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => addToCart(product)}
+                        className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 hover:shadow-md hover:border-indigo-300 transition-all text-left group"
+                      >
+                        {product.imageUrl && (
+                          <div className="w-full h-32 mb-3 rounded-lg overflow-hidden bg-slate-100">
+                            <img
+                              src={product.imageUrl}
+                              alt={product.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                          </div>
+                        )}
+                        <div className="font-semibold text-slate-900 mb-1 line-clamp-2">
+                          {product.name}
+                        </div>
+                        <div className="text-lg font-bold text-emerald-600">
+                          Rp {Number(product.price).toLocaleString('id-ID')}
+                        </div>
+                        {product.addons && product.addons.length > 0 && (
+                          <div className="text-xs text-slate-500 mt-1">
+                            +{product.addons.length} addon
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {filteredProducts.length === 0 && !loading && (
+                    <div className="text-center py-12">
+                      <p className="text-slate-500">
+                        {products.length === 0
+                          ? 'Tidak ada produk tersedia. Silakan tambahkan produk terlebih dahulu.'
+                          : 'Tidak ada produk ditemukan dengan filter yang dipilih.'}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

@@ -61,30 +61,78 @@ export default function MonthlyReportView({ report }: MonthlyReportViewProps) {
 
       {/* Statistics */}
       <div className="bg-white border border-slate-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-slate-800 mb-4">Statistik</h3>
+        <h3 className="text-lg font-semibold text-slate-800 mb-4">Statistik Detail</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <div className="text-sm text-slate-600">Rata-rata Pendapatan Harian</div>
-            <div className="text-xl font-semibold text-slate-800">
-              Rp {Number(report.averageDailyRevenue || 0).toLocaleString('id-ID')}
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="text-xs text-slate-500 mb-1">Rata-rata Pendapatan per Hari Aktif</div>
+            <div className="text-xl font-bold text-emerald-700">
+              Rp {Number(report.averageDailyRevenue || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })}
             </div>
+            {report.daysWithData && report.daysWithData > 0 && (
+              <div className="text-xs text-slate-500 mt-1">
+                dari {report.daysWithData} hari aktif
+              </div>
+            )}
           </div>
-          <div>
-            <div className="text-sm text-slate-600">Rata-rata Pengeluaran Harian</div>
-            <div className="text-xl font-semibold text-slate-800">
-              Rp {Number(report.averageDailyExpenses || 0).toLocaleString('id-ID')}
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="text-xs text-slate-500 mb-1">Rata-rata Pengeluaran per Hari Aktif</div>
+            <div className="text-xl font-bold text-rose-700">
+              Rp {Number(report.averageDailyExpenses || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })}
             </div>
+            {report.daysWithData && report.daysWithData > 0 && (
+              <div className="text-xs text-slate-500 mt-1">
+                dari {report.daysWithData} hari aktif
+              </div>
+            )}
           </div>
-          <div>
-            <div className="text-sm text-slate-600">Hari dengan Data</div>
-            <div className="text-xl font-semibold text-slate-800">
-              {report.daysWithData || 0} hari
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="text-xs text-slate-500 mb-1">Hari dengan Aktivitas</div>
+            <div className="text-xl font-bold text-indigo-700">
+              {report.daysWithData || 0}
             </div>
+            <div className="text-xs text-slate-500 mt-1">hari dari {new Date(report.year, report.month, 0).getDate()} hari</div>
           </div>
-          <div>
-            <div className="text-sm text-slate-600">Total Produksi</div>
-            <div className="text-xl font-semibold text-slate-800">
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="text-xs text-slate-500 mb-1">Total Produksi</div>
+            <div className="text-xl font-bold text-violet-700">
               {report.productions?.total || 0}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">catatan produksi</div>
+          </div>
+        </div>
+        
+        {/* Additional Metrics */}
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-xs text-slate-500 mb-1">Rata-rata per Transaksi</div>
+              <div className="text-lg font-semibold text-slate-800">
+                Rp {report.revenue?.transactions && report.revenue.transactions > 0
+                  ? (Number(report.revenue.total) / report.revenue.transactions).toLocaleString('id-ID', { maximumFractionDigits: 0 })
+                  : '0'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500 mb-1">Rata-rata per Pesanan</div>
+              <div className="text-lg font-semibold text-slate-800">
+                Rp {report.orders?.total && report.orders.total > 0
+                  ? (Number(report.revenue?.total || 0) / report.orders.total).toLocaleString('id-ID', { maximumFractionDigits: 0 })
+                  : '0'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500 mb-1">Margin Laba</div>
+              <div className={`text-lg font-semibold ${
+                report.revenue?.total && report.revenue.total > 0
+                  ? (Number(report.netProfit) / Number(report.revenue.total) * 100) >= 0
+                    ? 'text-emerald-700'
+                    : 'text-rose-700'
+                  : 'text-slate-800'
+              }`}>
+                {report.revenue?.total && report.revenue.total > 0
+                  ? `${(Number(report.netProfit) / Number(report.revenue.total) * 100).toFixed(1)}%`
+                  : '0%'}
+              </div>
             </div>
           </div>
         </div>

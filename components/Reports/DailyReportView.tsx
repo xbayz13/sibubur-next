@@ -98,7 +98,7 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
               <div className="text-sm text-slate-600">Jumlah Bubur</div>
               <div className="text-lg font-semibold text-slate-900">
                 {report.production.porridgeAmount
-                  ? `${Number(report.production.porridgeAmount).toLocaleString('id-ID')} porsi`
+                  ? `${Number(report.production.porridgeAmount).toLocaleString('id-ID')} kg`
                   : '-'}
               </div>
             </div>

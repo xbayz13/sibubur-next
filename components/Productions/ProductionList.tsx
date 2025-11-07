@@ -52,7 +52,7 @@ export default function ProductionList({
                 Toko
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Jumlah Bubur (porsi)
+                Jumlah Bubur (kg)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Cuaca
@@ -87,7 +87,7 @@ export default function ProductionList({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-slate-900">
                     {production.porridgeAmount
-                      ? `${Number(production.porridgeAmount).toLocaleString('id-ID')} porsi`
+                      ? `${Number(production.porridgeAmount).toLocaleString('id-ID')} kg`
                       : '-'}
                   </div>
                 </td>

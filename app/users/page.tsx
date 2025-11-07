@@ -6,13 +6,15 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { useToast } from '@/components/ToastContainer';
 import { usersService, CreateUserDto, UpdateUserDto } from '@/lib/services/users';
 import { rolesService } from '@/lib/services/roles';
-import { User, Role } from '@/types';
+import { storesService } from '@/lib/services/stores';
+import { User, Role, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 
 export default function UsersPage() {
   const { showToast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -24,13 +26,15 @@ export default function UsersPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [usersData, rolesData] = await Promise.all([
+      const [usersData, rolesData, storesData] = await Promise.all([
         usersService.getAll(),
         rolesService.getAll(),
+        storesService.getAll(),
       ]);
 
       setUsers(usersData);
       setRoles(rolesData);
+      setStores(storesData);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data pengguna', 'error');
     } finally {
@@ -125,6 +129,10 @@ export default function UsersPage() {
                 accessor: (user) => user.role?.name || '-',
               },
               {
+                header: 'Toko',
+                accessor: (user) => user.store?.name || '-',
+              },
+              {
                 header: 'Tanggal Dibuat',
                 accessor: (user) =>
                   user.createdAt
@@ -142,6 +150,7 @@ export default function UsersPage() {
             <UserForm
               user={selectedUser}
               roles={roles}
+              stores={stores}
               onSubmit={handleSubmit}
               onCancel={() => {
                 setShowForm(false);
@@ -158,22 +167,32 @@ export default function UsersPage() {
 interface UserFormProps {
   user: User | null;
   roles: Role[];
+  stores: Store[];
   onSubmit: (data: CreateUserDto | UpdateUserDto) => void;
   onCancel: () => void;
 }
 
-function UserForm({ user, roles, onSubmit, onCancel }: UserFormProps) {
-  const [formData, setFormData] = useState<CreateUserDto>({
+function UserForm({ user, roles, stores, onSubmit, onCancel }: UserFormProps) {
+  const [formData, setFormData] = useState<CreateUserDto & { storeId?: number | null }>({
     username: user?.username || '',
     password: '',
     name: user?.name || '',
     roleId: user?.roleId || 0,
+    storeId: user?.storeId || null,
   });
+
+  // Check if selected role is Cashier
+  const selectedRole = roles.find((r) => r.id === formData.roleId);
+  const isCashierRole = selectedRole?.name?.toLowerCase().includes('cashier') || false;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.username || !formData.name || !formData.roleId) {
       alert('Harap lengkapi semua field yang wajib');
+      return;
+    }
+    if (isCashierRole && !formData.storeId) {
+      alert('Toko wajib dipilih untuk cashier');
       return;
     }
     if (!user && !formData.password) {
@@ -237,7 +256,17 @@ function UserForm({ user, roles, onSubmit, onCancel }: UserFormProps) {
             </label>
             <select
               value={formData.roleId}
-              onChange={(e) => setFormData({ ...formData, roleId: Number(e.target.value) })}
+              onChange={(e) => {
+                const newRoleId = Number(e.target.value);
+                // Clear storeId if role is not cashier
+                const newRole = roles.find((r) => r.id === newRoleId);
+                const isCashier = newRole?.name?.toLowerCase().includes('cashier') || false;
+                setFormData({
+                  ...formData,
+                  roleId: newRoleId,
+                  storeId: isCashier ? formData.storeId : null,
+                });
+              }}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required
             >
@@ -249,6 +278,35 @@ function UserForm({ user, roles, onSubmit, onCancel }: UserFormProps) {
               ))}
             </select>
           </div>
+
+          {isCashierRole && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Toko *
+              </label>
+              <select
+                value={formData.storeId || ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    storeId: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
+                required={isCashierRole}
+              >
+                <option value="">Pilih Toko</option>
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500 mt-1">
+                Cashier harus ditugaskan ke satu toko (1-to-1 relationship)
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-2 pt-4">
             <button

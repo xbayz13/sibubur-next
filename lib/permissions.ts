@@ -1,52 +1,131 @@
-// Permission mapping for menu items and pages
-export const PERMISSION_SLUGS = {
-  DASHBOARD: 'dashboard:view',
-  CASHIER: 'cashier:view',
-  OPEN_ORDERS: 'orders:view',
-  PRODUCTION: 'productions:view',
-  ORDERS: 'orders:view',
-  TRANSACTIONS: 'transactions:view',
-  SUPPLIES: 'supplies:view',
-  EXPENSES: 'expenses:view',
-  EMPLOYEES: 'employees:view',
-  REPORTS: 'reports:view',
-  MASTER_DATA: 'master-data:view',
-  USERS: 'users:view',
-  ROLES: 'roles:view',
-} as const;
+/**
+ * Frontend permission mapping and utilities
+ */
 
-// Menu items with their permission requirements
-export const MENU_ITEMS = [
-  { name: 'Dashboard', href: '/', icon: '📊', permission: PERMISSION_SLUGS.DASHBOARD },
-  { name: 'Kasir', href: '/cashier', icon: '💳', permission: PERMISSION_SLUGS.CASHIER },
-  { name: 'Pesanan Terbuka', href: '/open-orders', icon: '🛒', permission: PERMISSION_SLUGS.OPEN_ORDERS },
-  { name: 'Produksi Harian', href: '/productions', icon: '🍲', permission: PERMISSION_SLUGS.PRODUCTION },
-  { name: 'Pesanan', href: '/orders', icon: '📝', permission: PERMISSION_SLUGS.ORDERS },
-  { name: 'Transaksi', href: '/transactions', icon: '💰', permission: PERMISSION_SLUGS.TRANSACTIONS },
-  { name: 'Persediaan', href: '/supplies', icon: '📦', permission: PERMISSION_SLUGS.SUPPLIES },
-  { name: 'Pengeluaran', href: '/expenses', icon: '💸', permission: PERMISSION_SLUGS.EXPENSES },
-  { name: 'Karyawan', href: '/employees', icon: '👥', permission: PERMISSION_SLUGS.EMPLOYEES },
-  { name: 'Laporan', href: '/reports', icon: '📈', permission: PERMISSION_SLUGS.REPORTS },
-  { name: 'Data Master', href: '/master-data', icon: '⚙️', permission: PERMISSION_SLUGS.MASTER_DATA },
-  { name: 'Pengguna', href: '/users', icon: '👤', permission: PERMISSION_SLUGS.USERS },
-  { name: 'Role & Izin', href: '/roles', icon: '🔐', permission: PERMISSION_SLUGS.ROLES },
-] as const;
+// Route to permission mapping for frontend
+const ROUTE_PERMISSIONS: Record<string, string[]> = {
+  '/': ['dashboard.read'],
+  '/cashier': ['cashier.read', 'cashier.create'],
+  '/open-orders': ['orders.read'],
+  '/productions': ['productions.read', 'productions.create', 'productions.update'],
+  '/orders': ['orders.read', 'orders.update'],
+  '/transactions': ['transactions.read'],
+  '/supplies': ['supplies.read', 'supplies.update'],
+  '/expenses': ['expenses.read', 'expenses.create', 'expenses.update', 'expenses.delete'],
+  '/employees': ['employees.read', 'employees.create', 'employees.update', 'employees.delete', 'attendances.read', 'attendances.create', 'attendances.update'],
+  '/reports': ['reports.read'],
+  '/master-data/products': ['products.read', 'products.create', 'products.update', 'products.delete'],
+  '/master-data/product-categories': ['product-categories.read', 'product-categories.create', 'product-categories.update', 'product-categories.delete'],
+  '/master-data/product-addons': ['product-addons.read', 'product-addons.create', 'product-addons.update', 'product-addons.delete'],
+  '/master-data/stores': ['stores.read', 'stores.create', 'stores.update', 'stores.delete'],
+  '/master-data/employees': ['employees.read', 'employees.create', 'employees.update', 'employees.delete'],
+  '/master-data/expense-categories': ['expense-categories.read', 'expense-categories.create', 'expense-categories.update', 'expense-categories.delete'],
+  '/users': ['users.read', 'users.create', 'users.update', 'users.delete'],
+  '/roles': ['roles.read', 'roles.create', 'roles.update', 'roles.delete'],
+  '/permissions': ['permissions.read'],
+};
 
-// Helper function to check if user has permission
-export function hasPermission(
+// Menu items with their required permissions
+const MENU_ITEMS_PERMISSIONS: Record<string, string[]> = {
+  'Dashboard': ['dashboard.read'],
+  'Kasir': ['cashier.read'],
+  'Pesanan Terbuka': ['orders.read'],
+  'Produksi Harian': ['productions.read'],
+  'Pesanan': ['orders.read'],
+  'Transaksi': ['transactions.read'],
+  'Persediaan': ['supplies.read'],
+  'Pengeluaran': ['expenses.read'],
+  'Karyawan': ['employees.read'],
+  'Laporan': ['reports.read'],
+  'Data Master': ['products.read', 'stores.read', 'product-categories.read', 'product-addons.read', 'employees.read', 'expense-categories.read'],
+  'Pengguna': ['users.read'],
+  'Role & Izin': ['roles.read'],
+};
+
+/**
+ * Get required permissions for a route
+ */
+export function getPermissionsForRoute(route: string): string[] {
+  // Check exact match first
+  if (ROUTE_PERMISSIONS[route]) {
+    return ROUTE_PERMISSIONS[route];
+  }
+
+  // Check if route starts with any mapped route
+  for (const [mappedRoute, permissions] of Object.entries(ROUTE_PERMISSIONS)) {
+    if (route.startsWith(mappedRoute)) {
+      return permissions;
+    }
+  }
+
+  // For master-data sub-routes
+  if (route.startsWith('/master-data/')) {
+    const parts = route.split('/');
+    if (parts.length >= 3) {
+      const subRoute = `/master-data/${parts[2]}`;
+      if (ROUTE_PERMISSIONS[subRoute]) {
+        return ROUTE_PERMISSIONS[subRoute];
+      }
+    }
+  }
+
+  return [];
+}
+
+/**
+ * Get required permissions for a menu item
+ */
+export function getPermissionsForMenuItem(menuName: string): string[] {
+  return MENU_ITEMS_PERMISSIONS[menuName] || [];
+}
+
+/**
+ * Check if user has any of the required permissions
+ */
+export function hasAnyPermission(
   userPermissions: string[],
-  requiredPermission: string
+  requiredPermissions: string[]
 ): boolean {
   // SuperAdmin has all permissions
   if (userPermissions.includes('superadmin:*')) {
     return true;
   }
-  return userPermissions.includes(requiredPermission);
+
+  // Check if user has any of the required permissions
+  return requiredPermissions.some((perm) => userPermissions.includes(perm));
 }
 
-// Get permission slug for a route
-export function getPermissionForRoute(route: string): string | null {
-  const item = MENU_ITEMS.find((item) => route === item.href || route.startsWith(item.href + '/'));
-  return item?.permission || null;
+/**
+ * Check if user has all of the required permissions
+ */
+export function hasAllPermissions(
+  userPermissions: string[],
+  requiredPermissions: string[]
+): boolean {
+  // SuperAdmin has all permissions
+  if (userPermissions.includes('superadmin:*')) {
+    return true;
+  }
+
+  // Check if user has all required permissions
+  return requiredPermissions.every((perm) => userPermissions.includes(perm));
 }
 
+/**
+ * Menu items configuration
+ */
+export const MENU_ITEMS = [
+  { name: 'Dashboard', href: '/', icon: '📊' },
+  { name: 'Kasir', href: '/cashier', icon: '💳' },
+  { name: 'Pesanan Terbuka', href: '/open-orders', icon: '🛒' },
+  { name: 'Produksi Harian', href: '/productions', icon: '🍲' },
+  { name: 'Pesanan', href: '/orders', icon: '📝' },
+  { name: 'Transaksi', href: '/transactions', icon: '💰' },
+  { name: 'Persediaan', href: '/supplies', icon: '📦' },
+  { name: 'Pengeluaran', href: '/expenses', icon: '💸' },
+  { name: 'Karyawan', href: '/employees', icon: '👥' },
+  { name: 'Laporan', href: '/reports', icon: '📈' },
+  { name: 'Data Master', href: '/master-data', icon: '⚙️' },
+  { name: 'Pengguna', href: '/users', icon: '👤' },
+  { name: 'Role & Izin', href: '/roles', icon: '🔐' },
+] as const;
