@@ -10,8 +10,10 @@ import { ordersService } from '@/lib/services/orders';
 import { storesService } from '@/lib/services/stores';
 import { transactionsService, CreateTransactionDto } from '@/lib/services/transactions';
 import { paymentMethodsService } from '@/lib/services/payment-methods';
-import { Order, Store, PaymentMethod } from '@/types';
+import { Order, Store, PaymentMethod, Product } from '@/types';
 import Link from 'next/link';
+import ReceiptPrint from '@/components/Orders/ReceiptPrint';
+import { productsService } from '@/lib/services/products';
 
 export default function OpenOrdersPage() {
   const { showToast } = useToast();
@@ -26,11 +28,26 @@ export default function OpenOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('kitchen');
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     loadStores();
     loadPaymentMethods();
+    loadProducts();
   }, []);
+
+  const loadProducts = async () => {
+    try {
+      const productsData = await productsService.getAll();
+      setProducts(productsData);
+    } catch (error: any) {
+      console.error('Failed to load products:', error);
+    }
+  };
 
   useEffect(() => {
     // Auto-set store for cashier users, otherwise use first store
@@ -98,6 +115,34 @@ export default function OpenOrdersPage() {
   const handlePayOrder = (order: Order) => {
     setSelectedOrder(order);
     setShowPaymentModal(true);
+  };
+
+  const handleViewDetail = (order: Order) => {
+    setSelectedOrder(order);
+    setShowDetailModal(true);
+  };
+
+  const handleEdit = (order: Order) => {
+    setSelectedOrder(order);
+    setShowEditModal(true);
+  };
+
+  const handlePrintReceipt = (order: Order, type: 'kitchen' | 'customer') => {
+    setSelectedOrder(order);
+    setReceiptType(type);
+    setShowReceipt(true);
+  };
+
+  const handleUpdateOrder = async (orderId: number, updateData: { customerName?: string }) => {
+    try {
+      await ordersService.update(orderId, updateData);
+      showToast('Pesanan berhasil diperbarui', 'success');
+      setShowEditModal(false);
+      setSelectedOrder(null);
+      await loadOrders();
+    } catch (error: any) {
+      showToast(error.response?.data?.message || 'Gagal memperbarui pesanan', 'error');
+    }
   };
 
   const handleProcessPayment = async (
@@ -278,7 +323,7 @@ export default function OpenOrdersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-slate-900">
-                            Rp {Number(order.taxAmount).toLocaleString('id-ID')}
+                            Rp 0
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -296,13 +341,33 @@ export default function OpenOrdersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end gap-2">
-                            <Link
-                              href={`/orders/${order.id}`}
+                          <div className="flex items-center justify-end gap-2 flex-wrap">
+                            <button
+                              onClick={() => handleViewDetail(order)}
                               className="text-indigo-600 hover:text-indigo-900 px-3 py-1 rounded hover:bg-indigo-50 transition-colors"
                             >
                               Detail
-                            </Link>
+                            </button>
+                            <button
+                              onClick={() => handleEdit(order)}
+                              className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded hover:bg-blue-50 transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handlePrintReceipt(order, 'kitchen')}
+                              className="text-purple-600 hover:text-purple-900 px-3 py-1 rounded hover:bg-purple-50 transition-colors"
+                              title="Cetak Struk Dapur"
+                            >
+                              🍳 Dapur
+                            </button>
+                            <button
+                              onClick={() => handlePrintReceipt(order, 'customer')}
+                              className="text-pink-600 hover:text-pink-900 px-3 py-1 rounded hover:bg-pink-50 transition-colors"
+                              title="Cetak Struk Pelanggan"
+                            >
+                              🧾 Pelanggan
+                            </button>
                             <button
                               onClick={() => handlePayOrder(order)}
                               className="text-emerald-600 hover:text-emerald-900 px-3 py-1 rounded hover:bg-emerald-50 transition-colors font-semibold"
@@ -348,6 +413,42 @@ export default function OpenOrdersPage() {
             onProcess={handleProcessPayment}
             onClose={() => {
               setShowPaymentModal(false);
+              setSelectedOrder(null);
+            }}
+          />
+        )}
+
+        {/* Detail Modal */}
+        {showDetailModal && selectedOrder && (
+          <DetailModal
+            order={selectedOrder}
+            onClose={() => {
+              setShowDetailModal(false);
+              setSelectedOrder(null);
+            }}
+          />
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && selectedOrder && products.length > 0 && (
+          <EditOrderModal
+            order={selectedOrder}
+            products={products}
+            onUpdate={handleUpdateOrder}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedOrder(null);
+            }}
+          />
+        )}
+
+        {/* Receipt Print */}
+        {showReceipt && selectedOrder && (
+          <ReceiptPrint
+            order={selectedOrder}
+            type={receiptType}
+            onClose={() => {
+              setShowReceipt(false);
               setSelectedOrder(null);
             }}
           />
@@ -509,6 +610,217 @@ function PaymentModal({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Detail Modal Component
+interface DetailModalProps {
+  order: Order;
+  onClose: () => void;
+}
+
+function DetailModal({ order, onClose }: DetailModalProps) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-slate-800">Detail Pesanan</h2>
+            <button
+              onClick={onClose}
+              className="text-slate-500 hover:text-slate-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Nomor Pesanan</label>
+                <div className="mt-1 text-sm text-slate-900 font-semibold">{order.orderNumber}</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Status</label>
+                <div className="mt-1 text-sm text-slate-900">
+                  {order.status === 'open' ? '⏳ Belum Bayar' : order.status === 'paid' ? '✅ Lunas' : '❌ Dibatalkan'}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Pelanggan</label>
+                <div className="mt-1 text-sm text-slate-900">{order.customerName || 'Tanpa Nama'}</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Toko</label>
+                <div className="mt-1 text-sm text-slate-900">{order.store.name}</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Tanggal</label>
+                <div className="mt-1 text-sm text-slate-900">
+                  {new Date(order.createdAt).toLocaleString('id-ID')}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700">Total</label>
+                <div className="mt-1 text-lg font-bold text-emerald-600">
+                  Rp {Number(order.totalAmount).toLocaleString('id-ID')}
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 pt-4">
+              <h3 className="text-lg font-semibold text-slate-800 mb-3">Item Pesanan</h3>
+              <div className="space-y-3">
+                {order.orderItems.map((item, idx) => (
+                  <div key={idx} className="bg-slate-50 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-semibold text-slate-900">
+                          {item.quantity}x {item.product.name}
+                        </div>
+                        <div className="text-sm text-slate-600 mt-1">
+                          @ Rp {Number(item.unitPrice).toLocaleString('id-ID')}
+                        </div>
+                        {item.orderItemAddons && item.orderItemAddons.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs font-medium text-slate-700">Addon:</div>
+                            {item.orderItemAddons.map((addon, aidx) => (
+                              <div key={aidx} className="text-xs text-slate-600 ml-4">
+                                + {addon.quantity}x {addon.addon.name} @ Rp {Number(addon.addonPrice).toLocaleString('id-ID')}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-slate-900">
+                          Rp {Number(item.lineTotal).toLocaleString('id-ID')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-200">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Edit Order Modal Component
+interface EditOrderModalProps {
+  order: Order;
+  products: Product[];
+  onUpdate: (orderId: number, updateData: { customerName?: string }) => Promise<void>;
+  onClose: () => void;
+}
+
+function EditOrderModal({ order, products, onUpdate, onClose }: EditOrderModalProps) {
+  const [customerName, setCustomerName] = useState(order.customerName || '');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onUpdate(order.id, {
+      customerName: customerName.trim() || undefined,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-slate-800">Edit Pesanan</h2>
+            <button
+              onClick={onClose}
+              className="text-slate-500 hover:text-slate-700 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Nomor Pesanan
+              </label>
+              <div className="px-3 py-2 bg-slate-100 rounded-lg text-slate-700 font-semibold">
+                {order.orderNumber}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Nama Pelanggan
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Nama pelanggan (opsional)"
+              />
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-4">
+              <div className="text-sm font-medium text-slate-700 mb-2">Item Pesanan:</div>
+              <div className="space-y-2">
+                {order.orderItems.map((item, idx) => (
+                  <div key={idx} className="text-sm text-slate-600">
+                    {item.quantity}x {item.product.name}
+                    {item.orderItemAddons && item.orderItemAddons.length > 0 && (
+                      <div className="ml-4 text-xs text-slate-500">
+                        {item.orderItemAddons.map((addon, aidx) => (
+                          <div key={aidx}>
+                            + {addon.quantity}x {addon.addon.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <div className="text-sm font-semibold text-slate-900">
+                  Total: Rp {Number(order.totalAmount).toLocaleString('id-ID')}
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-500 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <strong>Catatan:</strong> Saat ini hanya nama pelanggan yang dapat diubah. Untuk mengubah item pesanan, silakan batalkan pesanan dan buat pesanan baru.
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-slate-200 text-slate-800 px-4 py-3 rounded-lg hover:bg-slate-300 font-semibold transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 font-semibold transition-colors"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

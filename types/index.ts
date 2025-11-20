@@ -128,6 +128,15 @@ export interface CreateOrderDto {
 export interface UpdateOrderDto {
   customerName?: string;
   status?: OrderStatus;
+  items?: Array<{
+    productId: number;
+    quantity: number;
+    addons?: Array<{
+      addonId: number;
+      price: number;
+      quantity: number;
+    }>;
+  }>;
 }
 
 // Transaction Types
