@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
+import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { ordersService } from '@/lib/services/orders';
 import { productsService } from '@/lib/services/products';
@@ -169,22 +170,23 @@ export default function OrdersPage() {
   return (
     <ProtectedRoute>
       <MainLayout>
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
+        <div className="space-y-4 sm:space-y-6">
+          <BackButton href="/" />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Pesanan</h1>
-              <p className="text-slate-600">Sistem pencatatan pesanan dengan nomor order yang dapat dicetak</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Pesanan</h1>
+              <p className="text-sm sm:text-base text-slate-600">Sistem pencatatan pesanan dengan nomor order yang dapat dicetak</p>
             </div>
             <button
               onClick={() => setShowOrderForm(true)}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="w-full sm:w-auto bg-indigo-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
             >
               + Buat Pesanan Baru
             </button>
           </div>
 
           {/* Filters */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {stores.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">

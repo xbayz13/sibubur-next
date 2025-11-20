@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
+import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { useAuth } from '@/contexts/AuthContext';
 import { ordersService } from '@/lib/services/orders';
@@ -131,6 +132,7 @@ export default function OpenOrdersPage() {
     <ProtectedRoute>
       <MainLayout>
         <div className="p-6">
+          <BackButton href="/" />
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-slate-800">Pesanan Terbuka</h1>

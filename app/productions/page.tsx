@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
+import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { productionsService, CreateProductionDto } from '@/lib/services/productions';
 import { storesService } from '@/lib/services/stores';
@@ -142,6 +143,7 @@ export default function ProductionsPage() {
     <ProtectedRoute>
       <MainLayout>
         <div className="space-y-6">
+          <BackButton href="/" />
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-slate-800 mb-2">Produksi Harian</h1>

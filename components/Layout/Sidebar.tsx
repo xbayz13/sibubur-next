@@ -9,7 +9,7 @@ import { MENU_ITEMS, getPermissionsForMenuItem, hasAnyPermission } from '@/lib/p
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout, hasPermission, isSuperAdmin, permissions } = useAuth();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { isCollapsed, isMobileOpen, toggleSidebar, closeMobileMenu } = useSidebar();
 
   // Filter menu items based on permissions
   const visibleMenuItems = MENU_ITEMS.filter((item) => {
@@ -28,11 +28,23 @@ export default function Sidebar() {
   });
 
   return (
-    <div
-      className={`bg-slate-800 text-slate-100 min-h-screen flex flex-col shadow-lg transition-all duration-300 ${
-        isCollapsed ? 'w-20' : 'w-64'
-      }`}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={closeMobileMenu}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div
+        className={`bg-slate-800 text-slate-100 min-h-screen flex flex-col shadow-lg transition-all duration-300 fixed lg:static z-50 ${
+          isCollapsed ? 'w-20' : 'w-64'
+        } ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
       <div className={`border-b border-slate-700 ${isCollapsed ? 'p-3' : 'p-6'}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           {!isCollapsed && (
@@ -93,6 +105,7 @@ export default function Sidebar() {
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                   }`}
                   title={isCollapsed ? item.name : undefined}
+                  onClick={closeMobileMenu}
                 >
                   <span className="text-xl flex-shrink-0">{item.icon}</span>
                   {!isCollapsed && (
@@ -155,6 +168,7 @@ export default function Sidebar() {
         </button>
       </div>
     </div>
+    </>
   );
 }
 

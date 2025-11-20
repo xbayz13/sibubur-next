@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
+import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { expenseCategoriesService } from '@/lib/services/expense-categories';
 import { ExpenseCategory } from '@/types';
@@ -87,6 +88,7 @@ export default function ExpenseCategoriesPage() {
     <ProtectedRoute>
       <MainLayout>
         <div className="space-y-6">
+          <BackButton href="/master-data" />
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-slate-800 mb-2">Kategori Pengeluaran</h1>

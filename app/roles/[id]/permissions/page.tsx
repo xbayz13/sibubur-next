@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
+import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { rolesService } from '@/lib/services/roles';
 import { permissionsService } from '@/lib/services/permissions';
@@ -112,14 +113,9 @@ export default function RolePermissionsPage() {
     <ProtectedRoute>
       <MainLayout>
         <div className="space-y-6">
+          <BackButton href="/roles" label="Kembali ke Daftar Role" />
           <div className="flex justify-between items-center">
             <div>
-              <button
-                onClick={() => router.push('/roles')}
-                className="text-slate-600 hover:text-slate-900 mb-2"
-              >
-                ← Kembali ke Daftar Role
-              </button>
               <h1 className="text-3xl font-bold text-slate-800 mb-2">
                 Permission untuk Role: {role?.name}
               </h1>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import Sidebar from '@/components/Layout/Sidebar';
+import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { useAuth } from '@/contexts/AuthContext';
 import { productsService } from '@/lib/services/products';
@@ -45,6 +46,7 @@ export default function CashierPage() {
   const [currentOrder, setCurrentOrder] = useState<any>(null); // Store the created order
   const [openOrders, setOpenOrders] = useState<any[]>([]); // Store open orders for payment
   const [loading, setLoading] = useState(true);
+  const [showCart, setShowCart] = useState(false); // Mobile cart visibility
   const storeSetRef = useRef(false); // Track if store has been set
 
   // Load products, stores, and payment methods on mount (these don't depend on selectedStoreId)
@@ -404,51 +406,85 @@ export default function CashierPage() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="h-full flex flex-col bg-slate-50">
             {/* Header */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800">Kasir</h1>
-              <p className="text-sm text-slate-600">Sistem Point of Sale</p>
-            </div>
-            <div className="flex items-center gap-4">
-              {stores.length > 0 && !user?.storeId && (
-                <select
-                  value={selectedStoreId || ''}
-                  onChange={(e) => setSelectedStoreId(Number(e.target.value))}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {stores.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-              {user?.storeId && (
-                <div className="px-4 py-2 bg-slate-100 rounded-lg text-slate-700 font-medium">
-                  {stores.find((s) => s.id === user.storeId)?.name || 'Toko Anda'}
+            <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4">
+              <div className="mb-2">
+                <BackButton href="/" />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Kasir</h1>
+                  <p className="text-xs sm:text-sm text-slate-600 hidden sm:block">Sistem Point of Sale</p>
                 </div>
-              )}
-              <div className="text-right">
-                <div className="text-xs text-slate-500">Total</div>
-                <div className="text-xl font-bold text-emerald-600">
-                  Rp {total.toLocaleString('id-ID')}
+                <div className="flex items-center gap-2 sm:gap-4">
+                  {stores.length > 0 && !user?.storeId && (
+                    <select
+                      value={selectedStoreId || ''}
+                      onChange={(e) => setSelectedStoreId(Number(e.target.value))}
+                      className="px-4 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {stores.map((store) => (
+                        <option key={store.id} value={store.id}>
+                          {store.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {user?.storeId && (
+                    <div className="px-3 sm:px-4 py-2 bg-slate-100 rounded-lg text-slate-700 font-medium text-sm sm:text-base">
+                      <span className="hidden sm:inline">
+                        {stores.find((s) => s.id === user.storeId)?.name || 'Toko Anda'}
+                      </span>
+                      <span className="sm:hidden">Toko</span>
+                    </div>
+                  )}
+                  <div className="text-right hidden sm:block">
+                    <div className="text-xs text-slate-500">Total</div>
+                    <div className="text-xl font-bold text-emerald-600">
+                      Rp {total.toLocaleString('id-ID')}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden relative">
             {/* Products Section */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {/* Search and Category Filter */}
-              <div className="mb-6 space-y-4">
-                <input
-                  type="text"
-                  placeholder="Cari produk..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-lg"
-                />
+              <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg"
+                  />
+                  {/* Mobile Cart Toggle Button */}
+                  <button
+                    onClick={() => setShowCart(!showCart)}
+                    className="lg:hidden px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 relative"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    {cart.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {cart.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   <button
                     onClick={() => setSelectedCategory('all')}
@@ -483,7 +519,7 @@ export default function CashierPage() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                     {filteredProducts.map((product) => (
                       <button
                         key={product.id}
@@ -528,7 +564,33 @@ export default function CashierPage() {
             </div>
 
             {/* Cart Sidebar */}
-            <div className="w-96 bg-white flex flex-col">
+            <div
+              className={`fixed lg:static inset-y-0 right-0 w-full sm:w-96 bg-white flex flex-col z-40 transform transition-transform duration-300 ${
+                showCart ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+              }`}
+            >
+              {/* Mobile Cart Header */}
+              <div className="lg:hidden p-4 border-b border-slate-200 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-800">Keranjang</h2>
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="p-2 rounded-lg hover:bg-slate-100"
+                >
+                  <svg
+                    className="w-6 h-6 text-slate-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
               {/* Open Orders Section */}
               {openOrders.length > 0 && (
                 <div className="p-4 border-b border-slate-200 bg-yellow-50">
@@ -701,6 +763,14 @@ export default function CashierPage() {
             </div>
           </div>
 
+          {/* Mobile Cart Overlay */}
+          {showCart && (
+            <div
+              className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+              onClick={() => setShowCart(false)}
+            />
+          )}
+
           {/* Payment Modal */}
           {showPayment && currentOrder && (
             <PaymentModal
@@ -783,7 +853,7 @@ function PaymentModal({ total, paymentMethods, onProcess, onClose }: PaymentModa
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold text-slate-800 mb-4">Pembayaran</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

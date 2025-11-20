@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
+import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { reportsService } from '@/lib/services/reports';
 import { storesService } from '@/lib/services/stores';
@@ -179,6 +180,7 @@ export default function ReportsPage() {
     <ProtectedRoute>
       <MainLayout>
         <div className="space-y-6">
+          <BackButton href="/" />
           <div>
             <h1 className="text-3xl font-bold text-slate-800 mb-2">Laporan</h1>
             <p className="text-slate-600">

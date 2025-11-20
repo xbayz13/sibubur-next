@@ -284,62 +284,62 @@ export default function Home() {
   return (
     <ProtectedRoute>
       <MainLayout>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Dashboard</h1>
-            <p className="text-slate-600">Selamat datang di sistem SiBubur POS</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Dashboard</h1>
+            <p className="text-sm sm:text-base text-slate-600">Selamat datang di sistem SiBubur POS</p>
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-lg shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="bg-emerald-50 border border-emerald-200 p-4 sm:p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-emerald-700 font-medium">Total Penjualan Hari Ini</p>
-                  <p className="text-2xl font-bold text-emerald-900 mt-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm text-emerald-700 font-medium">Total Penjualan Hari Ini</p>
+                  <p className="text-xl sm:text-2xl font-bold text-emerald-900 mt-1 sm:mt-2 truncate">
                     Rp {Number(stats.revenue).toLocaleString('id-ID')}
                   </p>
                 </div>
-                <div className="text-3xl">💰</div>
+                <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">💰</div>
               </div>
             </div>
 
-            <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-lg shadow-sm">
+            <div className="bg-indigo-50 border border-indigo-200 p-4 sm:p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-indigo-700 font-medium">Pesanan Hari Ini</p>
-                  <p className="text-2xl font-bold text-indigo-900 mt-2">{stats.orders}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm text-indigo-700 font-medium">Pesanan Hari Ini</p>
+                  <p className="text-xl sm:text-2xl font-bold text-indigo-900 mt-1 sm:mt-2">{stats.orders}</p>
                 </div>
-                <div className="text-3xl">📝</div>
+                <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">📝</div>
               </div>
             </div>
 
-            <div className="bg-violet-50 border border-violet-200 p-6 rounded-lg shadow-sm">
+            <div className="bg-violet-50 border border-violet-200 p-4 sm:p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-violet-700 font-medium">Produksi Hari Ini</p>
-                  <p className="text-2xl font-bold text-violet-900 mt-2">{stats.productions}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm text-violet-700 font-medium">Produksi Hari Ini</p>
+                  <p className="text-xl sm:text-2xl font-bold text-violet-900 mt-1 sm:mt-2">{stats.productions}</p>
                 </div>
-                <div className="text-3xl">🍲</div>
+                <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">🍲</div>
               </div>
             </div>
 
-            <div className="bg-rose-50 border border-rose-200 p-6 rounded-lg shadow-sm">
+            <div className="bg-rose-50 border border-rose-200 p-4 sm:p-6 rounded-lg shadow-sm">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-rose-700 font-medium">Persediaan Rendah</p>
-                  <p className="text-2xl font-bold text-rose-900 mt-2">{stats.lowStock}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm text-rose-700 font-medium">Persediaan Rendah</p>
+                  <p className="text-xl sm:text-2xl font-bold text-rose-900 mt-1 sm:mt-2">{stats.lowStock}</p>
                 </div>
-                <div className="text-3xl">⚠️</div>
+                <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">⚠️</div>
               </div>
             </div>
           </div>
 
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Revenue Chart */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">Pendapatan 7 Hari Terakhir</h2>
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-slate-200">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-3 sm:mb-4">Pendapatan 7 Hari Terakhir</h2>
               {chartData.length === 0 ? (
                 <div className="h-64 flex items-center justify-center text-slate-500">
                   Tidak ada data untuk ditampilkan
@@ -359,8 +359,8 @@ export default function Home() {
             </div>
 
             {/* Orders Chart */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">Pesanan 7 Hari Terakhir</h2>
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-slate-200">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-3 sm:mb-4">Pesanan 7 Hari Terakhir</h2>
               {chartData.length === 0 ? (
                 <div className="h-64 flex items-center justify-center text-slate-500">
                   Tidak ada data untuk ditampilkan
@@ -381,9 +381,9 @@ export default function Home() {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-            <h2 className="text-xl font-semibold text-slate-800 mb-4">Ringkasan Hari Ini</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-slate-200">
+            <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-3 sm:mb-4">Ringkasan Hari Ini</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="p-4 bg-slate-50 rounded-lg">
                 <div className="text-sm text-slate-600 mb-1">Rata-rata per Pesanan</div>
                 <div className="text-2xl font-bold text-slate-800">
