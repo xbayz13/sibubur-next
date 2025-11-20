@@ -13,6 +13,7 @@ import { ordersService } from '@/lib/services/orders';
 import { transactionsService, CreateTransactionDto } from '@/lib/services/transactions';
 import { Product, Store, PaymentMethod, CreateOrderDto } from '@/types';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
+import Link from 'next/link';
 
 interface CartItem {
   productId: number;
@@ -44,7 +45,6 @@ export default function CashierPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentOrder, setCurrentOrder] = useState<any>(null); // Store the created order
-  const [openOrders, setOpenOrders] = useState<any[]>([]); // Store open orders for payment
   const [loading, setLoading] = useState(true);
   const [showCart, setShowCart] = useState(false); // Mobile cart visibility
   const storeSetRef = useRef(false); // Track if store has been set
@@ -108,25 +108,6 @@ export default function CashierPage() {
     }
   }, [user?.storeId, stores.length]);
 
-  // Load open orders when selectedStoreId changes
-  const loadOpenOrders = useCallback(async () => {
-    if (!selectedStoreId) return;
-    try {
-      console.log('Loading open orders for store:', selectedStoreId);
-      const orders = await ordersService.getAll(selectedStoreId);
-      const open = orders.filter((o) => o.status === 'open');
-      console.log('Open orders loaded:', open.length);
-      setOpenOrders(open);
-    } catch (error: any) {
-      console.error('Failed to load open orders:', error);
-    }
-  }, [selectedStoreId]);
-
-  useEffect(() => {
-    if (selectedStoreId) {
-      loadOpenOrders();
-    }
-  }, [selectedStoreId, loadOpenOrders]);
 
   // Filter products
   const filteredProducts = useMemo(() => {
@@ -326,9 +307,6 @@ export default function CashierPage() {
       setReceiptType('kitchen');
       setShowReceipt(true);
 
-      // Reload open orders
-      await loadOpenOrders();
-
       // Clear cart but keep customer name for next order
       setCart([]);
     } catch (error: any) {
@@ -360,12 +338,6 @@ export default function CashierPage() {
     }
   };
 
-  // Process payment for an existing order
-  const handlePayOrder = (order: any) => {
-    setCurrentOrder(order);
-    setShowPayment(true);
-  };
-
   const handleProcessPayment = async (
     paymentMethodId: number,
     amount: number,
@@ -387,9 +359,6 @@ export default function CashierPage() {
       showToast('Pembayaran berhasil diproses', 'success');
       setShowPayment(false);
       setCurrentOrder(null);
-
-      // Reload open orders
-      await loadOpenOrders();
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memproses pembayaran', 'error');
       console.error('Error processing payment:', error);
@@ -434,6 +403,26 @@ export default function CashierPage() {
                       <span className="sm:hidden">Toko</span>
                     </div>
                   )}
+                  <Link
+                    href="/open-orders"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-xl font-medium text-sm sm:text-base group"
+                  >
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <span className="hidden sm:inline">Pesanan Terbuka</span>
+                    <span className="sm:hidden">Pesanan</span>
+                  </Link>
                   <div className="text-right hidden sm:block">
                     <div className="text-xs text-slate-500">Total</div>
                     <div className="text-xl font-bold text-emerald-600">
@@ -588,35 +577,6 @@ export default function CashierPage() {
                   </svg>
                 </button>
               </div>
-              {/* Open Orders Section */}
-              {openOrders.length > 0 && (
-                <div className="p-4 border-b border-slate-200 bg-yellow-50">
-                  <h3 className="text-sm font-semibold text-slate-800 mb-2">Pesanan Belum Bayar</h3>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {openOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="bg-white rounded p-2 border border-slate-200 flex items-center justify-between"
-                      >
-                        <div className="flex-1">
-                          <div className="text-xs font-semibold text-slate-900">
-                            {order.orderNumber}
-                          </div>
-                          <div className="text-xs text-slate-600">
-                            Rp {Number(order.totalAmount || 0).toLocaleString('id-ID')}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handlePayOrder(order)}
-                          className="px-3 py-1 bg-emerald-600 text-white text-xs rounded hover:bg-emerald-700 transition-colors"
-                        >
-                          Bayar
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Cart Section */}
               <div className="flex-1 flex flex-col overflow-hidden">
