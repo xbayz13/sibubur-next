@@ -12,12 +12,14 @@ import { transactionsService, CreateTransactionDto } from '@/lib/services/transa
 import { paymentMethodsService } from '@/lib/services/payment-methods';
 import { Order, Store, PaymentMethod, Product } from '@/types';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import { productsService } from '@/lib/services/products';
 
 export default function OpenOrdersPage() {
   const { showToast } = useToast();
   const { user } = useAuth();
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -33,6 +35,7 @@ export default function OpenOrdersPage() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('kitchen');
   const [products, setProducts] = useState<Product[]>([]);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     loadStores();
@@ -142,6 +145,55 @@ export default function OpenOrdersPage() {
       await loadOrders();
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memperbarui pesanan', 'error');
+    }
+  };
+
+  const handleCancelClick = (order: Order) => {
+    setSelectedOrder(order);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelOrder = async (createNew: boolean = false) => {
+    if (!selectedOrder) return;
+
+    try {
+      await ordersService.cancel(selectedOrder.id);
+      showToast('Pesanan berhasil dibatalkan', 'success');
+      setShowCancelModal(false);
+
+      if (createNew) {
+        // Prepare cart data from order
+        const cartData = selectedOrder.orderItems.map((item) => {
+          const product = products.find((p) => p.id === item.productId);
+          if (!product) return null;
+
+          const addons = item.orderItemAddons?.map((addon) => ({
+            addonId: addon.addonId,
+            name: addon.addon.name,
+            price: addon.addonPrice,
+            quantity: addon.quantity,
+          })) || [];
+
+          return {
+            productId: item.productId,
+            product: product,
+            quantity: item.quantity,
+            addons: addons,
+          };
+        }).filter(Boolean);
+
+        // Store cart data in localStorage
+        localStorage.setItem('cashier_cart', JSON.stringify(cartData));
+        localStorage.setItem('cashier_customerName', selectedOrder.customerName || '');
+
+        // Redirect to cashier
+        router.push('/cashier');
+      } else {
+        setSelectedOrder(null);
+        await loadOrders();
+      }
+    } catch (error: any) {
+      showToast(error.response?.data?.message || 'Gagal membatalkan pesanan', 'error');
     }
   };
 
@@ -344,34 +396,51 @@ export default function OpenOrdersPage() {
                           <div className="flex items-center justify-end gap-2 flex-wrap">
                             <button
                               onClick={() => handleViewDetail(order)}
-                              className="text-indigo-600 hover:text-indigo-900 px-3 py-1 rounded hover:bg-indigo-50 transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
                             >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
                               Detail
                             </button>
                             <button
-                              onClick={() => handleEdit(order)}
-                              className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded hover:bg-blue-50 transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
                               onClick={() => handlePrintReceipt(order, 'kitchen')}
-                              className="text-purple-600 hover:text-purple-900 px-3 py-1 rounded hover:bg-purple-50 transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
                               title="Cetak Struk Dapur"
                             >
-                              🍳 Dapur
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                              </svg>
+                              <span className="hidden sm:inline">Dapur</span>
                             </button>
                             <button
                               onClick={() => handlePrintReceipt(order, 'customer')}
-                              className="text-pink-600 hover:text-pink-900 px-3 py-1 rounded hover:bg-pink-50 transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-50 text-pink-700 rounded-lg hover:bg-pink-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
                               title="Cetak Struk Pelanggan"
                             >
-                              🧾 Pelanggan
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                              </svg>
+                              <span className="hidden sm:inline">Pelanggan</span>
+                            </button>
+                            <button
+                              onClick={() => handleCancelClick(order)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
+                              title="Batalkan Pesanan"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                              <span className="hidden sm:inline">Batal</span>
                             </button>
                             <button
                               onClick={() => handlePayOrder(order)}
-                              className="text-emerald-600 hover:text-emerald-900 px-3 py-1 rounded hover:bg-emerald-50 transition-colors font-semibold"
+                              className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all font-semibold text-xs sm:text-sm shadow-md hover:shadow-lg"
                             >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
                               Bayar
                             </button>
                           </div>
@@ -449,6 +518,19 @@ export default function OpenOrdersPage() {
             type={receiptType}
             onClose={() => {
               setShowReceipt(false);
+              setSelectedOrder(null);
+            }}
+          />
+        )}
+
+        {/* Cancel Order Modal */}
+        {showCancelModal && selectedOrder && (
+          <CancelOrderModal
+            order={selectedOrder}
+            onCancel={() => handleCancelOrder(false)}
+            onCancelAndCreateNew={() => handleCancelOrder(true)}
+            onClose={() => {
+              setShowCancelModal(false);
               setSelectedOrder(null);
             }}
           />
@@ -820,6 +902,152 @@ function EditOrderModal({ order, products, onUpdate, onClose }: EditOrderModalPr
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Cancel Order Modal Component
+interface CancelOrderModalProps {
+  order: Order;
+  onCancel: () => void;
+  onCancelAndCreateNew: () => void;
+  onClose: () => void;
+}
+
+function CancelOrderModal({
+  order,
+  onCancel,
+  onCancelAndCreateNew,
+  onClose,
+}: CancelOrderModalProps) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-rose-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800">Batalkan Pesanan</h2>
+              <p className="text-sm text-slate-600">Pilih aksi yang ingin dilakukan</p>
+            </div>
+          </div>
+
+          <div className="mb-4 p-4 bg-slate-50 rounded-lg">
+            <div className="text-sm font-medium text-slate-700 mb-1">Nomor Pesanan</div>
+            <div className="text-lg font-semibold text-slate-900">{order.orderNumber}</div>
+            <div className="text-sm text-slate-600 mt-1">
+              Total: Rp {Number(order.totalAmount).toLocaleString('id-ID')}
+            </div>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <button
+              onClick={onCancel}
+              className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 hover:border-slate-300 rounded-lg transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center group-hover:bg-rose-200 transition-colors">
+                  <svg
+                    className="w-5 h-5 text-rose-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-slate-900">Batalkan Saja</div>
+                  <div className="text-xs text-slate-600">Pesanan akan dibatalkan</div>
+                </div>
+              </div>
+              <svg
+                className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            <button
+              onClick={onCancelAndCreateNew}
+              className="w-full flex items-center justify-between p-4 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 hover:border-indigo-300 rounded-lg transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                  <svg
+                    className="w-5 h-5 text-indigo-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold text-slate-900">Batal dan Buat Baru</div>
+                  <div className="text-xs text-slate-600">
+                    Batal pesanan dan buat pesanan baru dengan item yang sama
+                  </div>
+                </div>
+              </div>
+              <svg
+                className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-slate-200">
+            <button
+              onClick={onClose}
+              className="flex-1 bg-slate-200 text-slate-800 px-4 py-3 rounded-lg hover:bg-slate-300 font-semibold transition-colors"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
     </div>

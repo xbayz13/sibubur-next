@@ -69,17 +69,49 @@ export default function CashierPage() {
         setStores(storesData);
         setPaymentMethods(paymentMethodsData);
 
-        // Clear cart if it contains invalid product IDs
-        setCart((currentCart) => {
-          const validCart = currentCart.filter((item) =>
-            productsData.some((p) => p.id === item.productId)
-          );
-          if (validCart.length !== currentCart.length) {
-            console.warn('Removed invalid products from cart');
-            showToast('Keranjang telah dibersihkan karena ada produk yang tidak valid', 'info');
+        // Load cart from localStorage (for cancel and create new flow)
+        const savedCart = localStorage.getItem('cashier_cart');
+        const savedCustomerName = localStorage.getItem('cashier_customerName');
+        
+        if (savedCart) {
+          try {
+            const cartData = JSON.parse(savedCart);
+            // Validate cart data with loaded products
+            if (Array.isArray(cartData) && cartData.length > 0) {
+              const validCart = cartData.filter((item: CartItem) =>
+                productsData.some((p) => p.id === item.productId)
+              );
+              if (validCart.length > 0) {
+                setCart(validCart);
+                showToast('Item dari pesanan yang dibatalkan telah ditambahkan ke keranjang', 'success');
+              }
+              // Clear localStorage after loading
+              localStorage.removeItem('cashier_cart');
+            }
+          } catch (error) {
+            console.error('Failed to load cart from localStorage:', error);
+            localStorage.removeItem('cashier_cart');
           }
-          return validCart;
-        });
+        }
+        
+        if (savedCustomerName) {
+          setCustomerName(savedCustomerName);
+          localStorage.removeItem('cashier_customerName');
+        }
+
+        // Clear cart if it contains invalid product IDs (only if not loading from localStorage)
+        if (!savedCart) {
+          setCart((currentCart) => {
+            const validCart = currentCart.filter((item) =>
+              productsData.some((p) => p.id === item.productId)
+            );
+            if (validCart.length !== currentCart.length) {
+              console.warn('Removed invalid products from cart');
+              showToast('Keranjang telah dibersihkan karena ada produk yang tidak valid', 'info');
+            }
+            return validCart;
+          });
+        }
 
         // Auto-set store: prioritize user.storeId, then first store
         if (!storeSetRef.current && storesData.length > 0) {
