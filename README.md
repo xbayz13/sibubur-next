@@ -40,7 +40,11 @@ npm install
 3. Buat file `.env.local` di root project:
 
 ```env
+# Development
 NEXT_PUBLIC_API_URL=http://localhost:3000
+
+# Production (jika deploy)
+# NEXT_PUBLIC_API_URL=http://72.61.208.109:3000
 ```
 
 4. Jalankan development server:
@@ -49,7 +53,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 npm run dev
 ```
 
-5. Buka browser di `http://localhost:3001` (atau port yang ditampilkan di terminal)
+5. Buka browser di `http://localhost:3001` (default port adalah 3001)
 
 ## Struktur Project
 
@@ -75,16 +79,25 @@ frontend/
 
 Backend API tersedia di:
 - **Development**: `http://localhost:3000`
-- **Swagger Docs**: `http://localhost:3000/api`
+- **Production**: `http://72.61.208.109:3000`
+- **Swagger Docs**: `http://localhost:3000/api` (development)
 
 Frontend menggunakan Axios untuk komunikasi dengan backend. Token JWT disimpan di localStorage dan otomatis ditambahkan ke setiap request.
 
+API URL dikonfigurasi melalui environment variable `NEXT_PUBLIC_API_URL`:
+- Development: `http://localhost:3000` (default)
+- Production: `http://72.61.208.109:3000`
+
 ## Scripts
 
-- `npm run dev` - Jalankan development server
+- `npm run dev` - Jalankan development server (port 3001)
 - `npm run build` - Build untuk production
-- `npm run start` - Jalankan production server
+- `npm run start` - Jalankan production server (port 3001)
 - `npm run lint` - Lint kode
+
+## Production Deployment
+
+Untuk deployment ke production, lihat [PRODUCTION.md](./PRODUCTION.md) untuk panduan lengkap menggunakan PM2.
 
 ## Alur Aplikasi
 

@@ -9,7 +9,11 @@ npm install
 
 2. **Buat file `.env.local`** di root project:
 ```env
+# Development
 NEXT_PUBLIC_API_URL=http://localhost:3000
+
+# Production (jika deploy)
+# NEXT_PUBLIC_API_URL=http://72.61.208.109:3000
 ```
 
 3. **Pastikan backend API berjalan** di `http://localhost:3000`
@@ -19,7 +23,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 npm run dev
 ```
 
-5. **Buka browser** di `http://localhost:3001` (atau port yang ditampilkan)
+5. **Buka browser** di `http://localhost:3001` (default port: 3001)
 
 ## Login
 
