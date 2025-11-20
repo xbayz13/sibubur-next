@@ -10,6 +10,7 @@ import { productCategoriesService } from '@/lib/services/product-categories';
 import { Product, ProductCategory } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import ProductForm from '@/components/MasterData/ProductForm';
+import ProductAddonsManager from '@/components/MasterData/ProductAddonsManager';
 
 export default function ProductsPage() {
   const { showToast } = useToast();
@@ -18,6 +19,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [managingAddons, setManagingAddons] = useState<Product | null>(null);
 
   useEffect(() => {
     loadData();
@@ -108,28 +110,96 @@ export default function ProductsPage() {
             </button>
           </div>
 
-          <DataTable
-            data={products}
-            columns={[
-              { header: 'Nama', accessor: 'name' },
-              {
-                header: 'Kategori',
-                accessor: (item) => item.category?.name || '-',
-              },
-              {
-                header: 'Harga',
-                accessor: (item) => `Rp ${Number(item.price).toLocaleString('id-ID')}`,
-              },
-              {
-                header: 'Deskripsi',
-                accessor: (item) => item.description || '-',
-                className: 'max-w-xs truncate',
-              },
-            ]}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            keyExtractor={(item) => item.id}
-          />
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            {products.length === 0 ? (
+              <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center">
+                <p className="text-slate-500">Belum ada data</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Nama
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Kategori
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Harga
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Addons
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Deskripsi
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {products.map((product) => (
+                      <tr key={product.id} className="hover:bg-slate-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {product.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          {product.category?.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                          Rp {Number(product.price).toLocaleString('id-ID')}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-900">
+                          {product.addons && product.addons.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {product.addons.map((addon) => (
+                                <span
+                                  key={addon.id}
+                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800"
+                                >
+                                  {addon.name}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-900 max-w-xs truncate">
+                          {product.description || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEdit(product)}
+                              className="text-indigo-600 hover:text-indigo-900"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => setManagingAddons(product)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              Addons
+                            </button>
+                            <button
+                              onClick={() => handleDelete(product)}
+                              className="text-rose-600 hover:text-rose-900"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
 
           {showForm && (
             <ProductForm
@@ -140,6 +210,14 @@ export default function ProductsPage() {
                 setShowForm(false);
                 setEditingProduct(null);
               }}
+            />
+          )}
+
+          {managingAddons && (
+            <ProductAddonsManager
+              product={managingAddons}
+              onClose={() => setManagingAddons(null)}
+              onUpdate={loadData}
             />
           )}
         </div>

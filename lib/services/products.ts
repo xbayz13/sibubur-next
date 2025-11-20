@@ -74,5 +74,36 @@ export const productsService = {
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/products/${id}`);
   },
+
+  async addAddon(productId: number, addonId: number, addonPriceOverride?: number): Promise<Product> {
+    const response = await apiClient.post<Product>(`/products/${productId}/addons`, {
+      addonId,
+      addonPriceOverride,
+    });
+    const product: any = response.data;
+    return {
+      ...product,
+      addons: product.productAddons?.map((pap: any) => ({
+        id: pap.addon.id,
+        name: pap.addon.name,
+        price: pap.addonPriceOverride || pap.addon.price,
+        description: pap.addon.description,
+      })) || [],
+    };
+  },
+
+  async removeAddon(productId: number, addonId: number): Promise<Product> {
+    const response = await apiClient.delete<Product>(`/products/${productId}/addons/${addonId}`);
+    const product: any = response.data;
+    return {
+      ...product,
+      addons: product.productAddons?.map((pap: any) => ({
+        id: pap.addon.id,
+        name: pap.addon.name,
+        price: pap.addonPriceOverride || pap.addon.price,
+        description: pap.addon.description,
+      })) || [],
+    };
+  },
 };
 
