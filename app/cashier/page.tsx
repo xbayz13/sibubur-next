@@ -255,7 +255,7 @@ export default function CashierPage() {
   };
 
   // Calculate totals
-  const { subtotal, tax, total } = useMemo(() => {
+  const { subtotal, total } = useMemo(() => {
     let sub = 0;
     cart.forEach((item) => {
       sub += item.product.price * item.quantity;
@@ -263,12 +263,9 @@ export default function CashierPage() {
         sub += addon.price * addon.quantity * item.quantity;
       });
     });
-    const taxAmount = sub * 0.1; // 10% tax
-    const totalAmount = sub + taxAmount;
     return {
       subtotal: sub,
-      tax: taxAmount,
-      total: totalAmount,
+      total: sub,
     };
   }, [cart]);
 
@@ -735,19 +732,7 @@ export default function CashierPage() {
 
                 {/* Cart Summary */}
                 <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Subtotal:</span>
-                  <span className="font-semibold text-slate-900">
-                    Rp {subtotal.toLocaleString('id-ID')}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Pajak (10%):</span>
-                  <span className="font-semibold text-slate-900">
-                    Rp {tax.toLocaleString('id-ID')}
-                  </span>
-                </div>
-                <div className="flex justify-between text-lg font-bold border-t border-slate-300 pt-2">
+                <div className="flex justify-between text-lg font-bold">
                   <span className="text-slate-800">Total:</span>
                   <span className="text-emerald-600">Rp {total.toLocaleString('id-ID')}</span>
                 </div>

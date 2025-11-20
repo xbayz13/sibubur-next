@@ -168,8 +168,6 @@ export default function ReceiptPrint({
             </div>
 
             <div className="total">
-              <div>Subtotal: Rp {Number(order.subtotalAmount).toLocaleString('id-ID')}</div>
-              <div>Pajak: Rp {Number(order.taxAmount).toLocaleString('id-ID')}</div>
               <div className="text-lg mt-2">
                 TOTAL: Rp {Number(order.totalAmount).toLocaleString('id-ID')}
               </div>
