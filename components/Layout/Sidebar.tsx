@@ -39,13 +39,13 @@ export default function Sidebar() {
       
       {/* Sidebar */}
       <div
-        className={`bg-slate-800 text-slate-100 min-h-screen flex flex-col shadow-lg transition-all duration-300 fixed lg:static z-50 ${
+        className={`bg-slate-800 text-slate-100 h-screen flex flex-col shadow-lg transition-all duration-300 fixed lg:static z-50 ${
           isCollapsed ? 'w-20' : 'w-64'
         } ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-      <div className={`border-b border-slate-700 ${isCollapsed ? 'p-3' : 'p-6'}`}>
+      <div className={`border-b border-slate-700 flex-shrink-0 ${isCollapsed ? 'p-3' : 'p-6'}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           {!isCollapsed && (
             <div className="flex-1">
@@ -89,7 +89,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 overflow-y-auto p-4 min-h-0">
         <ul className="space-y-2">
           {visibleMenuItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -118,7 +118,7 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      <div className={`border-t border-slate-700 ${isCollapsed ? 'p-3' : 'p-4'}`}>
+      <div className={`border-t border-slate-700 flex-shrink-0 ${isCollapsed ? 'p-3' : 'p-4'}`}>
         {!isCollapsed && (
           <div className="mb-4">
             <p className="text-sm text-slate-400">Logged in as</p>
