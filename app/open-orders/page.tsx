@@ -164,7 +164,8 @@ export default function OpenOrdersPage() {
       if (createNew) {
         // Prepare cart data from order
         const cartData = selectedOrder.orderItems.map((item) => {
-          const product = products.find((p) => p.id === item.productId);
+          // Use item.product directly since OrderItem has product, not productId
+          const product = item.product;
           if (!product) return null;
 
           const addons = item.orderItemAddons?.map((addon) => ({
@@ -175,7 +176,7 @@ export default function OpenOrdersPage() {
           })) || [];
 
           return {
-            productId: item.productId,
+            productId: product.id,
             product: product,
             quantity: item.quantity,
             addons: addons,
