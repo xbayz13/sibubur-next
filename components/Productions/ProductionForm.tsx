@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Store, Supply, Weather } from '@/types';
 import { CreateProductionDto } from '@/lib/services/productions';
 import { weatherService } from '@/lib/services/weather';
+import { bmkgService } from '@/lib/services/bmkg';
 
 interface ProductionFormProps {
   stores: Store[];
@@ -36,15 +37,14 @@ export default function ProductionForm({
   );
   const [weatherId, setWeatherId] = useState<number | undefined>();
   const [existingWeather, setExistingWeather] = useState<Weather | null>(null);
-  const [createNewWeather, setCreateNewWeather] = useState(false);
-  const [weatherCondition, setWeatherCondition] = useState<'sunny' | 'cloudy' | 'rainy' | 'stormy'>('sunny');
-  const [weatherDescription, setWeatherDescription] = useState('');
-  const [weatherTemperature, setWeatherTemperature] = useState<string>('');
+  const [bmkgWeather, setBmkgWeather] = useState<any>(null);
+  const [loadingWeather, setLoadingWeather] = useState(false);
   const [productionSupplies, setProductionSupplies] = useState<ProductionSupply[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     checkExistingWeather();
+    loadBMKGWeather();
   }, [date]);
 
   const checkExistingWeather = async () => {
@@ -53,14 +53,46 @@ export default function ProductionForm({
       if (weather) {
         setExistingWeather(weather);
         setWeatherId(weather.id);
-        setCreateNewWeather(false);
       } else {
         setExistingWeather(null);
-        setCreateNewWeather(true);
       }
     } catch (error) {
       setExistingWeather(null);
-      setCreateNewWeather(true);
+    }
+  };
+
+  const loadBMKGWeather = async () => {
+    try {
+      setLoadingWeather(true);
+      const forecast = await bmkgService.getForecast();
+      // Get weather for the selected date
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      const daysDiff = Math.floor((selectedDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let weatherData = null;
+      if (daysDiff === 0) {
+        // Today - use current weather
+        weatherData = forecast.current;
+      } else if (daysDiff === 1) {
+        // Tomorrow - use first forecast from tomorrow
+        weatherData = forecast.forecasts.tomorrow[0] || null;
+      } else if (daysDiff === 2) {
+        // Day after tomorrow
+        weatherData = forecast.forecasts.dayAfter[0] || null;
+      }
+      
+      if (weatherData) {
+        setBmkgWeather(weatherData);
+      }
+    } catch (error) {
+      console.error('Failed to load BMKG weather:', error);
+      setBmkgWeather(null);
+    } finally {
+      setLoadingWeather(false);
     }
   };
 
@@ -85,13 +117,14 @@ export default function ProductionForm({
     try {
       let finalWeatherId = weatherId;
 
-      // Create weather if needed
-      if (createNewWeather && !existingWeather) {
+      // Create weather from BMKG data if not exists
+      if (!existingWeather && bmkgWeather) {
+        const mappedCondition = bmkgService.mapConditionToFormat(bmkgWeather.condition);
         const newWeather = await weatherService.create({
           date,
-          condition: weatherCondition,
-          description: weatherDescription || undefined,
-          temperature: weatherTemperature ? Number(weatherTemperature) : undefined,
+          condition: mappedCondition,
+          description: bmkgWeather.condition,
+          temperature: bmkgWeather.temperature,
         });
         finalWeatherId = newWeather.id;
       }
@@ -187,81 +220,50 @@ export default function ProductionForm({
             <div className="border-t pt-4">
               <h3 className="text-lg font-semibold text-slate-800 mb-3">Data Cuaca</h3>
 
-              {existingWeather && !createNewWeather ? (
-                <div className="bg-slate-50 p-4 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">
-                        Cuaca: {existingWeather.condition}
+              {loadingWeather ? (
+                <div className="bg-slate-50 p-4 rounded-lg text-center text-slate-600">
+                  Memuat data cuaca dari BMKG...
+                </div>
+              ) : existingWeather ? (
+                <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-emerald-700 font-medium">✓ Data cuaca sudah tersimpan</span>
+                  </div>
+                  <div className="text-sm text-slate-700">
+                    <div>Kondisi: <span className="font-medium">{existingWeather.condition}</span></div>
+                    {existingWeather.description && (
+                      <div>Deskripsi: {existingWeather.description}</div>
+                    )}
+                    {existingWeather.temperature && (
+                      <div>Suhu: {existingWeather.temperature}°C</div>
+                    )}
+                  </div>
+                </div>
+              ) : bmkgWeather ? (
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-blue-700 font-medium">🌤️ Data cuaca dari BMKG</span>
+                  </div>
+                  <div className="text-sm text-slate-700 space-y-1">
+                    <div>Kondisi: <span className="font-medium">{bmkgWeather.condition}</span></div>
+                    <div>Suhu: <span className="font-medium">{bmkgWeather.temperature}°C</span></div>
+                    {bmkgWeather.humidity && (
+                      <div>Kelembaban: {bmkgWeather.humidity}%</div>
+                    )}
+                    {bmkgWeather.precipitation > 0 && (
+                      <div className="text-rose-600 font-medium">
+                        ⚠️ Curah hujan: {bmkgWeather.precipitation} mm
                       </div>
-                      {existingWeather.description && (
-                        <div className="text-sm text-slate-600">
-                          {existingWeather.description}
-                        </div>
-                      )}
-                      {existingWeather.temperature && (
-                        <div className="text-sm text-slate-600">
-                          Suhu: {existingWeather.temperature}°C
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCreateNewWeather(true)}
-                      className="text-blue-600 hover:text-blue-700 text-sm"
-                    >
-                      Ubah
-                    </button>
+                    )}
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500">
+                    Data cuaca akan otomatis disimpan saat produksi dicatat
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Kondisi Cuaca *
-                    </label>
-                    <select
-                      value={weatherCondition}
-                      onChange={(e) =>
-                        setWeatherCondition(
-                          e.target.value as 'sunny' | 'cloudy' | 'rainy' | 'stormy'
-                        )
-                      }
-                      required
-                      className="w-full border border-slate-300 rounded-lg px-4 py-2"
-                    >
-                      <option value="sunny">Cerah</option>
-                      <option value="cloudy">Berawan</option>
-                      <option value="rainy">Hujan</option>
-                      <option value="stormy">Badai</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Suhu (°C)
-                    </label>
-                    <input
-                      type="number"
-                      value={weatherTemperature}
-                      onChange={(e) => setWeatherTemperature(e.target.value)}
-                      step="0.1"
-                      className="w-full border border-slate-300 rounded-lg px-4 py-2"
-                      placeholder="Opsional"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Deskripsi
-                    </label>
-                    <textarea
-                      value={weatherDescription}
-                      onChange={(e) => setWeatherDescription(e.target.value)}
-                      rows={2}
-                      className="w-full border border-slate-300 rounded-lg px-4 py-2"
-                      placeholder="Deskripsi cuaca (opsional)"
-                    />
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                  <div className="text-sm text-yellow-800">
+                    ⚠️ Data cuaca tidak tersedia. Silakan coba lagi atau catat produksi tanpa data cuaca.
                   </div>
                 </div>
               )}
