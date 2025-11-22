@@ -321,6 +321,102 @@ export default function Home() {
             <p className="text-sm sm:text-base text-slate-600">Selamat datang di sistem SiBubur POS</p>
           </div>
 
+          {/* Weather Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Prakiraan Cuaca</h2>
+              <p className="text-xs text-slate-500 italic">
+                Sumber: <span className="font-medium">BMKG</span> (Badan Meteorologi, Klimatologi, dan Geofisika)
+              </p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* Current Weather */}
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 p-4 sm:p-6 rounded-lg shadow-sm">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-base sm:text-lg font-semibold text-slate-800">Cuaca Saat Ini</h3>
+                  {lastWeatherUpdate && (
+                    <span className="text-xs text-slate-500">
+                      Update: {lastWeatherUpdate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
+                {weatherLoading ? (
+                  <div className="text-slate-500 text-center py-4">Memuat data cuaca...</div>
+                ) : currentWeather ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      {currentWeather.image && (
+                        <img 
+                          src={currentWeather.image} 
+                          alt={currentWeather.condition}
+                          className="w-16 h-16"
+                        />
+                      )}
+                      <div>
+                        <div className="text-3xl font-bold text-slate-800">
+                          {currentWeather.temperature}°C
+                        </div>
+                        <div className="text-lg text-slate-600">{currentWeather.condition}</div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="text-slate-600">
+                        <span className="font-medium">Kelembaban:</span> {currentWeather.humidity}%
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="font-medium">Angin:</span> {currentWeather.windSpeed} m/s {currentWeather.windDirection}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="font-medium">Visibilitas:</span> {currentWeather.visibility}
+                      </div>
+                      <div className="text-slate-600">
+                        <span className="font-medium">Curah Hujan:</span> {currentWeather.precipitation} mm
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-center py-4">Data cuaca tidak tersedia</div>
+                )}
+              </div>
+
+              {/* Tomorrow Morning Forecast */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-4 sm:p-6 rounded-lg shadow-sm">
+                <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-3">Prakiraan Cuaca Besok Pagi</h3>
+                <p className="text-xs text-slate-600 mb-3">Jam 05:00 - 10:00 (Waktu Berjualan)</p>
+                {weatherLoading ? (
+                  <div className="text-slate-500 text-center py-4">Memuat prakiraan cuaca...</div>
+                ) : tomorrowMorningForecast.length > 0 ? (
+                  <div className="space-y-2">
+                    {tomorrowMorningForecast.map((forecast, index) => {
+                      const time = new Date(forecast.datetime);
+                      const timeStr = time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                      return (
+                        <div key={index} className="flex items-center justify-between p-2 bg-white/50 rounded">
+                          <div className="flex items-center gap-3">
+                            <div className="text-sm font-medium text-slate-700 w-16">{timeStr}</div>
+                            <div>
+                              <div className="text-sm font-semibold text-slate-800">{forecast.condition}</div>
+                              <div className="text-xs text-slate-600">
+                                {forecast.temperature}°C • {forecast.humidity}% • {forecast.windSpeed} m/s
+                              </div>
+                            </div>
+                          </div>
+                          {forecast.precipitation > 0 && (
+                            <div className="text-xs text-blue-600 font-medium">
+                              {forecast.precipitation}mm
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-slate-500 text-center py-4">Prakiraan cuaca tidak tersedia</div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="bg-emerald-50 border border-emerald-200 p-4 sm:p-6 rounded-lg shadow-sm">
@@ -407,94 +503,6 @@ export default function Home() {
                     </div>
                   </div>
                 </>
-              )}
-            </div>
-          </div>
-
-          {/* Weather Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Current Weather */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 p-4 sm:p-6 rounded-lg shadow-sm">
-              <div className="flex justify-between items-start mb-3">
-                <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Cuaca Saat Ini</h2>
-                {lastWeatherUpdate && (
-                  <span className="text-xs text-slate-500">
-                    Update: {lastWeatherUpdate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
-              </div>
-              {weatherLoading ? (
-                <div className="text-slate-500 text-center py-4">Memuat data cuaca...</div>
-              ) : currentWeather ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    {currentWeather.image && (
-                      <img 
-                        src={currentWeather.image} 
-                        alt={currentWeather.condition}
-                        className="w-16 h-16"
-                      />
-                    )}
-                    <div>
-                      <div className="text-3xl font-bold text-slate-800">
-                        {currentWeather.temperature}°C
-                      </div>
-                      <div className="text-lg text-slate-600">{currentWeather.condition}</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-slate-600">
-                      <span className="font-medium">Kelembaban:</span> {currentWeather.humidity}%
-                    </div>
-                    <div className="text-slate-600">
-                      <span className="font-medium">Angin:</span> {currentWeather.windSpeed} m/s {currentWeather.windDirection}
-                    </div>
-                    <div className="text-slate-600">
-                      <span className="font-medium">Visibilitas:</span> {currentWeather.visibility}
-                    </div>
-                    <div className="text-slate-600">
-                      <span className="font-medium">Curah Hujan:</span> {currentWeather.precipitation} mm
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-slate-500 text-center py-4">Data cuaca tidak tersedia</div>
-              )}
-            </div>
-
-            {/* Tomorrow Morning Forecast */}
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-4 sm:p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg sm:text-xl font-semibold text-slate-800 mb-3">Prakiraan Cuaca Besok Pagi</h2>
-              <p className="text-xs text-slate-600 mb-3">Jam 05:00 - 10:00 (Waktu Berjualan)</p>
-              {weatherLoading ? (
-                <div className="text-slate-500 text-center py-4">Memuat prakiraan cuaca...</div>
-              ) : tomorrowMorningForecast.length > 0 ? (
-                <div className="space-y-2">
-                  {tomorrowMorningForecast.map((forecast, index) => {
-                    const time = new Date(forecast.datetime);
-                    const timeStr = time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                    return (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white/50 rounded">
-                        <div className="flex items-center gap-3">
-                          <div className="text-sm font-medium text-slate-700 w-16">{timeStr}</div>
-                          <div>
-                            <div className="text-sm font-semibold text-slate-800">{forecast.condition}</div>
-                            <div className="text-xs text-slate-600">
-                              {forecast.temperature}°C • {forecast.humidity}% • {forecast.windSpeed} m/s
-                            </div>
-                          </div>
-                        </div>
-                        {forecast.precipitation > 0 && (
-                          <div className="text-xs text-blue-600 font-medium">
-                            {forecast.precipitation}mm
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-slate-500 text-center py-4">Prakiraan cuaca tidak tersedia</div>
               )}
             </div>
           </div>
