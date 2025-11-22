@@ -43,6 +43,12 @@ export default function ProductionForm({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Reset weather data when date changes
+    setExistingWeather(null);
+    setBmkgWeather(null);
+    setWeatherId(undefined);
+    
+    // Load weather for new date
     checkExistingWeather();
     loadBMKGWeather();
   }, [date]);
@@ -131,17 +137,29 @@ export default function ProductionForm({
     try {
       let finalWeatherId = weatherId;
 
-      // Create weather from BMKG data if not exists (use createOrUpdate to prevent duplicates)
+      // Create or update weather from BMKG data if not exists
       if (!existingWeather && bmkgWeather) {
         const mappedCondition = bmkgService.mapConditionToFormat(bmkgWeather.condition);
-        // Use create - backend will handle deduplication via createOrUpdate if needed
-        const newWeather = await weatherService.create({
-          date,
-          condition: mappedCondition,
-          description: bmkgWeather.condition,
-          temperature: bmkgWeather.temperature,
-        });
-        finalWeatherId = newWeather.id;
+        // Check if weather exists for this date first
+        const existing = await weatherService.getByDate(date);
+        if (existing) {
+          // Update existing
+          const updated = await weatherService.update(existing.id, {
+            condition: mappedCondition,
+            description: bmkgWeather.condition,
+            temperature: bmkgWeather.temperature,
+          });
+          finalWeatherId = updated.id;
+        } else {
+          // Create new
+          const newWeather = await weatherService.create({
+            date,
+            condition: mappedCondition,
+            description: bmkgWeather.condition,
+            temperature: bmkgWeather.temperature,
+          });
+          finalWeatherId = newWeather.id;
+        }
       }
 
       const productionData: CreateProductionDto = {

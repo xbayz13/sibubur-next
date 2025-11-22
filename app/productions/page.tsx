@@ -164,7 +164,7 @@ export default function ProductionsPage() {
             </button>
           </div>
 
-          {/* Production Recommendations Section */}
+          {/* Production Recommendations Section - Above Filters */}
           <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-4 sm:p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Rekomendasi Produksi</h2>
@@ -256,7 +256,7 @@ export default function ProductionsPage() {
             )}
           </div>
 
-          {/* Filters */}
+          {/* Filters - Below Recommendations */}
           <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
             {stores.length > 0 && (
               <div>
