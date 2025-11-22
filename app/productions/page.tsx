@@ -26,6 +26,7 @@ export default function ProductionsPage() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
 
   // Load stores and supplies only once
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function ProductionsPage() {
   }, [selectedStoreId, showToast]);
 
   useEffect(() => {
-    if (selectedDate && selectedStoreId) {
+    if (selectedDate) {
       loadRecommendations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -78,6 +79,7 @@ export default function ProductionsPage() {
 
   const loadRecommendations = async () => {
     try {
+      setRecommendationLoading(true);
       const rec = await reportsService.getProductionRecommendations(
         selectedDate,
         selectedStoreId,
@@ -87,6 +89,9 @@ export default function ProductionsPage() {
     } catch (error: any) {
       // Silently fail - recommendations are optional
       console.warn('Failed to load recommendations:', error);
+      setRecommendations(null);
+    } finally {
+      setRecommendationLoading(false);
     }
   };
 
@@ -159,23 +164,97 @@ export default function ProductionsPage() {
             </button>
           </div>
 
-          {recommendations && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-900 mb-2">
-                Rekomendasi Produksi untuk {new Date(selectedDate).toLocaleDateString('id-ID')}
-              </h3>
-              <div className="space-y-1 text-sm text-blue-800">
-                {recommendations.recommendations.map((rec: string, idx: number) => (
-                  <p key={idx}>• {rec}</p>
-                ))}
-              </div>
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                <span className="text-lg font-bold text-blue-900">
-                  Jumlah yang Direkomendasikan: {recommendations.recommendedAmount} porsi
-                </span>
+          {/* Production Recommendations Section */}
+          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-800">Rekomendasi Produksi</h2>
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-slate-600">Tanggal:</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="border border-slate-300 rounded-lg px-3 py-1 text-sm"
+                />
               </div>
             </div>
-          )}
+
+            {recommendationLoading ? (
+              <div className="text-center py-4 text-slate-600">Memuat rekomendasi...</div>
+            ) : recommendations ? (
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg p-4 border border-indigo-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-indigo-900">
+                      Rekomendasi untuk {new Date(selectedDate).toLocaleDateString('id-ID', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </h3>
+                    <span className="text-2xl font-bold text-indigo-600">
+                      {recommendations.recommendedAmount} porsi
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-slate-50 p-3 rounded">
+                      <div className="text-slate-600">Rata-rata Penjualan (Hari Sama)</div>
+                      <div className="text-lg font-semibold text-slate-800">
+                        {recommendations.avgSalesForDayOfWeek} porsi
+                      </div>
+                    </div>
+                    {recommendations.targetWeather && (
+                      <div className="bg-slate-50 p-3 rounded">
+                        <div className="text-slate-600">Cuaca</div>
+                        <div className="text-lg font-semibold text-slate-800 capitalize">
+                          {recommendations.targetWeather.condition}
+                          {recommendations.targetWeather.description && (
+                            <span className="text-sm font-normal text-slate-600 ml-2">
+                              ({recommendations.targetWeather.description})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    <div className="bg-slate-50 p-3 rounded">
+                      <div className="text-slate-600">Data Historis</div>
+                      <div className="text-sm text-slate-700">
+                        {recommendations.historicalData.productionCount} produksi, {recommendations.historicalData.orderCount} pesanan
+                        <br />
+                        <span className="text-xs text-slate-500">
+                          (dari {recommendations.historicalData.lookbackDays} hari terakhir)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded">
+                      <div className="text-slate-600">Pengali Cuaca</div>
+                      <div className="text-lg font-semibold text-slate-800">
+                        {(recommendations.weatherMultiplier * 100).toFixed(0)}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg p-4 border border-indigo-100">
+                  <h4 className="font-medium text-indigo-900 mb-2">Detail Rekomendasi:</h4>
+                  <ul className="space-y-1 text-sm text-slate-700">
+                    {recommendations.recommendations.map((rec: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-indigo-500 mt-1">•</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 text-slate-500">
+                Tidak ada rekomendasi tersedia. Pastikan ada data historis produksi dan penjualan.
+              </div>
+            )}
+          </div>
 
           {/* Filters */}
           <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">

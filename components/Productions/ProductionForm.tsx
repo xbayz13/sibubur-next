@@ -78,15 +78,29 @@ export default function ProductionForm({
         // Today - use current weather
         weatherData = forecast.current;
       } else if (daysDiff === 1) {
-        // Tomorrow - use first forecast from tomorrow
-        weatherData = forecast.forecasts.tomorrow[0] || null;
+        // Tomorrow - use first forecast from tomorrow (morning forecast for production time)
+        weatherData = forecast.forecasts.tomorrow.find(f => {
+          const time = new Date(f.datetime);
+          return time.getHours() >= 5 && time.getHours() <= 10;
+        }) || forecast.forecasts.tomorrow[0] || null;
       } else if (daysDiff === 2) {
-        // Day after tomorrow
-        weatherData = forecast.forecasts.dayAfter[0] || null;
+        // Day after tomorrow - use first forecast from day after
+        weatherData = forecast.forecasts.dayAfter.find(f => {
+          const time = new Date(f.datetime);
+          return time.getHours() >= 5 && time.getHours() <= 10;
+        }) || forecast.forecasts.dayAfter[0] || null;
+      } else if (daysDiff < 0) {
+        // Past date - try to get from database first, if not available, use today's forecast as fallback
+        weatherData = null; // Will be handled by existingWeather check
+      } else {
+        // Future date beyond 3 days - use latest available forecast
+        weatherData = forecast.forecasts.dayAfter[forecast.forecasts.dayAfter.length - 1] || null;
       }
       
       if (weatherData) {
         setBmkgWeather(weatherData);
+      } else {
+        setBmkgWeather(null);
       }
     } catch (error) {
       console.error('Failed to load BMKG weather:', error);
@@ -117,9 +131,10 @@ export default function ProductionForm({
     try {
       let finalWeatherId = weatherId;
 
-      // Create weather from BMKG data if not exists
+      // Create weather from BMKG data if not exists (use createOrUpdate to prevent duplicates)
       if (!existingWeather && bmkgWeather) {
         const mappedCondition = bmkgService.mapConditionToFormat(bmkgWeather.condition);
+        // Use create - backend will handle deduplication via createOrUpdate if needed
         const newWeather = await weatherService.create({
           date,
           condition: mappedCondition,
