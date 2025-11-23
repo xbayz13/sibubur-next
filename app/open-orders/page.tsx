@@ -34,6 +34,7 @@ export default function OpenOrdersPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('kitchen');
+  const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -212,10 +213,30 @@ export default function OpenOrdersPage() {
         storeId: selectedStoreId,
       };
 
-      await transactionsService.create(transactionData);
+      const transaction = await transactionsService.create(transactionData);
+      
+      // Reload order to get updated status
+      const updatedOrder = await ordersService.getById(selectedOrder.id);
+      
+      // Calculate change
+      const totalAmount = Number(updatedOrder.totalAmount);
+      const change = Math.max(0, amount - totalAmount);
+      
+      // Add change to transaction data
+      const transactionWithChange = {
+        ...transaction,
+        change: change,
+      };
+
       showToast('Pembayaran berhasil diproses', 'success');
       setShowPaymentModal(false);
-      setSelectedOrder(null);
+      
+      // Auto-print customer receipt after payment
+      setSelectedOrder(updatedOrder);
+      setReceiptTransaction(transactionWithChange);
+      setReceiptType('customer');
+      setShowReceipt(true);
+      
       await loadOrders();
     } catch (error: any) {
       showToast(
@@ -520,7 +541,10 @@ export default function OpenOrdersPage() {
             onClose={() => {
               setShowReceipt(false);
               setSelectedOrder(null);
+              setReceiptTransaction(null);
             }}
+            transaction={receiptTransaction}
+            autoPrint={receiptType === 'kitchen'}
           />
         )}
 

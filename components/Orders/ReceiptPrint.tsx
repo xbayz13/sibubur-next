@@ -1,20 +1,37 @@
 'use client';
 
-import { useRef } from 'react';
-import { Order } from '@/types';
+import { useRef, useEffect } from 'react';
+import { Order, Transaction } from '@/types';
 
 interface ReceiptPrintProps {
   order: Order;
   type: 'kitchen' | 'customer';
   onClose: () => void;
+  transaction?: Transaction;
+  autoPrint?: boolean;
 }
 
 export default function ReceiptPrint({
   order,
   type,
   onClose,
+  transaction,
+  autoPrint = false,
 }: ReceiptPrintProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Auto print for kitchen receipt
+  useEffect(() => {
+    if (autoPrint && type === 'kitchen') {
+      const timer = setTimeout(() => {
+        if (receiptRef.current) {
+          handlePrint();
+        }
+      }, 500); // Small delay to ensure content is rendered
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPrint, type, order.id]); // Include order.id to trigger when order changes
 
   const handlePrint = () => {
     if (receiptRef.current) {
@@ -35,126 +52,155 @@ export default function ReceiptPrint({
                   font-family: 'Courier New', 'Monaco', monospace;
                   width: 80mm;
                   margin: 0 auto;
-                  padding: 15px 10px;
+                  padding: 10px 5px;
                   color: #000000;
                   background: #ffffff;
-                  font-size: 12px;
-                  line-height: 1.4;
+                  font-size: 11px;
+                  line-height: 1.3;
                 }
                 .header {
                   text-align: center;
-                  border-bottom: ${isKitchen ? '3px solid #000' : '2px dashed #000'};
-                  padding-bottom: 12px;
-                  margin-bottom: 12px;
+                  border-bottom: 1px solid #000000;
+                  padding-bottom: 8px;
+                  margin-bottom: 8px;
                 }
                 .header-title {
-                  font-size: ${isKitchen ? '18px' : '20px'};
+                  font-size: ${isKitchen ? '16px' : '18px'};
                   font-weight: bold;
                   color: #000000;
-                  margin-bottom: 4px;
-                  letter-spacing: 1px;
+                  margin-bottom: 2px;
+                  letter-spacing: 0.5px;
                 }
                 .header-subtitle {
-                  font-size: 10px;
+                  font-size: 9px;
                   color: #000000;
-                  margin-top: 2px;
+                  margin-top: 1px;
                 }
                 .receipt-type {
                   text-align: center;
                   font-weight: bold;
-                  font-size: 14px;
+                  font-size: ${isKitchen ? '13px' : '12px'};
                   color: #000000;
-                  background: ${isKitchen ? '#f0f0f0' : 'transparent'};
-                  padding: 6px;
-                  margin-bottom: 10px;
-                  border: ${isKitchen ? '2px solid #000' : 'none'};
+                  padding: 4px;
+                  margin-bottom: 8px;
+                  text-transform: uppercase;
+                  border-top: 1px solid #000000;
+                  border-bottom: 1px solid #000000;
                 }
                 .info {
-                  margin: 12px 0;
+                  margin: 8px 0;
                   color: #000000;
                 }
                 .info-row {
-                  margin: 6px 0;
-                  font-size: 11px;
+                  margin: 4px 0;
+                  font-size: 10px;
                   color: #000000;
+                  line-height: 1.4;
                 }
                 .info-label {
                   font-weight: bold;
                   color: #000000;
                 }
                 .items {
-                  border-top: ${isKitchen ? '2px solid #000' : '1px dashed #000'};
-                  border-bottom: ${isKitchen ? '2px solid #000' : '1px dashed #000'};
-                  padding: 12px 0;
-                  margin: 12px 0;
+                  border-top: 1px solid #000000;
+                  border-bottom: 1px solid #000000;
+                  padding: 8px 0;
+                  margin: 8px 0;
                 }
                 .items-title {
                   text-align: center;
                   font-weight: bold;
-                  font-size: ${isKitchen ? '13px' : '12px'};
+                  font-size: ${isKitchen ? '12px' : '11px'};
                   color: #000000;
-                  margin-bottom: 10px;
-                  ${isKitchen ? 'background: #f0f0f0; padding: 6px;' : ''}
+                  margin-bottom: 6px;
+                  text-transform: uppercase;
                 }
                 .item {
-                  margin: ${isKitchen ? '8px 0' : '6px 0'};
-                  padding: ${isKitchen ? '6px' : '4px 0'};
-                  ${isKitchen ? 'border-left: 3px solid #000; padding-left: 8px;' : ''}
+                  margin: ${isKitchen ? '6px 0' : '4px 0'};
+                  padding: ${isKitchen ? '4px 0' : '2px 0'};
                 }
                 .item-name {
                   font-weight: bold;
-                  font-size: ${isKitchen ? '13px' : '12px'};
+                  font-size: ${isKitchen ? '12px' : '11px'};
                   color: #000000;
-                  margin-bottom: 2px;
+                  margin-bottom: 1px;
                 }
                 .item-details {
-                  margin-left: ${isKitchen ? '0' : '10px'};
-                  font-size: 11px;
+                  margin-left: ${isKitchen ? '0' : '8px'};
+                  font-size: 10px;
                   color: #000000;
-                  margin-top: 2px;
+                  margin-top: 1px;
                 }
                 .item-addon {
-                  margin-left: 12px;
+                  margin-left: 10px;
                   color: #000000;
+                  font-size: 9px;
                 }
                 .item-subtotal {
-                  margin-top: 4px;
-                  font-size: 10px;
+                  margin-top: 2px;
+                  font-size: 9px;
                   color: #000000;
                 }
                 .total {
-                  text-align: right;
-                  margin-top: 12px;
-                  padding-top: 10px;
-                  border-top: ${isKitchen ? '2px solid #000' : '1px dashed #000'};
+                  margin-top: 8px;
+                  padding-top: 8px;
+                  border-top: 1px solid #000000;
+                }
+                .total-row {
+                  margin: 2px 0;
+                  font-size: 10px;
+                  color: #000000;
+                  display: flex;
+                  justify-content: space-between;
                 }
                 .total-amount {
-                  font-size: ${isKitchen ? '16px' : '18px'};
+                  font-size: ${isKitchen ? '14px' : '16px'};
                   font-weight: bold;
                   color: #000000;
-                  margin-top: 6px;
+                  margin-top: 4px;
+                  display: flex;
+                  justify-content: space-between;
+                }
+                .payment-info {
+                  margin-top: 8px;
+                  padding-top: 8px;
+                  border-top: 1px solid #000000;
+                  font-size: 10px;
+                }
+                .payment-row {
+                  margin: 3px 0;
+                  display: flex;
+                  justify-content: space-between;
+                }
+                .payment-label {
+                  font-weight: bold;
                 }
                 .footer {
                   text-align: center;
-                  margin-top: 15px;
-                  padding-top: 12px;
-                  border-top: ${isKitchen ? '2px solid #000' : '2px dashed #000'};
+                  margin-top: 10px;
+                  padding-top: 8px;
+                  border-top: 1px solid #000000;
                   color: #000000;
                 }
                 .footer-message {
-                  font-size: ${isKitchen ? '11px' : '12px'};
+                  font-size: ${isKitchen ? '10px' : '11px'};
                   color: #000000;
-                  margin-bottom: 6px;
+                  margin-bottom: 4px;
+                  font-weight: ${isKitchen ? 'bold' : 'normal'};
                 }
                 .footer-time {
-                  font-size: 10px;
+                  font-size: 9px;
                   color: #000000;
+                }
+                .divider {
+                  border-top: 1px dashed #000000;
+                  margin: 8px 0;
                 }
                 @media print {
                   body {
                     width: 80mm;
                     margin: 0;
-                    padding: 10px;
+                    padding: 5px;
                   }
                   @page {
                     margin: 0;
@@ -186,7 +232,7 @@ export default function ReceiptPrint({
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-black">
-              {isKitchen ? '🍳 Struk Dapur' : '🧾 Struk Pelanggan'}
+              {isKitchen ? 'Struk Dapur' : 'Struk Pelanggan'}
             </h2>
             <button
               onClick={onClose}
@@ -209,7 +255,7 @@ export default function ReceiptPrint({
 
             {/* Receipt Type Badge */}
             <div className="receipt-type">
-              {isKitchen ? '🍳 STRUK DAPUR 🍳' : '🧾 STRUK PELANGGAN 🧾'}
+              {isKitchen ? 'STRUK DAPUR' : 'STRUK PELANGGAN'}
             </div>
 
             {/* Order Info */}
@@ -239,10 +285,10 @@ export default function ReceiptPrint({
                 <div className="info-row">
                   <span className="info-label">Status:</span>{' '}
                   {order.status === 'open'
-                    ? '⏳ Belum Bayar'
+                    ? 'Belum Bayar'
                     : order.status === 'paid'
-                    ? '✅ Lunas'
-                    : '❌ Dibatalkan'}
+                    ? 'Lunas'
+                    : 'Dibatalkan'}
                 </div>
               )}
             </div>
@@ -250,7 +296,7 @@ export default function ReceiptPrint({
             {/* Items */}
             <div className="items">
               <div className="items-title">
-                {isKitchen ? '📋 DAFTAR PESANAN' : '--- ITEM PESANAN ---'}
+                {isKitchen ? 'DAFTAR PESANAN' : 'ITEM PESANAN'}
               </div>
               {order.orderItems.map((item, idx) => (
                 <div key={idx} className="item">
@@ -286,34 +332,62 @@ export default function ReceiptPrint({
             {/* Total - Only show for customer receipt */}
             {!isKitchen && (
               <div className="total">
-                <div className="text-xs mb-1 text-black">
-                  Subtotal: Rp {Number(order.subtotalAmount || order.totalAmount).toLocaleString('id-ID')}
+                <div className="total-row">
+                  <span>Subtotal:</span>
+                  <span>Rp {Number(order.subtotalAmount || order.totalAmount).toLocaleString('id-ID')}</span>
                 </div>
+                {order.taxAmount > 0 && (
+                  <div className="total-row">
+                    <span>Pajak:</span>
+                    <span>Rp {Number(order.taxAmount).toLocaleString('id-ID')}</span>
+                  </div>
+                )}
                 <div className="total-amount">
-                  TOTAL: Rp {Number(order.totalAmount).toLocaleString('id-ID')}
+                  <span>TOTAL:</span>
+                  <span>Rp {Number(order.totalAmount).toLocaleString('id-ID')}</span>
                 </div>
+              </div>
+            )}
+
+            {/* Payment Info - Only show for customer receipt with transaction */}
+            {!isKitchen && transaction && (
+              <div className="payment-info">
+                <div className="payment-row">
+                  <span className="payment-label">Metode Pembayaran:</span>
+                  <span>{transaction.paymentMethod?.name || 'Tunai'}</span>
+                </div>
+                <div className="payment-row">
+                  <span className="payment-label">Jumlah Bayar:</span>
+                  <span>Rp {Number(transaction.amount).toLocaleString('id-ID')}</span>
+                </div>
+                {transaction.change !== undefined && transaction.change > 0 && (
+                  <div className="payment-row">
+                    <span className="payment-label">Kembalian:</span>
+                    <span>Rp {Number(transaction.change).toLocaleString('id-ID')}</span>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Footer */}
             {isKitchen ? (
               <div className="footer">
-                <div className="footer-message font-bold text-xs">
-                  ⚠️ PERHATIAN: Siapkan pesanan sesuai item di atas
+                <div className="footer-message">
+                  PERHATIAN: Siapkan pesanan sesuai item di atas
                 </div>
-                <div className="footer-time mt-2">
+                <div className="footer-time">
                   Dicetak: {new Date().toLocaleString('id-ID')}
                 </div>
               </div>
             ) : (
               <div className="footer">
-                <div className="footer-message font-bold">
+                <div className="footer-message">
                   Terima kasih atas kunjungan Anda!
                 </div>
-                <div className="footer-message text-xs mt-1">
+                <div className="footer-message" style={{ fontSize: '9px', marginTop: '2px' }}>
                   Semoga Anda puas dengan pelayanan kami
                 </div>
-                <div className="footer-time mt-2">
+                <div className="footer-time">
                   {new Date().toLocaleString('id-ID')}
                 </div>
               </div>

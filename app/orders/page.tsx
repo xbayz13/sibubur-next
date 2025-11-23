@@ -30,6 +30,7 @@ export default function OrdersPage() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('customer');
+  const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 
   // Load static data (products, stores, paymentMethods) only once
@@ -102,7 +103,7 @@ export default function OrdersPage() {
       setShowOrderForm(false);
       await reloadOrders(); // Reload orders after creating
       
-      // Show receipt
+      // Auto-print kitchen receipt after order creation
       setReceiptOrder(newOrder);
       setReceiptType('kitchen');
       setShowReceipt(true);
@@ -120,16 +121,31 @@ export default function OrdersPage() {
     if (!selectedOrder) return;
 
     try {
-      await transactionsService.create({
+      const transaction = await transactionsService.create({
         orderId: selectedOrder.id,
         paymentMethodId,
         amount,
         storeId: selectedOrder.store.id,
       });
 
-      // Order is automatically marked as paid by the backend
+      // Reload order to get updated status
+      const updatedOrder = await ordersService.getById(selectedOrder.id);
+
+      // Add change to transaction data
+      const transactionWithChange = {
+        ...transaction,
+        change: Math.max(0, change),
+      };
+
       showToast('Pembayaran berhasil diproses', 'success');
       setShowPaymentModal(false);
+      
+      // Auto-print customer receipt after payment
+      setReceiptOrder(updatedOrder);
+      setReceiptTransaction(transactionWithChange);
+      setReceiptType('customer');
+      setShowReceipt(true);
+      
       setSelectedOrder(null);
       await reloadOrders(); // Reload orders after payment
     } catch (error: any) {
@@ -253,7 +269,10 @@ export default function OrdersPage() {
               onClose={() => {
                 setShowReceipt(false);
                 setReceiptOrder(null);
+                setReceiptTransaction(null);
               }}
+              transaction={receiptTransaction}
+              autoPrint={receiptType === 'kitchen'}
             />
           )}
         </div>

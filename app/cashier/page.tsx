@@ -42,6 +42,7 @@ export default function CashierPage() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptOrder, setReceiptOrder] = useState<any>(null);
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('kitchen');
+  const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentOrder, setCurrentOrder] = useState<any>(null); // Store the created order
@@ -334,7 +335,7 @@ export default function CashierPage() {
       
       showToast('Pesanan berhasil dibuat', 'success');
 
-      // Show kitchen receipt first
+      // Auto-print kitchen receipt after order creation
       setReceiptOrder(newOrder);
       setReceiptType('kitchen');
       setShowReceipt(true);
@@ -356,18 +357,11 @@ export default function CashierPage() {
     }
   };
 
-  // Show customer receipt after kitchen receipt is closed
+  // Handle receipt closed
   const handleReceiptClosed = () => {
-    if (receiptType === 'kitchen' && currentOrder) {
-      // Show customer receipt
-      setReceiptType('customer');
-      setShowReceipt(true);
-    } else {
-      // Both receipts shown, reset
-      setShowReceipt(false);
-      setReceiptOrder(null);
-      setCurrentOrder(null);
-    }
+    setShowReceipt(false);
+    setReceiptOrder(null);
+    // Don't reset currentOrder here, keep it for payment
   };
 
   const handleProcessPayment = async (
@@ -386,10 +380,26 @@ export default function CashierPage() {
         storeId: selectedStoreId,
       };
 
-      await transactionsService.create(transactionData);
-
+      const transaction = await transactionsService.create(transactionData);
+      
+      // Reload order to get updated status
+      const updatedOrder = await ordersService.getById(currentOrder.id);
+      
+      // Add change to transaction data
+      const transactionWithChange = {
+        ...transaction,
+        change: Math.max(0, change),
+      };
+      
       showToast('Pembayaran berhasil diproses', 'success');
       setShowPayment(false);
+      
+      // Auto-print customer receipt after payment
+      setReceiptOrder(updatedOrder);
+      setReceiptTransaction(transactionWithChange);
+      setReceiptType('customer');
+      setShowReceipt(true);
+      
       setCurrentOrder(null);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memproses pembayaran', 'error');
@@ -767,6 +777,8 @@ export default function CashierPage() {
                 order={receiptOrder}
                 type={receiptType}
                 onClose={handleReceiptClosed}
+                transaction={receiptTransaction}
+                autoPrint={receiptType === 'kitchen'}
               />
             )}
           </div>
