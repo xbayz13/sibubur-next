@@ -23,6 +23,7 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/users': ['users.read', 'users.create', 'users.update', 'users.delete'],
   '/roles': ['roles.read', 'roles.create', 'roles.update', 'roles.delete'],
   '/permissions': ['permissions.read'],
+  '/settings': [], // Settings page - accessible to all authenticated users
 };
 
 // Menu items with their required permissions
@@ -40,6 +41,7 @@ const MENU_ITEMS_PERMISSIONS: Record<string, string[]> = {
   'Data Master': ['products.read', 'stores.read', 'product-categories.read', 'product-addons.read', 'employees.read', 'expense-categories.read'],
   'Pengguna': ['users.read'],
   'Role & Izin': ['roles.read'],
+  'Pengaturan': [], // Settings - accessible to all authenticated users
 };
 
 /**
@@ -128,4 +130,5 @@ export const MENU_ITEMS = [
   { name: 'Data Master', href: '/master-data', icon: '⚙️' },
   { name: 'Pengguna', href: '/users', icon: '👤' },
   { name: 'Role & Izin', href: '/roles', icon: '🔐' },
+  { name: 'Pengaturan', href: '/settings', icon: '🔧' },
 ] as const;

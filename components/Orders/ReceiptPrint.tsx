@@ -1,7 +1,9 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Order, Transaction } from '@/types';
+import { bluetoothPrinterService } from '@/lib/bluetooth-printer';
+import { useToast } from '@/components/ToastContainer';
 
 interface ReceiptPrintProps {
   order: Order;
@@ -19,12 +21,29 @@ export default function ReceiptPrint({
   autoPrint = false,
 }: ReceiptPrintProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
+  const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  // Check Bluetooth connection status
+  useEffect(() => {
+    const checkBluetooth = () => {
+      setIsBluetoothConnected(bluetoothPrinterService.isConnected());
+    };
+    checkBluetooth();
+    // Check periodically
+    const interval = setInterval(checkBluetooth, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Auto print for kitchen receipt
   useEffect(() => {
     if (autoPrint && type === 'kitchen') {
       const timer = setTimeout(() => {
-        if (receiptRef.current) {
+        // Try Bluetooth first, fallback to regular print
+        if (bluetoothPrinterService.isConnected()) {
+          handleBluetoothPrint();
+        } else if (receiptRef.current) {
           handlePrint();
         }
       }, 500); // Small delay to ensure content is rendered
@@ -224,6 +243,23 @@ export default function ReceiptPrint({
     }
   };
 
+  const handleBluetoothPrint = async () => {
+    if (!bluetoothPrinterService.isConnected()) {
+      showToast('Printer Bluetooth tidak terhubung. Silakan hubungkan di halaman Settings.', 'error');
+      return;
+    }
+
+    setIsPrinting(true);
+    try {
+      await bluetoothPrinterService.printFormattedReceipt(order, type, transaction);
+      showToast('Struk berhasil dikirim ke printer Bluetooth', 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Gagal mencetak ke printer Bluetooth', 'error');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   const isKitchen = type === 'kitchen';
 
   return (
@@ -401,13 +437,39 @@ export default function ReceiptPrint({
             >
               Tutup
             </button>
-            <button
-              onClick={handlePrint}
-              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-            >
-              Cetak
-            </button>
+            {isBluetoothConnected ? (
+              <>
+                <button
+                  onClick={handleBluetoothPrint}
+                  disabled={isPrinting}
+                  className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPrinting ? 'Mencetak...' : 'Cetak Bluetooth'}
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                >
+                  Cetak Browser
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handlePrint}
+                className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+              >
+                Cetak
+              </button>
+            )}
           </div>
+          {isBluetoothConnected && (
+            <div className="mt-3 text-center">
+              <p className="text-xs text-slate-600">
+                <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                Printer Bluetooth terhubung
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
