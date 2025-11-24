@@ -3,43 +3,49 @@
 import { useState, useEffect } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useToast } from '@/components/ToastContainer';
-import {
-  bluetoothPrinterService,
-  BluetoothPrinter,
-} from '@/lib/bluetooth-printer';
+import { printerService, PrinterConnection } from '@/lib/printer-service';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
-  const [isSupported, setIsSupported] = useState(false);
-  const [printer, setPrinter] = useState<BluetoothPrinter | null>(null);
+  const [availableMethods, setAvailableMethods] = useState<string[]>([]);
+  const [connection, setConnection] = useState<PrinterConnection | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [storedPrinter, setStoredPrinter] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<'bluetooth' | 'serial'>('bluetooth');
 
   useEffect(() => {
-    // Check if Web Bluetooth is supported
-    setIsSupported(bluetoothPrinterService.isSupported());
+    // Check available methods
+    const methods = printerService.getAvailableMethods();
+    setAvailableMethods(methods);
 
-    // Check for stored printer
-    const stored = bluetoothPrinterService.getStoredPrinter();
-    setStoredPrinter(stored);
-
-    // Check if already connected
-    if (bluetoothPrinterService.isConnected()) {
-      setPrinter(bluetoothPrinterService.getPrinter());
+    // Check current connection
+    const currentConnection = printerService.getConnectionStatus();
+    setConnection(currentConnection);
+    if (currentConnection) {
+      setSelectedMethod(currentConnection.method as 'bluetooth' | 'serial');
     }
+
+    // Poll for connection status
+    const interval = setInterval(() => {
+      const status = printerService.getConnectionStatus();
+      setConnection(status);
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const connectedPrinter = await bluetoothPrinterService.connect();
-      setPrinter(connectedPrinter);
-      setStoredPrinter({ id: connectedPrinter.id, name: connectedPrinter.name });
-      showToast('Berhasil terhubung ke printer Bluetooth', 'success');
+      if (selectedMethod === 'bluetooth') {
+        await printerService.connectBluetooth();
+        showToast('Berhasil terhubung ke printer Bluetooth', 'success');
+      } else if (selectedMethod === 'serial') {
+        await printerService.connectSerial();
+        showToast('Berhasil terhubung ke printer Serial/USB', 'success');
+      }
+      const status = printerService.getConnectionStatus();
+      setConnection(status);
     } catch (error: any) {
       showToast(error.message || 'Gagal terhubung ke printer', 'error');
     } finally {
@@ -50,8 +56,12 @@ export default function SettingsPage() {
   const handleDisconnect = async () => {
     setIsDisconnecting(true);
     try {
-      await bluetoothPrinterService.disconnect();
-      setPrinter(null);
+      if (connection?.method === 'bluetooth') {
+        await printerService.disconnectBluetooth();
+      } else if (connection?.method === 'serial') {
+        await printerService.disconnectSerial();
+      }
+      setConnection(null);
       showToast('Berhasil memutuskan koneksi printer', 'success');
     } catch (error: any) {
       showToast(error.message || 'Gagal memutuskan koneksi', 'error');
@@ -61,35 +71,17 @@ export default function SettingsPage() {
   };
 
   const handleTestPrint = async () => {
-    if (!printer) {
+    if (!connection || !connection.connected) {
       showToast('Printer tidak terhubung', 'error');
       return;
     }
 
     try {
-      await bluetoothPrinterService.printText(
-        '\x1B@' + // Initialize
-        '\x1Ba\x01' + // Center align
-        '\x1B!\x30' + // Double size
-        'TEST PRINT\n' +
-        '\x1B!\x00' + // Normal size
-        '\x1Ba\x00' + // Left align
-        'Printer Bluetooth Test\n' +
-        `Waktu: ${new Date().toLocaleString('id-ID')}\n` +
-        `Printer: ${printer.name}\n` +
-        '\n\n\n' +
-        '\x1DVA\x00' // Cut
-      );
+      await printerService.testPrint();
       showToast('Test print berhasil dikirim ke printer', 'success');
     } catch (error: any) {
       showToast(error.message || 'Gagal mengirim test print', 'error');
     }
-  };
-
-  const handleClearStored = () => {
-    bluetoothPrinterService.clearStoredPrinter();
-    setStoredPrinter(null);
-    showToast('Data printer tersimpan telah dihapus', 'success');
   };
 
   return (
@@ -97,11 +89,75 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold text-slate-900 mb-6">
-            Pengaturan Printer Bluetooth
+            Pengaturan Printer
           </h1>
 
-          {/* Browser Support Check */}
-          {!isSupported && (
+          {/* Method Selection */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">
+              Pilih Metode Koneksi
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => setSelectedMethod('bluetooth')}
+                disabled={!availableMethods.includes('bluetooth')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  selectedMethod === 'bluetooth'
+                    ? 'border-indigo-600 bg-indigo-50'
+                    : 'border-slate-300 bg-white hover:border-slate-400'
+                } ${
+                  !availableMethods.includes('bluetooth')
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'cursor-pointer'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-slate-900">Bluetooth</h3>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Untuk printer Bluetooth wireless
+                    </p>
+                  </div>
+                  {availableMethods.includes('bluetooth') ? (
+                    <span className="text-green-600 text-sm">✓ Tersedia</span>
+                  ) : (
+                    <span className="text-slate-400 text-sm">✗ Tidak didukung</span>
+                  )}
+                </div>
+              </button>
+
+              <button
+                onClick={() => setSelectedMethod('serial')}
+                disabled={!availableMethods.includes('serial')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  selectedMethod === 'serial'
+                    ? 'border-indigo-600 bg-indigo-50'
+                    : 'border-slate-300 bg-white hover:border-slate-400'
+                } ${
+                  !availableMethods.includes('serial')
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'cursor-pointer'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-slate-900">Serial/USB</h3>
+                    <p className="text-sm text-slate-600 mt-1">
+                      Untuk printer USB atau Serial
+                    </p>
+                  </div>
+                  {availableMethods.includes('serial') ? (
+                    <span className="text-green-600 text-sm">✓ Tersedia</span>
+                  ) : (
+                    <span className="text-slate-400 text-sm">✗ Tidak didukung</span>
+                  )}
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Browser Support Info */}
+          {!availableMethods.includes('bluetooth') && !availableMethods.includes('serial') && (
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <div className="flex items-start">
                 <svg
@@ -117,11 +173,12 @@ export default function SettingsPage() {
                 </svg>
                 <div>
                   <h3 className="text-sm font-medium text-yellow-800">
-                    Web Bluetooth tidak didukung
+                    Browser tidak mendukung Web Bluetooth/Serial API
                   </h3>
                   <p className="mt-1 text-sm text-yellow-700">
-                    Browser Anda tidak mendukung Web Bluetooth API. Silakan
-                    gunakan Chrome, Edge, atau Opera untuk fitur ini.
+                    Browser Anda tidak mendukung Web Bluetooth atau Web Serial API. 
+                    Silakan gunakan Chrome, Edge, atau Opera untuk fitur ini. 
+                    Alternatif: gunakan print browser standar.
                   </p>
                 </div>
               </div>
@@ -138,29 +195,26 @@ export default function SettingsPage() {
                 <div className="flex items-center">
                   <div
                     className={`w-3 h-3 rounded-full mr-3 ${
-                      printer && bluetoothPrinterService.isConnected()
+                      connection && connection.connected
                         ? 'bg-green-500'
                         : 'bg-slate-400'
                     }`}
                   />
                   <div>
                     <p className="font-medium text-slate-900">
-                      {printer && bluetoothPrinterService.isConnected()
+                      {connection && connection.connected
                         ? 'Terhubung'
                         : 'Tidak Terhubung'}
                     </p>
-                    {printer && (
-                      <p className="text-sm text-slate-600">{printer.name}</p>
-                    )}
-                    {!printer && storedPrinter && (
+                    {connection && (
                       <p className="text-sm text-slate-600">
-                        Printer tersimpan: {storedPrinter.name}
+                        {connection.name} ({connection.method})
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {printer && bluetoothPrinterService.isConnected() ? (
+                  {connection && connection.connected ? (
                     <>
                       <button
                         onClick={handleTestPrint}
@@ -179,10 +233,14 @@ export default function SettingsPage() {
                   ) : (
                     <button
                       onClick={handleConnect}
-                      disabled={!isSupported || isConnecting}
+                      disabled={
+                        (!availableMethods.includes(selectedMethod) || isConnecting)
+                      }
                       className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isConnecting ? 'Menghubungkan...' : 'Hubungkan Printer'}
+                      {isConnecting
+                        ? 'Menghubungkan...'
+                        : `Hubungkan ${selectedMethod === 'bluetooth' ? 'Bluetooth' : 'Serial/USB'}`}
                     </button>
                   )}
                 </div>
@@ -190,32 +248,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Stored Printer Info */}
-          {storedPrinter && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4">
-                Printer Tersimpan
-              </h2>
-              <div className="bg-slate-50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-slate-900">
-                      {storedPrinter.name}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      ID: {storedPrinter.id}
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleClearStored}
-                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors text-sm"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Instructions */}
           <div className="mb-6">
@@ -223,25 +255,36 @@ export default function SettingsPage() {
               Petunjuk Penggunaan
             </h2>
             <div className="bg-blue-50 rounded-lg p-4">
-              <ol className="list-decimal list-inside space-y-2 text-sm text-slate-700">
-                <li>Pastikan printer Bluetooth dalam keadaan menyala</li>
-                <li>
-                  Pastikan printer sudah dipasangkan (paired) dengan perangkat
-                  Anda
-                </li>
-                <li>Klik tombol "Hubungkan Printer"</li>
-                <li>
-                  Pilih printer dari daftar yang muncul (browser akan meminta
-                  izin)
-                </li>
-                <li>
-                  Setelah terhubung, printer akan otomatis digunakan untuk
-                  mencetak struk
-                </li>
-                <li>
-                  Gunakan tombol "Test Print" untuk menguji koneksi printer
-                </li>
-              </ol>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    Untuk Printer Bluetooth:
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-1 text-sm text-slate-700 ml-2">
+                    <li>Pastikan printer Bluetooth dalam keadaan menyala</li>
+                    <li>Pastikan printer sudah dipasangkan (paired) dengan perangkat</li>
+                    <li>Pilih metode "Bluetooth" dan klik "Hubungkan Bluetooth"</li>
+                    <li>Pilih printer dari daftar yang muncul (browser akan meminta izin)</li>
+                  </ol>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-800 mb-2">
+                    Untuk Printer USB/Serial:
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-1 text-sm text-slate-700 ml-2">
+                    <li>Hubungkan printer ke komputer via USB</li>
+                    <li>Pastikan printer dalam keadaan menyala</li>
+                    <li>Pilih metode "Serial/USB" dan klik "Hubungkan Serial/USB"</li>
+                    <li>Pilih port printer dari daftar yang muncul</li>
+                  </ol>
+                </div>
+                <div className="pt-2 border-t border-blue-200">
+                  <p className="text-sm text-slate-700">
+                    <strong>Catatan:</strong> Setelah terhubung, printer akan otomatis digunakan untuk mencetak struk. 
+                    Gunakan tombol "Test Print" untuk menguji koneksi printer.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -260,23 +303,28 @@ export default function SettingsPage() {
                 </p>
                 <p>
                   <span className="font-medium">Web Bluetooth:</span>{' '}
-                  {isSupported ? 'Didukung' : 'Tidak Didukung'}
+                  {availableMethods.includes('bluetooth') ? 'Didukung' : 'Tidak Didukung'}
+                </p>
+                <p>
+                  <span className="font-medium">Web Serial:</span>{' '}
+                  {availableMethods.includes('serial') ? 'Didukung' : 'Tidak Didukung'}
                 </p>
                 <p>
                   <span className="font-medium">Status Koneksi:</span>{' '}
-                  {printer && bluetoothPrinterService.isConnected()
-                    ? 'Aktif'
-                    : 'Tidak Aktif'}
+                  {connection && connection.connected ? 'Aktif' : 'Tidak Aktif'}
                 </p>
-                {printer && (
+                {connection && (
                   <>
                     <p>
                       <span className="font-medium">Nama Printer:</span>{' '}
-                      {printer.name}
+                      {connection.name}
                     </p>
                     <p>
-                      <span className="font-medium">ID Printer:</span>{' '}
-                      {printer.id}
+                      <span className="font-medium">Metode:</span>{' '}
+                      {connection.method}
+                    </p>
+                    <p>
+                      <span className="font-medium">ID:</span> {connection.id}
                     </p>
                   </>
                 )}

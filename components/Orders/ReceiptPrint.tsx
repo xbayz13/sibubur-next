@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { Order, Transaction } from '@/types';
-import { bluetoothPrinterService } from '@/lib/bluetooth-printer';
+import { printerService } from '@/lib/printer-service';
 import { useToast } from '@/components/ToastContainer';
 
 interface ReceiptPrintProps {
@@ -25,14 +25,15 @@ export default function ReceiptPrint({
   const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
-  // Check Bluetooth connection status
+  // Check printer connection status
   useEffect(() => {
-    const checkBluetooth = () => {
-      setIsBluetoothConnected(bluetoothPrinterService.isConnected());
+    const checkConnection = () => {
+      const connection = printerService.getConnectionStatus();
+      setIsBluetoothConnected(connection !== null && connection.connected);
     };
-    checkBluetooth();
+    checkConnection();
     // Check periodically
-    const interval = setInterval(checkBluetooth, 1000);
+    const interval = setInterval(checkConnection, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -40,8 +41,9 @@ export default function ReceiptPrint({
   useEffect(() => {
     if (autoPrint && type === 'kitchen') {
       const timer = setTimeout(() => {
-        // Try Bluetooth first, fallback to regular print
-        if (bluetoothPrinterService.isConnected()) {
+        // Try direct printer first, fallback to regular print
+        const connection = printerService.getConnectionStatus();
+        if (connection && connection.connected) {
           handleBluetoothPrint();
         } else if (receiptRef.current) {
           handlePrint();
@@ -244,17 +246,19 @@ export default function ReceiptPrint({
   };
 
   const handleBluetoothPrint = async () => {
-    if (!bluetoothPrinterService.isConnected()) {
-      showToast('Printer Bluetooth tidak terhubung. Silakan hubungkan di halaman Settings.', 'error');
+    const connection = printerService.getConnectionStatus();
+    if (!connection || !connection.connected) {
+      showToast('Printer tidak terhubung. Silakan hubungkan di halaman Settings.', 'error');
       return;
     }
 
     setIsPrinting(true);
     try {
-      await bluetoothPrinterService.printFormattedReceipt(order, type, transaction);
-      showToast('Struk berhasil dikirim ke printer Bluetooth', 'success');
+      await printerService.printReceipt(order, type, transaction);
+      const methodName = connection.method === 'bluetooth' ? 'Bluetooth' : 'Serial/USB';
+      showToast(`Struk berhasil dikirim ke printer ${methodName}`, 'success');
     } catch (error: any) {
-      showToast(error.message || 'Gagal mencetak ke printer Bluetooth', 'error');
+      showToast(error.message || 'Gagal mencetak ke printer', 'error');
     } finally {
       setIsPrinting(false);
     }
@@ -444,7 +448,7 @@ export default function ReceiptPrint({
                   disabled={isPrinting}
                   className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isPrinting ? 'Mencetak...' : 'Cetak Bluetooth'}
+                  {isPrinting ? 'Mencetak...' : 'Cetak ke Printer'}
                 </button>
                 <button
                   onClick={handlePrint}
@@ -466,7 +470,7 @@ export default function ReceiptPrint({
             <div className="mt-3 text-center">
               <p className="text-xs text-slate-600">
                 <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                Printer Bluetooth terhubung
+                Printer terhubung ({printerService.getConnectionStatus()?.method})
               </p>
             </div>
           )}
