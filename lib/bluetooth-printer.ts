@@ -107,7 +107,7 @@ class BluetoothPrinterService {
    * Request Bluetooth device (printer)
    */
   async requestDevice(): Promise<BluetoothDevice> {
-    if (!this.isSupported()) {
+    if (!this.isSupported() || !navigator.bluetooth) {
       throw new Error('Web Bluetooth API tidak didukung di browser ini. Gunakan Chrome atau Edge.');
     }
 
@@ -161,6 +161,9 @@ class BluetoothPrinterService {
         if (stored) {
           try {
             // Try to reconnect to stored device
+            if (!navigator.bluetooth) {
+              throw new Error('Web Bluetooth tidak tersedia');
+            }
             const devices = await navigator.bluetooth.getDevices();
             targetDevice = devices.find((d) => d.id === stored.id) || undefined;
           } catch {
