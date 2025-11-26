@@ -14,6 +14,8 @@ export default function SettingsPage() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'bluetooth' | 'serial'>('bluetooth');
   const [browserCompatibility, setBrowserCompatibility] = useState<BrowserCompatibility | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     // Check available methods
@@ -37,8 +39,35 @@ export default function SettingsPage() {
       setConnection(status);
     }, 1000);
 
+    // Check if PWA is already installed
+    if (typeof window !== 'undefined') {
+      if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+        setIsInstalled(true);
+      }
+
+      // Listen for beforeinstallprompt event
+      const handleBeforeInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+      };
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+      // Listen for app installed event
+      window.addEventListener('appinstalled', () => {
+        setIsInstalled(true);
+        setDeferredPrompt(null);
+        showToast('Aplikasi berhasil diinstall!', 'success');
+      });
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      };
+    }
+
     return () => clearInterval(interval);
-  }, []);
+  }, [showToast]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -87,6 +116,28 @@ export default function SettingsPage() {
       showToast('Test print berhasil dikirim ke printer', 'success');
     } catch (error: any) {
       showToast(error.message || 'Gagal mengirim test print', 'error');
+    }
+  };
+
+  const handleInstallPWA = async () => {
+    if (!deferredPrompt) {
+      showToast('Aplikasi sudah terinstall atau tidak dapat diinstall di browser ini', 'info');
+      return;
+    }
+
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        showToast('Aplikasi sedang diinstall...', 'success');
+      } else {
+        showToast('Installasi dibatalkan', 'info');
+      }
+      
+      setDeferredPrompt(null);
+    } catch (error: any) {
+      showToast('Gagal menginstall aplikasi', 'error');
     }
   };
 
@@ -302,6 +353,69 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* PWA Install */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">
+              Install Aplikasi
+            </h2>
+            <div className="bg-slate-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg
+                      className="w-6 h-6 text-indigo-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900">
+                      {isInstalled ? 'Aplikasi Terinstall' : 'Install Aplikasi SiBubur'}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {isInstalled
+                        ? 'Aplikasi sudah terinstall di perangkat Anda'
+                        : 'Install aplikasi untuk akses lebih cepat dan dapat digunakan offline'}
+                    </p>
+                  </div>
+                </div>
+                {!isInstalled && deferredPrompt && (
+                  <button
+                    onClick={handleInstallPWA}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                  >
+                    Install App
+                  </button>
+                )}
+                {isInstalled && (
+                  <span className="px-4 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
+                    ✓ Terinstall
+                  </span>
+                )}
+                {!isInstalled && !deferredPrompt && (
+                  <span className="px-4 py-2 bg-slate-200 text-slate-600 rounded-lg text-sm">
+                    Tidak Tersedia
+                  </span>
+                )}
+              </div>
+              {!isInstalled && (
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <p className="text-xs text-slate-600">
+                    <strong>Catatan:</strong> Fitur install aplikasi tersedia di browser yang mendukung PWA 
+                    (Chrome, Edge, Safari iOS). Pastikan Anda menggunakan HTTPS atau localhost.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Instructions */}
           <div className="mb-6">
