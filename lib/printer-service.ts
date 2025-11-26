@@ -246,8 +246,7 @@ class UniversalPrinterService {
     data += ESCPOS_COMMANDS.INIT;
     data += ESCPOS_COMMANDS.ALIGN_CENTER;
     data += ESCPOS_COMMANDS.FONT_DOUBLE;
-    data += 'SiBubur\n';
-    data += 'Sistem Point of Sale\n';
+    data += 'Bubur Ayam Lembur Kuring\n';
     data += ESCPOS_COMMANDS.FONT_NORMAL;
     data += ESCPOS_COMMANDS.FEED;
     data += ESCPOS_COMMANDS.BOLD_ON;
