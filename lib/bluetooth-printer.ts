@@ -616,7 +616,8 @@ class BluetoothPrinterService {
     await this.write(ESCPOS_COMMANDS.INIT);
     await this.write(ESCPOS_COMMANDS.ALIGN_CENTER);
     await this.write(ESCPOS_COMMANDS.FONT_DOUBLE);
-    receipt += 'Bubur Ayam Lembur Kuring\n';
+    receipt += 'Bubur Ayam\n';
+    receipt += 'Lembur Kuring\n';
     await this.write(receipt);
     receipt = '';
 

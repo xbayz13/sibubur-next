@@ -289,7 +289,8 @@ export default function ReceiptPrint({
           >
             {/* Header */}
             <div className="header text-center">
-              <div className="header-title">Bubur Ayam Lembur Kuring</div>
+              <div className="header-title">Bubur Ayam</div>
+              <div className="header-title">Lembur Kuring</div>
             </div>
 
             {/* Receipt Type Badge */}
