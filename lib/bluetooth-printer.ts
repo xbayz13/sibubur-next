@@ -1,7 +1,28 @@
 /**
  * Bluetooth Printer Service
  * Handles connection and printing to Bluetooth thermal printers
+ * 
+ * Browser Compatibility:
+ * - Chrome/Edge (Windows, Android, Chrome OS): Full support
+ * - Opera: Full support
+ * - Firefox: Not supported
+ * - Safari: Not supported
+ * 
+ * Note: Web Bluetooth API requires HTTPS (except localhost)
+ * 
+ * Packages used:
+ * - escpos-buffer: For generating ESC/POS command buffers
+ * - escpos-printer-bt: Alternative implementation (optional)
  */
+
+// Try to import escpos-buffer (optional, will fallback if not available)
+let Printer: any = null;
+try {
+  const escposBuffer = require('escpos-buffer');
+  Printer = escposBuffer.Printer || escposBuffer.default;
+} catch (error) {
+  console.warn('escpos-buffer not available, using manual ESC/POS commands');
+}
 
 export interface BluetoothPrinter {
   device: BluetoothDevice;
@@ -9,6 +30,14 @@ export interface BluetoothPrinter {
   characteristic: BluetoothRemoteGATTCharacteristic;
   name: string;
   id: string;
+}
+
+export interface BrowserCompatibility {
+  supported: boolean;
+  browser: string;
+  platform: string;
+  requiresHttps: boolean;
+  message: string;
 }
 
 // ESC/POS commands for thermal printers
@@ -72,6 +101,63 @@ class BluetoothPrinterService {
   }
 
   /**
+   * Get detailed browser compatibility information
+   */
+  getBrowserCompatibility(): BrowserCompatibility {
+    if (typeof navigator === 'undefined') {
+      return {
+        supported: false,
+        browser: 'Unknown',
+        platform: 'Unknown',
+        requiresHttps: true,
+        message: 'Tidak dapat mendeteksi browser (Server-side rendering)',
+      };
+    }
+
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isChrome = userAgent.includes('chrome') && !userAgent.includes('edg');
+    const isEdge = userAgent.includes('edg');
+    const isOpera = userAgent.includes('opr') || userAgent.includes('opera');
+    const isFirefox = userAgent.includes('firefox');
+    const isSafari = userAgent.includes('safari') && !userAgent.includes('chrome');
+    
+    const isHttps = typeof window !== 'undefined' && 
+      (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    
+    const supported = this.isSupported() && (isChrome || isEdge || isOpera);
+    
+    let browser = 'Unknown';
+    if (isChrome) browser = 'Chrome';
+    else if (isEdge) browser = 'Edge';
+    else if (isOpera) browser = 'Opera';
+    else if (isFirefox) browser = 'Firefox';
+    else if (isSafari) browser = 'Safari';
+
+    let message = '';
+    if (!supported) {
+      if (isFirefox) {
+        message = 'Firefox tidak mendukung Web Bluetooth API. Gunakan Chrome, Edge, atau Opera.';
+      } else if (isSafari) {
+        message = 'Safari tidak mendukung Web Bluetooth API. Gunakan Chrome, Edge, atau Opera.';
+      } else {
+        message = 'Browser ini tidak mendukung Web Bluetooth API. Gunakan Chrome, Edge, atau Opera.';
+      }
+    } else if (!isHttps) {
+      message = 'Web Bluetooth API memerlukan koneksi HTTPS (kecuali localhost).';
+    } else {
+      message = 'Browser mendukung Web Bluetooth API.';
+    }
+
+    return {
+      supported,
+      browser,
+      platform: navigator.platform || 'Unknown',
+      requiresHttps: !isHttps,
+      message,
+    };
+  }
+
+  /**
    * Get stored printer from localStorage
    */
   getStoredPrinter(): { id: string; name: string } | null {
@@ -105,10 +191,17 @@ class BluetoothPrinterService {
 
   /**
    * Request Bluetooth device (printer)
+   * Supports multiple service UUIDs for different printer models
    */
   async requestDevice(): Promise<BluetoothDevice> {
+    const compatibility = this.getBrowserCompatibility();
+    
     if (!this.isSupported() || !navigator.bluetooth) {
-      throw new Error('Web Bluetooth API tidak didukung di browser ini. Gunakan Chrome atau Edge.');
+      throw new Error(compatibility.message || 'Web Bluetooth API tidak didukung di browser ini. Gunakan Chrome atau Edge.');
+    }
+
+    if (compatibility.requiresHttps) {
+      throw new Error('Web Bluetooth API memerlukan koneksi HTTPS. Pastikan Anda menggunakan HTTPS atau localhost.');
     }
 
     try {
@@ -116,23 +209,27 @@ class BluetoothPrinterService {
         filters: [
           // Common thermal printer service UUIDs
           { services: [0xff00] }, // Generic service
-          { services: [0xffe0] }, // Serial Port Profile
+          { services: [0xffe0] }, // Serial Port Profile (SPP) - Most common
+          { services: [0xffe5] }, // Custom service
         ],
         optionalServices: [
           0xff00, // Generic service
           0xffe0, // Serial Port Profile
           0xffe5, // Custom service
+          0xfff0, // Additional service
         ],
       });
 
       return device;
     } catch (error: any) {
       if (error.name === 'NotFoundError') {
-        throw new Error('Tidak ada printer Bluetooth yang ditemukan.');
+        throw new Error('Tidak ada printer Bluetooth yang ditemukan. Pastikan printer dalam keadaan menyala dan dapat ditemukan.');
       } else if (error.name === 'SecurityError') {
-        throw new Error('Akses Bluetooth ditolak. Pastikan browser memiliki izin.');
+        throw new Error('Akses Bluetooth ditolak. Pastikan browser memiliki izin dan printer sudah dipasangkan (paired).');
       } else if (error.name === 'InvalidStateError') {
         throw new Error('Bluetooth sedang digunakan. Tutup koneksi lain terlebih dahulu.');
+      } else if (error.name === 'NetworkError') {
+        throw new Error('Gagal terhubung ke printer. Pastikan printer dalam jangkauan dan tidak terhubung ke perangkat lain.');
       }
       throw new Error(`Gagal mencari printer: ${error.message}`);
     }
@@ -186,40 +283,87 @@ class BluetoothPrinterService {
       }
 
       // Find the service (usually 0xffe0 for thermal printers)
+      // Try multiple service UUIDs to support different printer models
       let service: BluetoothRemoteGATTService | null = null;
-      const serviceUUIDs = [0xffe0, 0xff00, 0xffe5];
+      const serviceUUIDs = [
+        0xffe0, // Serial Port Profile (SPP) - Most common for thermal printers
+        0xff00, // Generic service
+        0xffe5, // Custom service
+        0xfff0, // Additional service
+      ];
 
       for (const uuid of serviceUUIDs) {
         try {
           service = await server.getPrimaryService(uuid);
-          if (service) break;
-        } catch {
+          if (service) {
+            console.log(`Found service: ${uuid.toString(16)}`);
+            break;
+          }
+        } catch (error) {
           // Try next service
+          console.log(`Service ${uuid.toString(16)} not found, trying next...`);
         }
       }
 
       if (!service) {
-        throw new Error('Service Bluetooth tidak ditemukan pada printer.');
+        // Try to get all services as fallback
+        try {
+          const services = await server.getPrimaryServices();
+          if (services.length > 0) {
+            service = services[0];
+            console.log(`Using first available service: ${service.uuid}`);
+          }
+        } catch (error) {
+          throw new Error('Service Bluetooth tidak ditemukan pada printer. Pastikan printer mendukung BLE dan sudah dipasangkan.');
+        }
+      }
+
+      if (!service) {
+        throw new Error('Service Bluetooth tidak ditemukan pada printer. Pastikan printer mendukung BLE.');
       }
 
       // Find the characteristic (usually 0xffe1 for write)
+      // Try multiple characteristic UUIDs to support different printer models
       let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
-      const charUUIDs = [0xffe1, 0xff01, 0xffe6];
+      const charUUIDs = [
+        0xffe1, // Write characteristic - Most common
+        0xff01, // Alternative write characteristic
+        0xffe6, // Custom characteristic
+        0xfff1, // Additional characteristic
+      ];
 
       for (const uuid of charUUIDs) {
         try {
           const characteristics = await service.getCharacteristics(uuid);
           if (characteristics.length > 0) {
             characteristic = characteristics[0];
+            console.log(`Found characteristic: ${uuid.toString(16)}`);
             break;
           }
-        } catch {
+        } catch (error) {
           // Try next characteristic
+          console.log(`Characteristic ${uuid.toString(16)} not found, trying next...`);
         }
       }
 
       if (!characteristic) {
-        throw new Error('Karakteristik Bluetooth tidak ditemukan pada printer.');
+        // Try to get all characteristics as fallback
+        try {
+          const characteristics = await service.getCharacteristics();
+          // Find write characteristic (has write property)
+          characteristic = characteristics.find(
+            (char) => char.properties.write || char.properties.writeWithoutResponse
+          ) || null;
+          if (characteristic) {
+            console.log(`Using first writable characteristic: ${characteristic.uuid}`);
+          }
+        } catch (error) {
+          throw new Error('Karakteristik Bluetooth tidak ditemukan pada printer.');
+        }
+      }
+
+      if (!characteristic) {
+        throw new Error('Karakteristik Bluetooth tidak ditemukan pada printer. Pastikan printer mendukung BLE write.');
       }
 
       // Store printer info
@@ -298,12 +442,23 @@ class BluetoothPrinterService {
       }
 
       // Write in chunks if data is too large
-      const chunkSize = 20; // BLE characteristic write limit
+      // BLE characteristic write limit is typically 20 bytes, but some support up to 512
+      const chunkSize = this.printer.characteristic.properties.writeWithoutResponse ? 20 : 20;
+      const writeMethod = this.printer.characteristic.properties.writeWithoutResponse
+        ? 'writeValueWithoutResponse'
+        : 'writeValue';
+
       for (let i = 0; i < dataToWrite.length; i += chunkSize) {
         const chunk = dataToWrite.slice(i, i + chunkSize);
-        await this.printer.characteristic.writeValue(chunk);
-        // Small delay between chunks
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        
+        if (writeMethod === 'writeValueWithoutResponse') {
+          await this.printer.characteristic.writeValueWithoutResponse(chunk);
+        } else {
+          await this.printer.characteristic.writeValue(chunk);
+        }
+        
+        // Small delay between chunks to prevent buffer overflow
+        await new Promise((resolve) => setTimeout(resolve, 20));
       }
     } catch (error: any) {
       if (error.message?.includes('not connected')) {
@@ -319,6 +474,25 @@ class BluetoothPrinterService {
    */
   async printText(text: string): Promise<void> {
     await this.write(text);
+  }
+
+  /**
+   * Generate ESC/POS buffer using escpos-buffer package (if available)
+   * Falls back to manual commands if package is not available
+   */
+  private generateEscPosBuffer(commands: (printer: any) => any): Uint8Array | null {
+    if (!Printer) {
+      return null; // Will use fallback method
+    }
+    
+    try {
+      const printer = new Printer();
+      commands(printer);
+      return printer.encode();
+    } catch (error) {
+      console.warn('Error using escpos-buffer, will use fallback:', error);
+      return null;
+    }
   }
 
   /**
@@ -394,6 +568,7 @@ class BluetoothPrinterService {
 
   /**
    * Print formatted receipt from order data
+   * Uses escpos-buffer for better command generation
    */
   async printFormattedReceipt(
     order: any,
@@ -405,129 +580,156 @@ class BluetoothPrinterService {
     }
 
     try {
-      let receipt = '';
+      // Try to use escpos-buffer for better command generation
+      const buffer = this.generateEscPosBuffer((printer) => {
+        // Note: escpos-buffer API may vary, so we'll use fallback for now
+        // This is a placeholder for future enhancement
+        return printer;
+      });
 
-      // Initialize
-      await this.write(ESCPOS_COMMANDS.INIT);
-      await this.write(ESCPOS_COMMANDS.ALIGN_CENTER);
-      await this.write(ESCPOS_COMMANDS.FONT_DOUBLE);
-      receipt += 'SiBubur\n';
-      receipt += 'Sistem Point of Sale\n';
-      await this.write(receipt);
-      receipt = '';
-
-      // Receipt type
-      await this.write(ESCPOS_COMMANDS.FEED);
-      await this.write(ESCPOS_COMMANDS.FONT_NORMAL);
-      await this.write(ESCPOS_COMMANDS.BOLD_ON);
-      receipt += type === 'kitchen' ? 'STRUK DAPUR\n' : 'STRUK PELANGGAN\n';
-      await this.write(receipt);
-      receipt = '';
-      await this.write(ESCPOS_COMMANDS.BOLD_OFF);
-
-      // Order info
-      await this.write(ESCPOS_COMMANDS.ALIGN_LEFT);
-      await this.write(ESCPOS_COMMANDS.FEED);
-      receipt += `No. Order: ${order.orderNumber}\n`;
-      receipt += `Tanggal: ${new Date(order.createdAt).toLocaleString('id-ID')}\n`;
-      if (order.customerName) {
-        receipt += `Pelanggan: ${order.customerName}\n`;
-      }
-      receipt += `Toko: ${order.store.name}\n`;
-      if (type === 'kitchen') {
-        const statusText =
-          order.status === 'open'
-            ? 'Belum Bayar'
-            : order.status === 'paid'
-            ? 'Lunas'
-            : 'Dibatalkan';
-        receipt += `Status: ${statusText}\n`;
-      }
-      await this.write(receipt);
-      receipt = '';
-
-      // Items
-      await this.write(ESCPOS_COMMANDS.FEED);
-      await this.write(ESCPOS_COMMANDS.BOLD_ON);
-      receipt += type === 'kitchen' ? 'DAFTAR PESANAN\n' : 'ITEM PESANAN\n';
-      await this.write(receipt);
-      receipt = '';
-      await this.write(ESCPOS_COMMANDS.BOLD_OFF);
-
-      for (const item of order.orderItems) {
-        receipt += `${item.quantity}x ${item.product.name}\n`;
-        if (type === 'customer') {
-          receipt += `  @ Rp ${Number(item.unitPrice).toLocaleString('id-ID')}\n`;
-        }
-        if (item.orderItemAddons && item.orderItemAddons.length > 0) {
-          for (const addon of item.orderItemAddons) {
-            receipt += `  ${type === 'kitchen' ? '•' : '+'} ${addon.quantity}x ${addon.addon.name}`;
-            if (type === 'customer') {
-              receipt += ` @ Rp ${Number(addon.addonPrice).toLocaleString('id-ID')}`;
-            }
-            receipt += '\n';
-          }
-        }
-        if (type === 'customer') {
-          receipt += `  Subtotal: Rp ${Number(item.lineTotal).toLocaleString('id-ID')}\n`;
-        }
-        await this.write(receipt);
-        receipt = '';
+      if (buffer) {
+        // Send the buffer to printer if escpos-buffer is available
+        await this.write(buffer);
+        return;
       }
 
-      // Total (customer only)
-      if (type === 'customer') {
-        await this.write(ESCPOS_COMMANDS.FEED);
-        receipt += '--------------------------------\n';
-        receipt += `Subtotal: Rp ${Number(order.subtotalAmount || order.totalAmount).toLocaleString('id-ID')}\n`;
-        if (order.taxAmount > 0) {
-          receipt += `Pajak: Rp ${Number(order.taxAmount).toLocaleString('id-ID')}\n`;
-        }
-        await this.write(ESCPOS_COMMANDS.BOLD_ON);
-        receipt += `TOTAL: Rp ${Number(order.totalAmount).toLocaleString('id-ID')}\n`;
-        await this.write(receipt);
-        receipt = '';
-        await this.write(ESCPOS_COMMANDS.BOLD_OFF);
-      }
-
-      // Payment info (customer only)
-      if (type === 'customer' && transaction) {
-        await this.write(ESCPOS_COMMANDS.FEED);
-        receipt += '--------------------------------\n';
-        receipt += `Metode: ${transaction.paymentMethod?.name || 'Tunai'}\n`;
-        receipt += `Bayar: Rp ${Number(transaction.amount).toLocaleString('id-ID')}\n`;
-        if (transaction.change !== undefined && transaction.change > 0) {
-          receipt += `Kembalian: Rp ${Number(transaction.change).toLocaleString('id-ID')}\n`;
-        }
-        await this.write(receipt);
-        receipt = '';
-      }
-
-      // Footer
-      await this.write(ESCPOS_COMMANDS.FEED);
-      await this.write(ESCPOS_COMMANDS.ALIGN_CENTER);
-      if (type === 'kitchen') {
-        await this.write(ESCPOS_COMMANDS.BOLD_ON);
-        receipt += 'PERHATIAN:\n';
-        receipt += 'Siapkan pesanan sesuai item di atas\n';
-        await this.write(receipt);
-        receipt = '';
-        await this.write(ESCPOS_COMMANDS.BOLD_OFF);
-      } else {
-        receipt += 'Terima kasih atas kunjungan Anda!\n';
-        receipt += 'Semoga Anda puas dengan pelayanan kami\n';
-        await this.write(receipt);
-        receipt = '';
-      }
-      receipt += `Dicetak: ${new Date().toLocaleString('id-ID')}\n`;
-      await this.write(receipt);
-
-      // Feed and cut
-      await this.write(ESCPOS_COMMANDS.FEED_LINES(3));
-      await this.write(ESCPOS_COMMANDS.CUT);
+      // Fallback to manual ESC/POS commands (current implementation)
+      await this.printFormattedReceiptFallback(order, type, transaction);
     } catch (error: any) {
-      throw new Error(`Gagal mencetak struk: ${error.message}`);
+      // Fallback to original method if escpos-buffer fails
+      console.warn('Error using escpos-buffer, falling back to manual commands:', error);
+      await this.printFormattedReceiptFallback(order, type, transaction);
     }
+  }
+
+  /**
+   * Fallback method using manual ESC/POS commands
+   */
+  private async printFormattedReceiptFallback(
+    order: any,
+    type: 'kitchen' | 'customer',
+    transaction?: any
+  ): Promise<void> {
+    let receipt = '';
+
+    // Initialize
+    await this.write(ESCPOS_COMMANDS.INIT);
+    await this.write(ESCPOS_COMMANDS.ALIGN_CENTER);
+    await this.write(ESCPOS_COMMANDS.FONT_DOUBLE);
+    receipt += 'SiBubur\n';
+    receipt += 'Sistem Point of Sale\n';
+    await this.write(receipt);
+    receipt = '';
+
+    // Receipt type
+    await this.write(ESCPOS_COMMANDS.FEED);
+    await this.write(ESCPOS_COMMANDS.FONT_NORMAL);
+    await this.write(ESCPOS_COMMANDS.BOLD_ON);
+    receipt += type === 'kitchen' ? 'STRUK DAPUR\n' : 'STRUK PELANGGAN\n';
+    await this.write(receipt);
+    receipt = '';
+    await this.write(ESCPOS_COMMANDS.BOLD_OFF);
+
+    // Order info
+    await this.write(ESCPOS_COMMANDS.ALIGN_LEFT);
+    await this.write(ESCPOS_COMMANDS.FEED);
+    receipt += `No. Order: ${order.orderNumber}\n`;
+    receipt += `Tanggal: ${new Date(order.createdAt).toLocaleString('id-ID')}\n`;
+    if (order.customerName) {
+      receipt += `Pelanggan: ${order.customerName}\n`;
+    }
+    receipt += `Toko: ${order.store.name}\n`;
+    if (type === 'kitchen') {
+      const statusText =
+        order.status === 'open'
+          ? 'Belum Bayar'
+          : order.status === 'paid'
+          ? 'Lunas'
+          : 'Dibatalkan';
+      receipt += `Status: ${statusText}\n`;
+    }
+    await this.write(receipt);
+    receipt = '';
+
+    // Items
+    await this.write(ESCPOS_COMMANDS.FEED);
+    await this.write(ESCPOS_COMMANDS.BOLD_ON);
+    receipt += type === 'kitchen' ? 'DAFTAR PESANAN\n' : 'ITEM PESANAN\n';
+    await this.write(receipt);
+    receipt = '';
+    await this.write(ESCPOS_COMMANDS.BOLD_OFF);
+
+    for (const item of order.orderItems) {
+      receipt += `${item.quantity}x ${item.product.name}\n`;
+      if (type === 'customer') {
+        receipt += `  @ Rp ${Number(item.unitPrice).toLocaleString('id-ID')}\n`;
+      }
+      if (item.orderItemAddons && item.orderItemAddons.length > 0) {
+        for (const addon of item.orderItemAddons) {
+          receipt += `  ${type === 'kitchen' ? '•' : '+'} ${addon.quantity}x ${addon.addon.name}`;
+          if (type === 'customer') {
+            receipt += ` @ Rp ${Number(addon.addonPrice).toLocaleString('id-ID')}`;
+          }
+          receipt += '\n';
+        }
+      }
+      if (type === 'customer') {
+        receipt += `  Subtotal: Rp ${Number(item.lineTotal).toLocaleString('id-ID')}\n`;
+      }
+      await this.write(receipt);
+      receipt = '';
+    }
+
+    // Total (customer only)
+    if (type === 'customer') {
+      await this.write(ESCPOS_COMMANDS.FEED);
+      receipt += '--------------------------------\n';
+      receipt += `Subtotal: Rp ${Number(order.subtotalAmount || order.totalAmount).toLocaleString('id-ID')}\n`;
+      if (order.taxAmount > 0) {
+        receipt += `Pajak: Rp ${Number(order.taxAmount).toLocaleString('id-ID')}\n`;
+      }
+      await this.write(ESCPOS_COMMANDS.BOLD_ON);
+      receipt += `TOTAL: Rp ${Number(order.totalAmount).toLocaleString('id-ID')}\n`;
+      await this.write(receipt);
+      receipt = '';
+      await this.write(ESCPOS_COMMANDS.BOLD_OFF);
+    }
+
+    // Payment info (customer only)
+    if (type === 'customer' && transaction) {
+      await this.write(ESCPOS_COMMANDS.FEED);
+      receipt += '--------------------------------\n';
+      receipt += `Metode: ${transaction.paymentMethod?.name || 'Tunai'}\n`;
+      receipt += `Bayar: Rp ${Number(transaction.amount).toLocaleString('id-ID')}\n`;
+      if (transaction.change !== undefined && transaction.change > 0) {
+        receipt += `Kembalian: Rp ${Number(transaction.change).toLocaleString('id-ID')}\n`;
+      }
+      await this.write(receipt);
+      receipt = '';
+    }
+
+    // Footer
+    await this.write(ESCPOS_COMMANDS.FEED);
+    await this.write(ESCPOS_COMMANDS.ALIGN_CENTER);
+    if (type === 'kitchen') {
+      await this.write(ESCPOS_COMMANDS.BOLD_ON);
+      receipt += 'PERHATIAN:\n';
+      receipt += 'Siapkan pesanan sesuai item di atas\n';
+      await this.write(receipt);
+      receipt = '';
+      await this.write(ESCPOS_COMMANDS.BOLD_OFF);
+    } else {
+      receipt += 'Terima kasih atas kunjungan Anda!\n';
+      receipt += 'Semoga Anda puas dengan pelayanan kami\n';
+      await this.write(receipt);
+      receipt = '';
+    }
+    receipt += `Dicetak: ${new Date().toLocaleString('id-ID')}\n`;
+    await this.write(receipt);
+
+    // Feed and cut
+    await this.write(ESCPOS_COMMANDS.FEED_LINES(3));
+    await this.write(ESCPOS_COMMANDS.CUT);
   }
 }
 

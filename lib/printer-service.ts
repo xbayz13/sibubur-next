@@ -390,3 +390,7 @@ class UniversalPrinterService {
 // Export singleton instance
 export const printerService = new UniversalPrinterService();
 
+
+
+
+
