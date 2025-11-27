@@ -5,6 +5,7 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { useToast } from '@/components/ToastContainer';
 import { printerService, PrinterConnection } from '@/lib/printer-service';
 import { bluetoothPrinterService, BrowserCompatibility } from '@/lib/bluetooth-printer';
+import { getPrintSettings, savePrintSettings, type PrintSettings } from '@/lib/print-settings';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
@@ -16,8 +17,12 @@ export default function SettingsPage() {
   const [browserCompatibility, setBrowserCompatibility] = useState<BrowserCompatibility | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [printSettings, setPrintSettings] = useState<PrintSettings>(getPrintSettings());
 
   useEffect(() => {
+    // Load print settings
+    setPrintSettings(getPrintSettings());
+
     // Check available methods
     const methods = printerService.getAvailableMethods();
     setAvailableMethods(methods);
@@ -139,6 +144,30 @@ export default function SettingsPage() {
     } catch (error: any) {
       showToast('Gagal menginstall aplikasi', 'error');
     }
+  };
+
+  const handleToggleAutoPrintKitchen = (enabled: boolean) => {
+    const newSettings = { ...printSettings, autoPrintKitchen: enabled };
+    savePrintSettings({ autoPrintKitchen: enabled });
+    setPrintSettings(newSettings);
+    showToast(
+      enabled 
+        ? 'Auto print struk dapur diaktifkan' 
+        : 'Auto print struk dapur dinonaktifkan',
+      'success'
+    );
+  };
+
+  const handleToggleAutoPrintCustomer = (enabled: boolean) => {
+    const newSettings = { ...printSettings, autoPrintCustomer: enabled };
+    savePrintSettings({ autoPrintCustomer: enabled });
+    setPrintSettings(newSettings);
+    showToast(
+      enabled 
+        ? 'Auto print struk pelanggan diaktifkan' 
+        : 'Auto print struk pelanggan dinonaktifkan',
+      'success'
+    );
   };
 
   return (
@@ -348,6 +377,70 @@ export default function SettingsPage() {
                         : `Hubungkan ${selectedMethod === 'bluetooth' ? 'Bluetooth' : 'Serial/USB'}`}
                     </button>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Print Settings */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">
+              Pengaturan Print Struk
+            </h2>
+            <div className="space-y-4">
+              {/* Auto Print Kitchen Receipt */}
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-900 mb-1">
+                      Auto Print Struk Dapur
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      {printSettings.autoPrintKitchen
+                        ? 'Struk dapur akan otomatis dicetak setelah pesanan dibuat'
+                        : 'Tombol dan modal print struk dapur akan disembunyikan'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleAutoPrintKitchen(!printSettings.autoPrintKitchen)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      printSettings.autoPrintKitchen ? 'bg-indigo-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        printSettings.autoPrintKitchen ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto Print Customer Receipt */}
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-900 mb-1">
+                      Auto Print Struk Pelanggan
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      {printSettings.autoPrintCustomer
+                        ? 'Struk pelanggan akan otomatis dicetak setelah pembayaran'
+                        : 'Tombol dan modal print struk pelanggan akan disembunyikan'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleAutoPrintCustomer(!printSettings.autoPrintCustomer)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      printSettings.autoPrintCustomer ? 'bg-indigo-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        printSettings.autoPrintCustomer ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
             </div>

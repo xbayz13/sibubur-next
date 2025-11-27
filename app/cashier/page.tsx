@@ -14,6 +14,7 @@ import { transactionsService, CreateTransactionDto } from '@/lib/services/transa
 import { Product, Store, PaymentMethod, CreateOrderDto } from '@/types';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import Link from 'next/link';
+import { isAutoPrintKitchenEnabled, isAutoPrintCustomerEnabled, shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
 
 interface CartItem {
   productId: number;
@@ -335,10 +336,12 @@ export default function CashierPage() {
       
       showToast('Pesanan berhasil dibuat', 'success');
 
-      // Auto-print kitchen receipt after order creation
-      setReceiptOrder(newOrder);
-      setReceiptType('kitchen');
-      setShowReceipt(true);
+      // Auto-print kitchen receipt after order creation (if enabled)
+      if (isAutoPrintKitchenEnabled()) {
+        setReceiptOrder(newOrder);
+        setReceiptType('kitchen');
+        setShowReceipt(true);
+      }
 
       // Clear cart but keep customer name for next order
       setCart([]);
@@ -394,11 +397,13 @@ export default function CashierPage() {
       showToast('Pembayaran berhasil diproses', 'success');
       setShowPayment(false);
       
-      // Auto-print customer receipt after payment
-      setReceiptOrder(updatedOrder);
-      setReceiptTransaction(transactionWithChange);
-      setReceiptType('customer');
-      setShowReceipt(true);
+      // Auto-print customer receipt after payment (if enabled)
+      if (isAutoPrintCustomerEnabled()) {
+        setReceiptOrder(updatedOrder);
+        setReceiptTransaction(transactionWithChange);
+        setReceiptType('customer');
+        setShowReceipt(true);
+      }
       
       setCurrentOrder(null);
     } catch (error: any) {
@@ -773,13 +778,16 @@ export default function CashierPage() {
 
             {/* Receipt */}
             {showReceipt && receiptOrder && (
-              <ReceiptPrint
-                order={receiptOrder}
-                type={receiptType}
-                onClose={handleReceiptClosed}
-                transaction={receiptTransaction}
-                autoPrint={receiptType === 'kitchen'}
-              />
+              ((receiptType === 'kitchen' && shouldShowKitchenPrintButton()) ||
+               (receiptType === 'customer' && shouldShowCustomerPrintButton())) && (
+                <ReceiptPrint
+                  order={receiptOrder}
+                  type={receiptType}
+                  onClose={handleReceiptClosed}
+                  transaction={receiptTransaction}
+                  autoPrint={receiptType === 'kitchen'}
+                />
+              )
             )}
           </div>
         </div>

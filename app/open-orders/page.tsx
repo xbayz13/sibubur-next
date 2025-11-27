@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import { productsService } from '@/lib/services/products';
+import { shouldShowKitchenPrintButton, shouldShowCustomerPrintButton, isAutoPrintCustomerEnabled } from '@/lib/print-settings';
 
 export default function OpenOrdersPage() {
   const { showToast } = useToast();
@@ -231,11 +232,13 @@ export default function OpenOrdersPage() {
       showToast('Pembayaran berhasil diproses', 'success');
       setShowPaymentModal(false);
       
-      // Auto-print customer receipt after payment
-      setSelectedOrder(updatedOrder);
-      setReceiptTransaction(transactionWithChange);
-      setReceiptType('customer');
-      setShowReceipt(true);
+      // Auto-print customer receipt after payment (if enabled)
+      if (isAutoPrintCustomerEnabled()) {
+        setSelectedOrder(updatedOrder);
+        setReceiptTransaction(transactionWithChange);
+        setReceiptType('customer');
+        setShowReceipt(true);
+      }
       
       await loadOrders();
     } catch (error: any) {
@@ -426,26 +429,30 @@ export default function OpenOrdersPage() {
                               </svg>
                               Detail
                             </button>
-                            <button
-                              onClick={() => handlePrintReceipt(order, 'kitchen')}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
-                              title="Cetak Struk Dapur"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                              </svg>
-                              <span className="hidden sm:inline">Dapur</span>
-                            </button>
-                            <button
-                              onClick={() => handlePrintReceipt(order, 'customer')}
-                              className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-50 text-pink-700 rounded-lg hover:bg-pink-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
-                              title="Cetak Struk Pelanggan"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                              </svg>
-                              <span className="hidden sm:inline">Pelanggan</span>
-                            </button>
+                            {shouldShowKitchenPrintButton() && (
+                              <button
+                                onClick={() => handlePrintReceipt(order, 'kitchen')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
+                                title="Cetak Struk Dapur"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                <span className="hidden sm:inline">Dapur</span>
+                              </button>
+                            )}
+                            {shouldShowCustomerPrintButton() && (
+                              <button
+                                onClick={() => handlePrintReceipt(order, 'customer')}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-50 text-pink-700 rounded-lg hover:bg-pink-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
+                                title="Cetak Struk Pelanggan"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                <span className="hidden sm:inline">Pelanggan</span>
+                              </button>
+                            )}
                             <button
                               onClick={() => handleCancelClick(order)}
                               className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 transition-all font-medium text-xs sm:text-sm shadow-sm hover:shadow"
@@ -535,17 +542,20 @@ export default function OpenOrdersPage() {
 
         {/* Receipt Print */}
         {showReceipt && selectedOrder && (
-          <ReceiptPrint
-            order={selectedOrder}
-            type={receiptType}
-            onClose={() => {
-              setShowReceipt(false);
-              setSelectedOrder(null);
-              setReceiptTransaction(null);
-            }}
-            transaction={receiptTransaction}
-            autoPrint={receiptType === 'kitchen'}
-          />
+          ((receiptType === 'kitchen' && shouldShowKitchenPrintButton()) ||
+           (receiptType === 'customer' && shouldShowCustomerPrintButton())) && (
+            <ReceiptPrint
+              order={selectedOrder}
+              type={receiptType}
+              onClose={() => {
+                setShowReceipt(false);
+                setSelectedOrder(null);
+                setReceiptTransaction(null);
+              }}
+              transaction={receiptTransaction}
+              autoPrint={receiptType === 'kitchen'}
+            />
+          )
         )}
 
         {/* Cancel Order Modal */}

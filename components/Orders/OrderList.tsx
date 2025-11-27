@@ -1,6 +1,7 @@
 'use client';
 
 import { Order } from '@/types';
+import { shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
 
 interface OrderListProps {
   orders: Order[];
@@ -131,22 +132,26 @@ export default function OrderList({
                             </button>
                           </>
                         )}
-                        <button
-                          onClick={() => onPrintReceipt(order, 'kitchen')}
-                          className="text-blue-600 hover:text-blue-900 text-xs sm:text-sm px-1 sm:px-0"
-                          title="Cetak Dapur"
-                        >
-                          <span className="hidden sm:inline">Cetak Dapur</span>
-                          <span className="sm:hidden">Dapur</span>
-                        </button>
-                        <button
-                          onClick={() => onPrintReceipt(order, 'customer')}
-                          className="text-purple-600 hover:text-purple-900 text-xs sm:text-sm px-1 sm:px-0"
-                          title="Cetak Pelanggan"
-                        >
-                          <span className="hidden sm:inline">Cetak Pelanggan</span>
-                          <span className="sm:hidden">Pelanggan</span>
-                        </button>
+                        {shouldShowKitchenPrintButton() && (
+                          <button
+                            onClick={() => onPrintReceipt(order, 'kitchen')}
+                            className="text-blue-600 hover:text-blue-900 text-xs sm:text-sm px-1 sm:px-0"
+                            title="Cetak Dapur"
+                          >
+                            <span className="hidden sm:inline">Cetak Dapur</span>
+                            <span className="sm:hidden">Dapur</span>
+                          </button>
+                        )}
+                        {shouldShowCustomerPrintButton() && (
+                          <button
+                            onClick={() => onPrintReceipt(order, 'customer')}
+                            className="text-purple-600 hover:text-purple-900 text-xs sm:text-sm px-1 sm:px-0"
+                            title="Cetak Pelanggan"
+                          >
+                            <span className="hidden sm:inline">Cetak Pelanggan</span>
+                            <span className="sm:hidden">Pelanggan</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
