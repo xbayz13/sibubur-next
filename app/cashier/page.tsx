@@ -15,6 +15,7 @@ import { Product, Store, PaymentMethod, CreateOrderDto } from '@/types';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import Link from 'next/link';
 import { isAutoPrintKitchenEnabled, isAutoPrintCustomerEnabled, shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
+import { isInstantPaymentEnabled } from '@/lib/instant-payment-settings';
 
 interface CartItem {
   productId: number;
@@ -341,6 +342,11 @@ export default function CashierPage() {
         setReceiptOrder(newOrder);
         setReceiptType('kitchen');
         setShowReceipt(true);
+      }
+
+      // Show payment form immediately if instant payment is enabled
+      if (isInstantPaymentEnabled()) {
+        setShowPayment(true);
       }
 
       // Clear cart but keep customer name for next order

@@ -6,6 +6,7 @@ import { useToast } from '@/components/ToastContainer';
 import { printerService, PrinterConnection } from '@/lib/printer-service';
 import { bluetoothPrinterService, BrowserCompatibility } from '@/lib/bluetooth-printer';
 import { getPrintSettings, savePrintSettings, type PrintSettings } from '@/lib/print-settings';
+import { getInstantPaymentSettings, saveInstantPaymentSettings, type InstantPaymentSettings } from '@/lib/instant-payment-settings';
 
 export default function SettingsPage() {
   const { showToast } = useToast();
@@ -18,10 +19,13 @@ export default function SettingsPage() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [printSettings, setPrintSettings] = useState<PrintSettings>(getPrintSettings());
+  const [instantPaymentSettings, setInstantPaymentSettings] = useState<InstantPaymentSettings>(getInstantPaymentSettings());
 
   useEffect(() => {
     // Load print settings
     setPrintSettings(getPrintSettings());
+    // Load instant payment settings
+    setInstantPaymentSettings(getInstantPaymentSettings());
 
     // Check available methods
     const methods = printerService.getAvailableMethods();
@@ -166,6 +170,18 @@ export default function SettingsPage() {
       enabled 
         ? 'Auto print struk pelanggan diaktifkan' 
         : 'Auto print struk pelanggan dinonaktifkan',
+      'success'
+    );
+  };
+
+  const handleToggleInstantPayment = (enabled: boolean) => {
+    const newSettings = { ...instantPaymentSettings, enabled };
+    saveInstantPaymentSettings({ enabled });
+    setInstantPaymentSettings(newSettings);
+    showToast(
+      enabled 
+        ? 'Instant payment diaktifkan - Form pembayaran akan muncul langsung setelah pesanan dibuat' 
+        : 'Instant payment dinonaktifkan',
       'success'
     );
   };
@@ -438,6 +454,42 @@ export default function SettingsPage() {
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                         printSettings.autoPrintCustomer ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Instant Payment Settings */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">
+              Pengaturan Pembayaran
+            </h2>
+            <div className="space-y-4">
+              {/* Instant Payment */}
+              <div className="bg-slate-50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-slate-900 mb-1">
+                      Instant Payment
+                    </h3>
+                    <p className="text-sm text-slate-600">
+                      {instantPaymentSettings.enabled
+                        ? 'Form pembayaran akan muncul langsung setelah pesanan berhasil dibuat di halaman kasir'
+                        : 'Form pembayaran hanya muncul saat tombol "Bayar" diklik'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleToggleInstantPayment(!instantPaymentSettings.enabled)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      instantPaymentSettings.enabled ? 'bg-indigo-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        instantPaymentSettings.enabled ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
