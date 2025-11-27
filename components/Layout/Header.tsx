@@ -8,22 +8,45 @@ export default function Header() {
   const { user } = useAuth();
   const { toggleMobileMenu } = useSidebar();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
+    const handleOrientationChange = () => {
+      // Check current orientation
+      const orientation = (screen as any).orientation;
+      if (orientation && orientation.angle !== undefined) {
+        setIsLandscape(
+          orientation.angle === 90 || orientation.angle === -90 || orientation.angle === 270
+        );
+      } else {
+        // Fallback for browsers without Screen Orientation API
+        setIsLandscape(window.innerWidth > window.innerHeight);
+      }
+    };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    // Listen for orientation changes
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', handleOrientationChange);
+    
+    // Initial check
+    handleOrientationChange();
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleOrientationChange);
     };
   }, []);
 
@@ -54,6 +77,45 @@ export default function Header() {
       }
     } catch (error) {
       console.error('Error toggling fullscreen:', error);
+    }
+  };
+
+  const toggleScreenRotation = async () => {
+    try {
+      const orientation = (screen as any).orientation;
+      
+      if (!orientation) {
+        // Fallback: Show message if Screen Orientation API is not supported
+        alert('Rotasi layar tidak didukung di browser ini. Silakan gunakan rotasi otomatis perangkat.');
+        return;
+      }
+
+      // Check if we can lock orientation
+      if (orientation.lock) {
+        if (isLandscape) {
+          // Switch to portrait
+          await orientation.lock('portrait');
+          setIsLandscape(false);
+        } else {
+          // Switch to landscape
+          await orientation.lock('landscape');
+          setIsLandscape(true);
+        }
+      } else {
+        // Fallback: Try to unlock and let device handle it
+        if (orientation.unlock) {
+          orientation.unlock();
+        }
+        alert('Rotasi layar tidak dapat dikunci. Silakan gunakan rotasi otomatis perangkat.');
+      }
+    } catch (error: any) {
+      // Some browsers require fullscreen mode to lock orientation
+      if (error.name === 'NotSupportedError' || error.name === 'SecurityError') {
+        alert('Rotasi layar memerlukan mode fullscreen. Silakan aktifkan fullscreen terlebih dahulu.');
+      } else {
+        console.error('Error toggling screen rotation:', error);
+        alert('Gagal memutar layar. Silakan coba lagi.');
+      }
     }
   };
 
@@ -90,6 +152,28 @@ export default function Header() {
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
+          {/* Rotate Screen Button */}
+          <button
+            onClick={toggleScreenRotation}
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label={isLandscape ? 'Rotate to portrait' : 'Rotate to landscape'}
+            title={isLandscape ? 'Putar ke portrait' : 'Putar ke landscape'}
+          >
+            <svg
+              className="w-5 h-5 text-slate-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                transform={isLandscape ? 'rotate(90 12 12)' : ''}
+              />
+            </svg>
+          </button>
           {/* Fullscreen Button */}
           <button
             onClick={toggleFullscreen}
