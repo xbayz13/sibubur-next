@@ -48,6 +48,13 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-md">
         <div className="text-center mb-6 sm:mb-8">
+          <div className="flex justify-center mb-4">
+            <img
+              src="/sibubur-high-resolution-logo-transparent.png"
+              alt="SiBubur Logo"
+              className="h-16 w-16 sm:h-20 sm:w-20 object-contain"
+            />
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">SiBubur</h1>
           <p className="text-sm sm:text-base text-slate-600">Point of Sale System</p>
         </div>

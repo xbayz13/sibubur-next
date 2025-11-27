@@ -81,8 +81,12 @@ export default function Header() {
               />
             </svg>
           </button>
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-slate-800">SiBubur POS System</h2>
+          <div className="flex items-center">
+            <img
+              src="/sibubur-high-resolution-logo-transparent.png"
+              alt="SiBubur Logo"
+              className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
+            />
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">

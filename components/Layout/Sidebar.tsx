@@ -48,14 +48,25 @@ export default function Sidebar() {
       <div className={`border-b border-slate-700 flex-shrink-0 ${isCollapsed ? 'p-3' : 'p-6'}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           {!isCollapsed && (
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-white">SiBubur</h1>
-              <p className="text-sm text-slate-400 mt-1">Point of Sale</p>
+            <div className="flex-1 flex items-center gap-3">
+              <img
+                src="/sibubur-high-resolution-logo-transparent.png"
+                alt="SiBubur Logo"
+                className="h-8 w-8 object-contain"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-white">SiBubur</h1>
+                <p className="text-sm text-slate-400 mt-1">Point of Sale</p>
+              </div>
             </div>
           )}
           {isCollapsed && (
             <div className="flex justify-center w-full mb-2">
-              <h1 className="text-2xl font-bold text-white">S</h1>
+              <img
+                src="/sibubur-high-resolution-logo-transparent.png"
+                alt="SiBubur Logo"
+                className="h-10 w-10 object-contain"
+              />
             </div>
           )}
           <button
