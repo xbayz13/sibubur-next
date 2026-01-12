@@ -10,6 +10,7 @@ import { storesService } from '@/lib/services/stores';
 import { Employee, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import EmployeeForm from '@/components/MasterData/EmployeeForm';
+import Button from '@/components/ui/Button';
 
 export default function EmployeesPage() {
   const { showToast } = useToast();
@@ -88,7 +89,7 @@ export default function EmployeesPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -102,15 +103,12 @@ export default function EmployeesPage() {
           <BackButton href="/master-data" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Karyawan</h1>
-              <p className="text-slate-600">Manajemen data karyawan</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Karyawan</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen data karyawan</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <Button onClick={handleCreate} size="md">
               + Tambah Karyawan
-            </button>
+            </Button>
           </div>
 
           <DataTable
@@ -126,11 +124,11 @@ export default function EmployeesPage() {
                 accessor: (item) => {
                   const status = (item as any).status;
                   return status === 'active' ? (
-                    <span className="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs">
+                    <span className="px-2 py-1 bg-success-100 text-success-800 dark:bg-success-500/20 dark:text-success-400 rounded-full text-xs">
                       Aktif
                     </span>
                   ) : (
-                    <span className="px-2 py-1 bg-slate-100 text-slate-800 rounded-full text-xs">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 rounded-full text-xs">
                       Tidak Aktif
                     </span>
                   );

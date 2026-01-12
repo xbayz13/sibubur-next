@@ -9,6 +9,7 @@ import { productAddonsService } from '@/lib/services/product-addons';
 import { ProductAddon } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import AddonForm from '@/components/MasterData/AddonForm';
+import Button from '@/components/ui/Button';
 
 export default function ProductAddonsPage() {
   const { showToast } = useToast();
@@ -77,7 +78,7 @@ export default function ProductAddonsPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -91,15 +92,12 @@ export default function ProductAddonsPage() {
           <BackButton href="/master-data" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Addon Produk</h1>
-              <p className="text-slate-600">Manajemen addon produk</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Addon Produk</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen addon produk</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <Button onClick={handleCreate} size="md">
               + Tambah Addon
-            </button>
+            </Button>
           </div>
 
           <DataTable

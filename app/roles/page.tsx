@@ -11,6 +11,10 @@ import { rolePermissionsService } from '@/lib/services/role-permissions';
 import { Role, Permission } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import Link from 'next/link';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/form/Input';
+import Label from '@/components/form/Label';
 
 export default function RolesPage() {
   const { showToast } = useToast();
@@ -81,7 +85,7 @@ export default function RolesPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -95,15 +99,12 @@ export default function RolesPage() {
           <BackButton href="/" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Role</h1>
-              <p className="text-slate-600">Manajemen role dan izin akses</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Role</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen role dan izin akses</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm hover:shadow-md"
-            >
+            <Button onClick={handleCreate} size="md">
               Tambah Role
-            </button>
+            </Button>
           </div>
 
           {/* Roles Table */}
@@ -131,7 +132,7 @@ export default function RolesPage() {
                 accessor: (role) => (
                   <Link
                     href={`/roles/${role.id}/permissions`}
-                    className="text-indigo-600 hover:text-indigo-900 text-sm"
+                    className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 text-sm"
                   >
                     Kelola Permission
                   </Link>
@@ -181,41 +182,34 @@ function RoleForm({ role, onSubmit, onCancel }: RoleFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-        <h2 className="text-xl font-bold mb-4 text-slate-800">{role ? 'Edit Role' : 'Tambah Role'}</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal isOpen={true} onClose={onCancel}>
+      <div className="max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white/90">{role ? 'Edit Role' : 'Tambah Role'}</h2>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Nama Role *
-            </label>
-            <input
+            <Label htmlFor="name">
+              Nama Role <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              id="name"
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required
             />
           </div>
 
-          <div className="flex gap-2 pt-4">
-            <button
-              type="submit"
-              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all"
-            >
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" className="flex-1">
               Simpan
-            </button>
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 bg-slate-200 text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-300 transition-colors"
-            >
+            </Button>
+            <Button type="button" onClick={onCancel} variant="outline" className="flex-1">
               Batal
-            </button>
+            </Button>
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }
 

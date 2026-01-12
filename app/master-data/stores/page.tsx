@@ -9,6 +9,7 @@ import { storesService } from '@/lib/services/stores';
 import { Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import StoreForm from '@/components/MasterData/StoreForm';
+import Button from '@/components/ui/Button';
 
 export default function StoresPage() {
   const { showToast } = useToast();
@@ -77,7 +78,7 @@ export default function StoresPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -91,15 +92,12 @@ export default function StoresPage() {
           <BackButton href="/master-data" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Toko</h1>
-              <p className="text-slate-600">Manajemen data toko</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Toko</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen data toko</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <Button onClick={handleCreate} size="md">
               + Tambah Toko
-            </button>
+            </Button>
           </div>
 
           <DataTable

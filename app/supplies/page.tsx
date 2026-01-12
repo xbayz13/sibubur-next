@@ -10,6 +10,8 @@ import { Supply } from '@/types';
 import SupplyList from '@/components/Supplies/SupplyList';
 import RestockModal from '@/components/Supplies/RestockModal';
 import SupplyForm from '@/components/Supplies/SupplyForm';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 export default function SuppliesPage() {
   const { showToast } = useToast();
@@ -101,7 +103,7 @@ export default function SuppliesPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -115,48 +117,46 @@ export default function SuppliesPage() {
           <BackButton href="/" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Persediaan</h1>
-              <p className="text-slate-600">Manajemen stok bahan baku</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Persediaan</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen stok bahan baku</p>
             </div>
-            <button
-              onClick={() => setShowSupplyForm(true)}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <Button onClick={() => setShowSupplyForm(true)} size="md">
               + Tambah Persediaan
-            </button>
+            </Button>
           </div>
 
           {/* Low Stock Alert */}
           {lowStockSupplies.length > 0 && (
-            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+            <Card className="border-error-200 bg-error-50 dark:bg-error-500/10 dark:border-error-500/20">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-semibold text-rose-900">
+                  <h3 className="font-semibold text-error-900 dark:text-error-400">
                     Peringatan: {lowStockSupplies.length} persediaan dengan stok rendah
                   </h3>
-                  <p className="text-sm text-rose-700 mt-1">
+                  <p className="text-sm text-error-700 dark:text-error-500 mt-1">
                     Beberapa persediaan perlu di-restock segera
                   </p>
                 </div>
-                <button
+                <Button
                   onClick={() => setFilter('low-stock')}
-                  className="bg-rose-600 text-white px-4 py-2 rounded-lg hover:bg-rose-700 transition-colors"
+                  size="sm"
+                  className="bg-error-600 hover:bg-error-700"
                 >
                   Lihat Stok Rendah
-                </button>
+                </Button>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* Filter Tabs */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+          <Card>
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   filter === 'all'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                 }`}
               >
                 Semua Persediaan
@@ -165,14 +165,14 @@ export default function SuppliesPage() {
                 onClick={() => setFilter('low-stock')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   filter === 'low-stock'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                 }`}
               >
                 Stok Rendah ({lowStockSupplies.length})
               </button>
             </div>
-          </div>
+          </Card>
 
           <SupplyList
             supplies={displayedSupplies}

@@ -1,6 +1,7 @@
 'use client';
 
 import { Supply } from '@/types';
+import Card from '@/components/ui/Card';
 
 interface SupplyListProps {
   supplies: Supply[];
@@ -17,69 +18,71 @@ export default function SupplyList({
 }: SupplyListProps) {
   const getStockStatus = (supply: Supply) => {
     if (supply.stock <= 0) {
-      return { label: 'Habis', color: 'bg-rose-100 text-rose-800' };
+      return { label: 'Habis', color: 'bg-error-100 text-error-800 dark:bg-error-500/20 dark:text-error-400' };
     } else if (supply.stock <= supply.minStock) {
-      return { label: 'Rendah', color: 'bg-yellow-100 text-yellow-800' };
+      return { label: 'Rendah', color: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-400' };
     } else {
-      return { label: 'Aman', color: 'bg-emerald-100 text-emerald-800' };
+      return { label: 'Aman', color: 'bg-success-100 text-success-800 dark:bg-success-500/20 dark:text-success-400' };
     }
   };
 
   if (supplies.length === 0) {
     return (
-      <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center">
-        <p className="text-slate-500">Belum ada data persediaan</p>
-      </div>
+      <Card>
+        <div className="p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">Belum ada data persediaan</p>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <Card>
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-slate-50">
+          <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Nama Persediaan
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Unit
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Stok Saat Ini
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Stok Minimum
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Harga
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Aksi
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
             {supplies.map((supply) => {
               const status = getStockStatus(supply);
               return (
-                <tr key={supply.id} className="hover:bg-slate-50">
+                <tr key={supply.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900">{supply.name}</div>
+                    <div className="text-sm font-medium text-gray-800 dark:text-white/90">{supply.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">{supply.unit}</div>
+                    <div className="text-sm text-gray-800 dark:text-white/90">{supply.unit}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900">
+                    <div className="text-sm font-medium text-gray-800 dark:text-white/90">
                       {Number(supply.stock).toLocaleString('id-ID')}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">
+                    <div className="text-sm text-gray-800 dark:text-white/90">
                       {Number(supply.minStock).toLocaleString('id-ID')}
                     </div>
                   </td>
@@ -91,7 +94,7 @@ export default function SupplyList({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">
+                    <div className="text-sm text-gray-800 dark:text-white/90">
                       {supply.price
                         ? `Rp ${Number(supply.price).toLocaleString('id-ID')}`
                         : '-'}
@@ -101,13 +104,13 @@ export default function SupplyList({
                     <div className="flex gap-2">
                       <button
                         onClick={() => onRestock(supply)}
-                        className="text-emerald-600 hover:text-emerald-900"
+                        className="text-success-600 hover:text-success-700 dark:text-success-400 dark:hover:text-success-300"
                       >
                         Restock
                       </button>
                       <button
                         onClick={() => onDelete(supply.id)}
-                        className="text-rose-600 hover:text-rose-900"
+                        className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300"
                       >
                         Hapus
                       </button>
@@ -119,7 +122,6 @@ export default function SupplyList({
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }
-

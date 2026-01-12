@@ -8,6 +8,12 @@ import { useToast } from '@/components/ToastContainer';
 import { permissionsService, CreatePermissionDto, UpdatePermissionDto } from '@/lib/services/permissions';
 import { Permission } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/form/Input';
+import Label from '@/components/form/Label';
+import Select from '@/components/form/Select';
+import Card from '@/components/ui/Card';
 
 export default function PermissionsPage() {
   const { showToast } = useToast();
@@ -84,7 +90,7 @@ export default function PermissionsPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -98,35 +104,29 @@ export default function PermissionsPage() {
           <BackButton href="/" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Permission</h1>
-              <p className="text-slate-600">Manajemen izin akses sistem</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Permission</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen izin akses sistem</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm hover:shadow-md"
-            >
+            <Button onClick={handleCreate} size="md">
               Tambah Permission
-            </button>
+            </Button>
           </div>
 
           {/* Module Filter */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Filter Module
-            </label>
-            <select
+          <Card>
+            <Label htmlFor="moduleFilter">Filter Module</Label>
+            <Select
+              id="moduleFilter"
+              options={modules.map((module) => ({
+                value: module,
+                label: module,
+              }))}
+              placeholder="Semua Module"
               value={moduleFilter}
-              onChange={(e) => setModuleFilter(e.target.value)}
-              className="w-full md:w-64 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Semua Module</option>
-              {modules.map((module) => (
-                <option key={module} value={module}>
-                  {module}
-                </option>
-              ))}
-            </select>
-          </div>
+              onChange={(value) => setModuleFilter(value)}
+              className="w-full md:w-64"
+            />
+          </Card>
 
           {/* Permissions Table */}
           <DataTable
@@ -190,72 +190,65 @@ function PermissionForm({ permission, onSubmit, onCancel }: PermissionFormProps)
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-        <h2 className="text-xl font-bold mb-4 text-slate-800">
+    <Modal isOpen={true} onClose={onCancel}>
+      <div className="max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white/90">
           {permission ? 'Edit Permission' : 'Tambah Permission'}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Module *
-            </label>
-            <input
+            <Label htmlFor="module">
+              Module <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              id="module"
               type="text"
               value={formData.module}
               onChange={(e) => setFormData({ ...formData, module: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required
               placeholder="e.g., products"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Action *
-            </label>
-            <input
+            <Label htmlFor="action">
+              Action <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              id="action"
               type="text"
               value={formData.action}
               onChange={(e) => setFormData({ ...formData, action: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required
               placeholder="e.g., create"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Slug *
-            </label>
-            <input
+            <Label htmlFor="slug">
+              Slug <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              id="slug"
               type="text"
               value={formData.slug}
               onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required
               placeholder="e.g., products.create"
             />
           </div>
 
-          <div className="flex gap-2 pt-4">
-            <button
-              type="submit"
-              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all"
-            >
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" className="flex-1">
               Simpan
-            </button>
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 bg-slate-200 text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-300 transition-colors"
-            >
+            </Button>
+            <Button type="button" onClick={onCancel} variant="outline" className="flex-1">
               Batal
-            </button>
+            </Button>
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }
 

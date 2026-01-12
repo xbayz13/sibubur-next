@@ -11,6 +11,11 @@ import { DailyReport, MonthlyReport, YearlyReport, Store } from '@/types';
 import DailyReportView from '@/components/Reports/DailyReportView';
 import MonthlyReportView from '@/components/Reports/MonthlyReportView';
 import YearlyReportView from '@/components/Reports/YearlyReportView';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Select from '@/components/form/Select';
+import Label from '@/components/form/Label';
+import Input from '@/components/form/Input';
 
 type ReportType = 'daily' | 'monthly' | 'yearly';
 
@@ -182,21 +187,21 @@ export default function ReportsPage() {
         <div className="space-y-6">
           <BackButton href="/" />
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Laporan</h1>
-            <p className="text-slate-600">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Laporan</h1>
+            <p className="text-gray-500 dark:text-gray-400">
               Laporan harian, bulanan, dan tahunan dengan rekomendasi produksi
             </p>
           </div>
 
           {/* Report Type Selection */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+          <Card>
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setReportType('daily')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   reportType === 'daily'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                 }`}
               >
                 Laporan Harian
@@ -205,8 +210,8 @@ export default function ReportsPage() {
                 onClick={() => setReportType('monthly')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   reportType === 'monthly'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                 }`}
               >
                 Laporan Bulanan
@@ -215,8 +220,8 @@ export default function ReportsPage() {
                 onClick={() => setReportType('yearly')}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   reportType === 'yearly'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
                 }`}
               >
                 Laporan Tahunan
@@ -226,38 +231,33 @@ export default function ReportsPage() {
             {/* Store Filter */}
             {stores.length > 0 && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Filter berdasarkan Toko:
-                </label>
-                <select
-                  value={selectedStoreId || ''}
-                  onChange={(e) =>
-                    setSelectedStoreId(e.target.value ? Number(e.target.value) : undefined)
+                <Label htmlFor="storeFilter">Filter berdasarkan Toko:</Label>
+                <Select
+                  id="storeFilter"
+                  options={stores.map((store) => ({
+                    value: store.id.toString(),
+                    label: store.name,
+                  }))}
+                  placeholder="Semua Toko"
+                  value={selectedStoreId?.toString() || ''}
+                  onChange={(value) =>
+                    setSelectedStoreId(value ? Number(value) : undefined)
                   }
-                  className="border border-slate-300 rounded-lg px-4 py-2 w-full max-w-xs text-slate-900 bg-white"
-                >
-                  <option value="">Semua Toko</option>
-                  {stores.map((store) => (
-                    <option key={store.id} value={store.id}>
-                      {store.name}
-                    </option>
-                  ))}
-                </select>
+                  className="w-full max-w-xs"
+                />
               </div>
             )}
 
             {/* Date/Period Selection */}
-            <div className="flex gap-4 items-end">
+            <div className="flex gap-4 items-end flex-wrap">
               {reportType === 'daily' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Pilih Tanggal:
-                  </label>
-                  <input
+                  <Label htmlFor="dailyDate">Pilih Tanggal:</Label>
+                  <Input
+                    id="dailyDate"
                     type="date"
                     value={dailyDate}
                     onChange={(e) => setDailyDate(e.target.value)}
-                    className="border border-slate-300 rounded-lg px-4 py-2 text-slate-900 bg-white"
                   />
                 </div>
               )}
@@ -265,70 +265,69 @@ export default function ReportsPage() {
               {reportType === 'monthly' && (
                 <div className="flex gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Tahun:
-                    </label>
-                    <input
+                    <Label htmlFor="monthlyYear">Tahun:</Label>
+                    <Input
+                      id="monthlyYear"
                       type="number"
-                      value={monthlyYear}
+                      value={monthlyYear.toString()}
                       onChange={(e) => setMonthlyYear(Number(e.target.value))}
                       min="2020"
                       max="2100"
-                      className="border border-slate-300 rounded-lg px-4 py-2 w-32 text-slate-900 bg-white"
+                      className="w-32"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Bulan:
-                    </label>
-                    <select
-                      value={monthlyMonth}
-                      onChange={(e) => setMonthlyMonth(Number(e.target.value))}
-                      className="border border-slate-300 rounded-lg px-4 py-2 text-slate-900 bg-white"
-                    >
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                        <option key={month} value={month}>
-                          {new Date(2000, month - 1).toLocaleString('id-ID', {
+                    <Label htmlFor="monthlyMonth">Bulan:</Label>
+                    <Select
+                      id="monthlyMonth"
+                      options={Array.from({ length: 12 }, (_, i) => {
+                        const month = i + 1;
+                        return {
+                          value: month.toString(),
+                          label: new Date(2000, month - 1).toLocaleString('id-ID', {
                             month: 'long',
-                          })}
-                        </option>
-                      ))}
-                    </select>
+                          }),
+                        };
+                      })}
+                      value={monthlyMonth.toString()}
+                      onChange={(value) => setMonthlyMonth(Number(value))}
+                    />
                   </div>
                 </div>
               )}
 
               {reportType === 'yearly' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Pilih Tahun:
-                  </label>
-                  <input
+                  <Label htmlFor="yearlyYear">Pilih Tahun:</Label>
+                  <Input
+                    id="yearlyYear"
                     type="number"
-                    value={yearlyYear}
+                    value={yearlyYear.toString()}
                     onChange={(e) => setYearlyYear(Number(e.target.value))}
                     min="2020"
                     max="2100"
-                    className="border border-slate-300 rounded-lg px-4 py-2 w-32 text-slate-900 bg-white"
+                    className="w-32"
                   />
                 </div>
               )}
 
-              <button
+              <Button
                 onClick={handleLoadReport}
                 disabled={loading}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                size="sm"
               >
                 {loading ? 'Memuat...' : 'Muat Laporan'}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
 
           {/* Report Content */}
           {loading && (
-            <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center">
-              <div className="text-slate-500">Memuat laporan...</div>
-            </div>
+            <Card>
+              <div className="p-8 text-center">
+                <div className="text-gray-500 dark:text-gray-400">Memuat laporan...</div>
+              </div>
+            </Card>
           )}
 
           {!loading && reportType === 'daily' && dailyReport && (
@@ -347,25 +346,31 @@ export default function ReportsPage() {
             reportType === 'daily' &&
             !dailyReport &&
             dailyDate && (
-              <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center">
-                <p className="text-slate-500">Tidak ada data untuk tanggal yang dipilih</p>
-              </div>
+              <Card>
+                <div className="p-8 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">Tidak ada data untuk tanggal yang dipilih</p>
+                </div>
+              </Card>
             )}
 
           {!loading &&
             reportType === 'monthly' &&
             !monthlyReport && (
-              <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center">
-                <p className="text-slate-500">Tidak ada data untuk periode yang dipilih</p>
-              </div>
+              <Card>
+                <div className="p-8 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">Tidak ada data untuk periode yang dipilih</p>
+                </div>
+              </Card>
             )}
 
           {!loading &&
             reportType === 'yearly' &&
             !yearlyReport && (
-              <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center">
-                <p className="text-slate-500">Tidak ada data untuk tahun yang dipilih</p>
-              </div>
+              <Card>
+                <div className="p-8 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">Tidak ada data untuk tahun yang dipilih</p>
+                </div>
+              </Card>
             )}
         </div>
       </MainLayout>

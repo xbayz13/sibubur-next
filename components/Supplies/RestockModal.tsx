@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import { Supply } from '@/types';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/form/Input';
+import Label from '@/components/form/Label';
+import Button from '@/components/ui/Button';
 
 interface RestockModalProps {
   supply: Supply;
@@ -33,37 +37,38 @@ export default function RestockModal({
   const newStock = currentStock + (parseFloat(quantity) || 0);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">Restock Persediaan</h2>
+    <Modal isOpen={true} onClose={onClose}>
+      <div className="max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white/90 mb-6">Restock Persediaan</h2>
 
-          <div className="space-y-4 mb-6">
+        <div className="space-y-5 mb-6">
+          <div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Nama Persediaan</div>
+            <div className="text-lg font-semibold text-gray-800 dark:text-white/90">{supply.name}</div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-slate-600">Nama Persediaan</div>
-              <div className="text-lg font-semibold">{supply.name}</div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-slate-600">Stok Saat Ini</div>
-                <div className="text-xl font-bold text-slate-800">
-                  {currentStock.toLocaleString('id-ID')} {supply.unit}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-slate-600">Stok Minimum</div>
-                <div className="text-xl font-semibold text-slate-800">
-                  {Number(supply.minStock).toLocaleString('id-ID')} {supply.unit}
-                </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Stok Saat Ini</div>
+              <div className="text-xl font-bold text-gray-800 dark:text-white/90">
+                {currentStock.toLocaleString('id-ID')} {supply.unit}
               </div>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Jumlah yang Ditambahkan *
-              </label>
-              <input
+              <div className="text-sm text-gray-600 dark:text-gray-400">Stok Minimum</div>
+              <div className="text-xl font-semibold text-gray-800 dark:text-white/90">
+                {Number(supply.minStock).toLocaleString('id-ID')} {supply.unit}
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="quantity">
+                Jumlah yang Ditambahkan <span className="text-error-500">*</span>
+              </Label>
+              <Input
+                id="quantity"
                 type="number"
                 value={quantity}
                 onChange={(e) => {
@@ -72,19 +77,19 @@ export default function RestockModal({
                 }}
                 min="0"
                 step="0.01"
-                className="w-full border border-slate-300 rounded-lg px-4 py-2 text-lg"
                 placeholder="0"
                 required
+                error={!!error}
               />
               {quantity && parseFloat(quantity) > 0 && (
-                <div className="mt-2">
-                  <div className="text-sm text-slate-600">
-                    Stok setelah restock: <span className="font-semibold text-emerald-600">
+                <div className="mt-2 space-y-1">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Stok setelah restock: <span className="font-semibold text-success-600 dark:text-success-400">
                       {newStock.toLocaleString('id-ID')} {supply.unit}
                     </span>
                   </div>
                   {newStock >= supply.minStock && (
-                    <div className="text-xs text-emerald-600 mt-1">
+                    <div className="text-xs text-success-600 dark:text-success-400">
                       ✓ Stok akan mencapai level aman
                     </div>
                   )}
@@ -93,31 +98,22 @@ export default function RestockModal({
             </div>
 
             {error && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2 rounded">
+              <div className="bg-error-50 border border-error-200 text-error-700 dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400 px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
-          </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-            >
-              Tambah Stok
-            </button>
-          </div>
+            <div className="flex gap-3 pt-4">
+              <Button type="button" onClick={onClose} variant="outline" className="flex-1">
+                Batal
+              </Button>
+              <Button type="submit" className="flex-1 bg-success-600 hover:bg-success-700">
+                Tambah Stok
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
-

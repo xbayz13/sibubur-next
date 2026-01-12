@@ -11,6 +11,8 @@ import { Product, ProductCategory } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import ProductForm from '@/components/MasterData/ProductForm';
 import ProductAddonsManager from '@/components/MasterData/ProductAddonsManager';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
 export default function ProductsPage() {
   const { showToast } = useToast();
@@ -85,7 +87,7 @@ export default function ProductsPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -99,95 +101,92 @@ export default function ProductsPage() {
           <BackButton href="/master-data" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Produk</h1>
-              <p className="text-slate-600">Manajemen data produk</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Produk</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen data produk</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <Button onClick={handleCreate} size="md">
               + Tambah Produk
-            </button>
+            </Button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+          <Card>
             {products.length === 0 ? (
-              <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 text-center">
-                <p className="text-slate-500">Belum ada data</p>
+              <div className="p-8 text-center">
+                <p className="text-gray-500 dark:text-gray-400">Belum ada data</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Nama
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Kategori
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Harga
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Addons
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Deskripsi
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Aksi
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-slate-200">
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                     {products.map((product) => (
-                      <tr key={product.id} className="hover:bg-slate-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                      <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-white/90">
                           {product.name}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-white/90">
                           {product.category?.name || '-'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-white/90">
                           Rp {Number(product.price).toLocaleString('id-ID')}
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-900">
+                        <td className="px-6 py-4 text-sm text-gray-800 dark:text-white/90">
                           {product.addons && product.addons.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {product.addons.map((addon) => (
                                 <span
                                   key={addon.id}
-                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800"
+                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-brand-100 text-brand-800 dark:bg-brand-500/20 dark:text-brand-400"
                                 >
                                   {addon.name}
                                 </span>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-slate-400">-</span>
+                            <span className="text-gray-400 dark:text-gray-500">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-900 max-w-xs truncate">
+                        <td className="px-6 py-4 text-sm text-gray-800 dark:text-white/90 max-w-xs truncate">
                           {product.description || '-'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEdit(product)}
-                              className="text-indigo-600 hover:text-indigo-900"
+                              className="text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => setManagingAddons(product)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                             >
                               Addons
                             </button>
                             <button
                               onClick={() => handleDelete(product)}
-                              className="text-rose-600 hover:text-rose-900"
+                              className="text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300"
                             >
                               Hapus
                             </button>
@@ -199,7 +198,7 @@ export default function ProductsPage() {
                 </table>
               </div>
             )}
-          </div>
+          </Card>
 
           {showForm && (
             <ProductForm

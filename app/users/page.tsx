@@ -10,6 +10,11 @@ import { rolesService } from '@/lib/services/roles';
 import { storesService } from '@/lib/services/stores';
 import { User, Role, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/form/Input';
+import Select from '@/components/form/Select';
+import Label from '@/components/form/Label';
 
 export default function UsersPage() {
   const { showToast } = useToast();
@@ -89,7 +94,7 @@ export default function UsersPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -103,15 +108,12 @@ export default function UsersPage() {
           <BackButton href="/" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Pengguna</h1>
-              <p className="text-slate-600">Manajemen pengguna sistem</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Pengguna</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen pengguna sistem</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm hover:shadow-md"
-            >
+            <Button onClick={handleCreate} size="md">
               Tambah Pengguna
-            </button>
+            </Button>
           </div>
 
           {/* Users Table */}
@@ -205,62 +207,67 @@ function UserForm({ user, roles, stores, onSubmit, onCancel }: UserFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-        <h2 className="text-xl font-bold mb-4 text-slate-800">
+    <Modal isOpen={true} onClose={onCancel}>
+      <div className="max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white/90">
           {user ? 'Edit Pengguna' : 'Tambah Pengguna'}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Username *
-            </label>
-            <input
+            <Label htmlFor="username">
+              Username <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              id="username"
               type="text"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required
               disabled={!!user}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Nama *
-            </label>
-            <input
+            <Label htmlFor="name">
+              Nama <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              id="name"
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Password {!user && '*'}
-            </label>
-            <input
+            <Label htmlFor="password">
+              Password {!user && <span className="text-error-500">*</span>}
+            </Label>
+            <Input
+              id="password"
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
               required={!user}
               placeholder={user ? 'Kosongkan jika tidak ingin mengubah' : ''}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Role *
-            </label>
-            <select
-              value={formData.roleId}
-              onChange={(e) => {
-                const newRoleId = Number(e.target.value);
-                // Clear storeId if role is not cashier
+            <Label htmlFor="role">
+              Role <span className="text-error-500">*</span>
+            </Label>
+            <Select
+              id="role"
+              options={roles.map((role) => ({
+                value: role.id.toString(),
+                label: role.name,
+              }))}
+              placeholder="Pilih Role"
+              value={formData.roleId.toString()}
+              onChange={(value) => {
+                const newRoleId = Number(value);
                 const newRole = roles.find((r) => r.id === newRoleId);
                 const isCashier = newRole?.name?.toLowerCase().includes('cashier') || false;
                 setFormData({
@@ -269,65 +276,46 @@ function UserForm({ user, roles, stores, onSubmit, onCancel }: UserFormProps) {
                   storeId: isCashier ? formData.storeId : null,
                 });
               }}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
-              required
-            >
-              <option value="">Pilih Role</option>
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {isCashierRole && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Toko *
-              </label>
-              <select
-                value={formData.storeId || ''}
-                onChange={(e) =>
+              <Label htmlFor="store">
+                Toko <span className="text-error-500">*</span>
+              </Label>
+              <Select
+                id="store"
+                options={stores.map((store) => ({
+                  value: store.id.toString(),
+                  label: store.name,
+                }))}
+                placeholder="Pilih Toko"
+                value={formData.storeId?.toString() || ''}
+                onChange={(value) =>
                   setFormData({
                     ...formData,
-                    storeId: e.target.value ? Number(e.target.value) : null,
+                    storeId: value ? Number(value) : null,
                   })
                 }
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
-                required={isCashierRole}
-              >
-                <option value="">Pilih Toko</option>
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-slate-500 mt-1">
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Cashier harus ditugaskan ke satu toko (1-to-1 relationship)
               </p>
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
-            <button
-              type="submit"
-              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all"
-            >
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" className="flex-1">
               Simpan
-            </button>
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 bg-slate-200 text-slate-800 px-4 py-2 rounded-lg hover:bg-slate-300 transition-colors"
-            >
+            </Button>
+            <Button type="button" onClick={onCancel} variant="outline" className="flex-1">
               Batal
-            </button>
+            </Button>
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   );
 }
 

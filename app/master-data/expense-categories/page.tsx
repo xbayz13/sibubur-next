@@ -9,6 +9,7 @@ import { expenseCategoriesService } from '@/lib/services/expense-categories';
 import { ExpenseCategory } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import CategoryForm from '@/components/MasterData/CategoryForm';
+import Button from '@/components/ui/Button';
 
 export default function ExpenseCategoriesPage() {
   const { showToast } = useToast();
@@ -77,7 +78,7 @@ export default function ExpenseCategoriesPage() {
       <ProtectedRoute>
         <MainLayout>
           <div className="flex items-center justify-center h-64">
-            <div className="text-slate-500">Memuat data...</div>
+            <div className="text-gray-500 dark:text-gray-400">Memuat data...</div>
           </div>
         </MainLayout>
       </ProtectedRoute>
@@ -91,15 +92,12 @@ export default function ExpenseCategoriesPage() {
           <BackButton href="/master-data" />
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-slate-800 mb-2">Kategori Pengeluaran</h1>
-              <p className="text-slate-600">Manajemen kategori pengeluaran</p>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Kategori Pengeluaran</h1>
+              <p className="text-gray-500 dark:text-gray-400">Manajemen kategori pengeluaran</p>
             </div>
-            <button
-              onClick={handleCreate}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <Button onClick={handleCreate} size="md">
               + Tambah Kategori
-            </button>
+            </Button>
           </div>
 
           <DataTable

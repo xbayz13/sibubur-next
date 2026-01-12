@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Employee, Store } from '@/types';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/form/Input';
+import Select from '@/components/form/Select';
+import Label from '@/components/form/Label';
+import Button from '@/components/ui/Button';
 
 interface EmployeeFormProps {
   employee?: Employee | null;
@@ -55,94 +60,78 @@ export default function EmployeeForm({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">
-            {employee ? 'Edit Karyawan' : 'Tambah Karyawan'}
-          </h2>
+    <Modal isOpen={true} onClose={onCancel}>
+      <div className="max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white/90 mb-6">
+          {employee ? 'Edit Karyawan' : 'Tambah Karyawan'}
+        </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Nama Karyawan *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="w-full border border-slate-300 rounded-lg px-4 py-2"
-                placeholder="Contoh: John Doe"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <Label htmlFor="name">
+              Nama Karyawan <span className="text-error-500">*</span>
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              placeholder="Contoh: John Doe"
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'active' | 'inactive')}
-                className="w-full border border-slate-300 rounded-lg px-4 py-2"
-              >
-                <option value="active">Aktif</option>
-                <option value="inactive">Tidak Aktif</option>
-              </select>
-            </div>
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <Select
+              id="status"
+              options={[
+                { value: 'active', label: 'Aktif' },
+                { value: 'inactive', label: 'Tidak Aktif' },
+              ]}
+              value={status}
+              onChange={(value) => setStatus(value as 'active' | 'inactive')}
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Gaji Harian
-              </label>
-              <input
-                type="number"
-                value={dailySalary}
-                onChange={(e) => setDailySalary(e.target.value)}
-                min="0"
-                step="1000"
-                className="w-full border border-slate-300 rounded-lg px-4 py-2"
-                placeholder="0 (opsional)"
-              />
-            </div>
+          <div>
+            <Label htmlFor="dailySalary">Gaji Harian</Label>
+            <Input
+              id="dailySalary"
+              type="number"
+              value={dailySalary}
+              onChange={(e) => setDailySalary(e.target.value)}
+              min="0"
+              step="1000"
+              placeholder="0 (opsional)"
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Toko
-              </label>
-              <select
-                value={storeId || ''}
-                onChange={(e) => setStoreId(e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full border border-slate-300 rounded-lg px-4 py-2"
-              >
-                <option value="">Pilih Toko</option>
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <Label htmlFor="store">Toko</Label>
+            <Select
+              id="store"
+              options={stores.map((store) => ({
+                value: store.id.toString(),
+                label: store.name,
+              }))}
+              placeholder="Pilih Toko"
+              value={storeId?.toString() || ''}
+              onChange={(value) => setStoreId(value ? Number(value) : undefined)}
+            />
+          </div>
 
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={onCancel}
-                className="flex-1 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-              >
-                {employee ? 'Perbarui' : 'Simpan'}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div className="flex gap-3 pt-4">
+            <Button type="button" onClick={onCancel} variant="outline" className="flex-1">
+              Batal
+            </Button>
+            <Button type="submit" className="flex-1">
+              {employee ? 'Perbarui' : 'Simpan'}
+            </Button>
+          </div>
+        </form>
       </div>
-    </div>
+    </Modal>
   );
 }
 
