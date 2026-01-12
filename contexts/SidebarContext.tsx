@@ -4,7 +4,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 interface SidebarContextType {
   isCollapsed: boolean;
+  isExpanded: boolean; // Alias for !isCollapsed
   isMobileOpen: boolean;
+  isHovered: boolean;
+  setIsHovered: (hovered: boolean) => void;
   toggleSidebar: () => void;
   collapseSidebar: () => void;
   expandSidebar: () => void;
@@ -17,6 +20,7 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
 
   // Load saved state from localStorage on mount
   useEffect(() => {
@@ -70,7 +74,10 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     <SidebarContext.Provider
       value={{
         isCollapsed,
+        isExpanded: !isCollapsed,
         isMobileOpen,
+        isHovered,
+        setIsHovered,
         toggleSidebar,
         collapseSidebar,
         expandSidebar,

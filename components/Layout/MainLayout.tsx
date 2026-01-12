@@ -3,18 +3,29 @@
 import { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
+  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+
   return (
-    <div className="flex h-screen bg-slate-50">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden w-0">
+    <div className="min-h-screen xl:flex">
+      <div>
+        <Sidebar />
+      </div>
+      <div
+        className={`flex-1 transition-all duration-300 ease-in-out ${
+          isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]'
+        } ${isMobileOpen ? 'ml-0' : ''}`}
+      >
         <Header />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50">{children}</main>
+        <div className="p-4 mx-auto max-w-7xl md:p-6">
+          {children}
+        </div>
       </div>
     </div>
   );
