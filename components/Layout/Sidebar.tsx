@@ -14,10 +14,17 @@ import {
   UserCircleIcon,
   HorizontalDotsIcon,
   TableIcon,
-  BoxCubeIcon,
-  PieChartIcon,
-  PageIcon,
-  PlugInIcon,
+  CashierIcon,
+  OpenOrdersIcon,
+  ProductionIcon,
+  TransactionIcon,
+  InventoryIcon,
+  ExpenseIcon,
+  ReportIcon,
+  DatabaseIcon,
+  UserIcon,
+  KeyIcon,
+  SettingsIcon,
 } from '@/components/icons';
 
 type NavItem = {
@@ -31,21 +38,21 @@ type NavItem = {
 const mapMenuItemToIcon = (name: string): React.ReactNode => {
   const iconMap: Record<string, React.ReactNode> = {
     'Dashboard': <GridIcon />,
-    'Kasir': <BoxCubeIcon />,
-    'Pesanan Terbuka': <TableIcon />,
-    'Produksi Harian': <ListIcon />,
+    'Kasir': <CashierIcon />,
+    'Pesanan Terbuka': <OpenOrdersIcon />,
+    'Produksi Harian': <ProductionIcon />,
     'Pesanan': <TableIcon />,
-    'Transaksi': <PieChartIcon />,
-    'Persediaan': <BoxCubeIcon />,
-    'Pengeluaran': <PieChartIcon />,
+    'Transaksi': <TransactionIcon />,
+    'Persediaan': <InventoryIcon />,
+    'Pengeluaran': <ExpenseIcon />,
     'Karyawan': <UserCircleIcon />,
-    'Laporan': <PieChartIcon />,
-    'Data Master': <PageIcon />,
-    'Pengguna': <UserCircleIcon />,
-    'Role & Izin': <PlugInIcon />,
-    'Pengaturan': <PlugInIcon />,
+    'Laporan': <ReportIcon />,
+    'Data Master': <DatabaseIcon />,
+    'Pengguna': <UserIcon />,
+    'Role & Izin': <KeyIcon />,
+    'Pengaturan': <SettingsIcon />,
   };
-  return iconMap[name] || <PageIcon />;
+  return iconMap[name] || <GridIcon />;
 };
 
 // Master data submenu

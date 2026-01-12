@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,7 +10,7 @@ import Label from '@/components/form/Label';
 import Input from '@/components/form/Input';
 import Checkbox from '@/components/form/Checkbox';
 import Button from '@/components/ui/Button';
-import { EyeIcon, EyeCloseIcon, ChevronLeftIcon } from '@/components/icons';
+import { EyeIcon, EyeCloseIcon } from '@/components/icons';
 
 export default function LoginPage() {
   const [credentials, setCredentials] = useState<LoginRequest>({
@@ -51,22 +51,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
-      <div className="relative flex flex-col justify-center w-full h-screen lg:flex-row dark:bg-gray-900 sm:p-0">
-        <div className="flex flex-col flex-1">
-          <div className="w-full max-w-md pt-10 mx-auto">
-            <Link
-              href="/"
-              className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-            >
-              <ChevronLeftIcon className="w-5 h-5" />
-              Back to dashboard
-            </Link>
-          </div>
+    <div className="relative min-h-screen bg-white dark:bg-gray-900">
+      <div className="relative flex flex-col justify-center w-full min-h-screen lg:flex-row">
+        <div className="flex flex-col flex-1 px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
             <div>
-              <div className="mb-5 sm:mb-8">
-                <div className="flex justify-center mb-4">
+              <div className="mb-6 sm:mb-8">
+                <div className="flex justify-center mb-4 sm:mb-6">
                   <img
                     src="/sibubur-high-resolution-logo-transparent.png"
                     alt="SiBubur Logo"
@@ -82,9 +73,9 @@ export default function LoginPage() {
               </div>
               <div>
                 <form onSubmit={handleSubmit}>
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {error && (
-                      <div className="bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded-lg dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
+                      <div className="bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded-lg text-sm dark:bg-error-500/10 dark:border-error-500/20 dark:text-error-400">
                         {error}
                       </div>
                     )}
@@ -142,7 +133,7 @@ export default function LoginPage() {
                       <div className="flex items-center gap-3">
                         <Checkbox
                           checked={isChecked}
-                          onChange={(checked) => setIsChecked(checked)}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) => setIsChecked(e.target.checked)}
                           id="remember"
                         />
                         <label
@@ -166,18 +157,18 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="items-center hidden w-full h-full lg:w-1/2 bg-brand-950 dark:bg-white/5 lg:grid">
-          <div className="relative flex items-center justify-center z-1">
-            <div className="flex flex-col items-center max-w-xs">
-              <Link href="/" className="block mb-4">
+        <div className="hidden items-center justify-center w-full min-h-screen lg:w-1/2 bg-brand-950 dark:bg-white/5 lg:flex">
+          <div className="relative flex items-center justify-center px-6 py-12">
+            <div className="flex flex-col items-center max-w-md">
+              <Link href="/" className="block mb-6">
                 <img
                   src="/sibubur-high-resolution-logo-transparent.png"
                   alt="SiBubur Logo"
-                  className="h-16 w-auto object-contain"
+                  className="h-20 w-auto object-contain"
                 />
               </Link>
-              <p className="text-center text-gray-400 dark:text-white/60">
-                Sistem Point of Sale untuk Aplikasi SiBubur
+              <p className="text-center text-sm sm:text-base text-gray-400 dark:text-white/60 leading-relaxed">
+                Sistem manajemen terintegrasi untuk mengelola produksi, penjualan, persediaan, dan laporan bisnis bubur Anda
               </p>
             </div>
           </div>

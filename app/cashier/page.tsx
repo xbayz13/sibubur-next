@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import Sidebar from '@/components/Layout/Sidebar';
+import Header from '@/components/Layout/Header';
 import BackButton from '@/components/Layout/BackButton';
+import { useSidebar } from '@/contexts/SidebarContext';
 import { useToast } from '@/components/ToastContainer';
 import { useAuth } from '@/contexts/AuthContext';
 import { productsService } from '@/lib/services/products';
@@ -32,6 +34,7 @@ interface CartItem {
 export default function CashierPage() {
   const { showToast } = useToast();
   const { user } = useAuth();
+  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
   const [products, setProducts] = useState<Product[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -420,11 +423,18 @@ export default function CashierPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen bg-slate-50">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="h-full flex flex-col bg-slate-50">
-            {/* Header */}
+      <div className="min-h-screen xl:flex bg-slate-50">
+        <div>
+          <Sidebar />
+        </div>
+        <div
+          className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+            isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]'
+          } ${isMobileOpen ? 'ml-0' : ''}`}
+        >
+          <Header />
+          <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+            {/* Page Header */}
             <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4">
               <div className="mb-2">
                 <BackButton href="/" />
