@@ -8,7 +8,7 @@ import UserDropdown from '@/components/header/UserDropdown';
 import { ChevronLeftIcon } from '@/components/icons';
 
 export default function Header() {
-  const { isMobileOpen, toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { isMobileOpen, toggleSidebar, toggleMobileMenu } = useSidebar();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
 
@@ -108,7 +108,7 @@ export default function Header() {
     if (window.innerWidth >= 1024) {
       toggleSidebar();
     } else {
-      toggleMobileSidebar();
+      toggleMobileMenu();
     }
   };
 
