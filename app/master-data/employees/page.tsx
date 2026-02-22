@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -24,28 +24,43 @@ export default function EmployeesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
+  // Load stores once on mount (for dropdown)
   useEffect(() => {
-    loadData();
-  }, [page, showToast]);
+    const loadStores = async () => {
+      try {
+        const res = await storesService.getAll({ limit: 100 });
+        setStores(res.data);
+      } catch (error: any) {
+        showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
+      }
+    };
+    loadStores();
+  }, [showToast]);
 
-  const loadData = async () => {
+  const loadEmployees = useCallback(async (pageToLoad?: number) => {
     try {
       setLoading(true);
-      const [employeesRes, storesRes] = await Promise.all([
-        employeesService.getAll({ page, limit }),
-        storesService.getAll({ limit: 100 }),
-      ]);
-      setEmployees(employeesRes.data);
-      setStores(storesRes.data);
-      setTotal(employeesRes.total);
-      setTotalPages(employeesRes.totalPages);
+      const p = pageToLoad ?? pageRef.current;
+      const res = await employeesService.getAll({ page: p, limit });
+      setEmployees(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
+      if (pageToLoad !== undefined) setPage(pageToLoad);
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data karyawan', 'error');
+      showToastRef.current(error.response?.data?.message || 'Gagal memuat data karyawan', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
+
+  useEffect(() => {
+    loadEmployees(page);
+  }, [page, loadEmployees]);
 
   const handleCreate = () => {
     setEditingEmployee(null);
@@ -73,7 +88,7 @@ export default function EmployeesPage() {
       }
       setShowForm(false);
       setEditingEmployee(null);
-      await loadData();
+      await loadEmployees(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menyimpan karyawan', 'error');
     }
@@ -85,7 +100,7 @@ export default function EmployeesPage() {
     try {
       await employeesService.delete(employee.id);
       showToast('Karyawan berhasil dihapus', 'success');
-      await loadData();
+      await loadEmployees(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus karyawan', 'error');
     }

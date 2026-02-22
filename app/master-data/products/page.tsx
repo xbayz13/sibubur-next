@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -27,28 +27,43 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
+  // Load categories once on mount (for dropdown)
   useEffect(() => {
-    loadData();
-  }, [page, showToast]);
+    const loadCategories = async () => {
+      try {
+        const res = await productCategoriesService.getAll({ limit: 100 });
+        setCategories(res.data);
+      } catch (error: any) {
+        showToast(error.response?.data?.message || 'Gagal memuat data kategori', 'error');
+      }
+    };
+    loadCategories();
+  }, [showToast]);
 
-  const loadData = async () => {
+  const loadProducts = useCallback(async (pageToLoad?: number) => {
     try {
       setLoading(true);
-      const [productsRes, categoriesRes] = await Promise.all([
-        productsService.getAll({ page, limit }),
-        productCategoriesService.getAll({ limit: 100 }),
-      ]);
-      setProducts(productsRes.data);
-      setCategories(categoriesRes.data);
-      setTotal(productsRes.total);
-      setTotalPages(productsRes.totalPages);
+      const p = pageToLoad ?? pageRef.current;
+      const res = await productsService.getAll({ page: p, limit });
+      setProducts(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
+      if (pageToLoad !== undefined) setPage(pageToLoad);
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data produk', 'error');
+      showToastRef.current(error.response?.data?.message || 'Gagal memuat data produk', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
+
+  useEffect(() => {
+    loadProducts(page);
+  }, [page, loadProducts]);
 
   const handleCreate = () => {
     setEditingProduct(null);
@@ -71,7 +86,7 @@ export default function ProductsPage() {
       }
       setShowForm(false);
       setEditingProduct(null);
-      await loadData();
+      await loadProducts(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menyimpan produk', 'error');
     }
@@ -83,7 +98,7 @@ export default function ProductsPage() {
     try {
       await productsService.delete(product.id);
       showToast('Produk berhasil dihapus', 'success');
-      await loadData();
+      await loadProducts(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus produk', 'error');
     }
@@ -230,7 +245,7 @@ export default function ProductsPage() {
             <ProductAddonsManager
               product={managingAddons}
               onClose={() => setManagingAddons(null)}
-              onUpdate={loadData}
+              onUpdate={loadProducts}
             />
           )}
         </div>
