@@ -32,10 +32,12 @@ export default function RolesPage() {
     loadData();
   }, [page, showToast]);
 
-  const loadData = async () => {
+  const loadData = async (pageOverride?: number) => {
     try {
       setLoading(true);
-      const res = await rolesService.getAll({ page, limit });
+      const pageToLoad = pageOverride ?? page;
+      if (pageOverride !== undefined) setPage(pageOverride);
+      const res = await rolesService.getAll({ page: pageToLoad, limit });
       setRoles(res.data);
       setTotal(res.total);
       setTotalPages(res.totalPages);
@@ -64,7 +66,7 @@ export default function RolesPage() {
     try {
       await rolesService.delete(role.id);
       showToast('Role berhasil dihapus', 'success');
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus role', 'error');
     }
@@ -81,7 +83,7 @@ export default function RolesPage() {
       }
       setShowForm(false);
       setSelectedRole(null);
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menyimpan role', 'error');
     }

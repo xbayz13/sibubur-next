@@ -74,16 +74,18 @@ export default function ExpensesPage() {
     setPage(1);
   }, [selectedStoreId]);
 
-  const reloadExpenses = async () => {
+  const reloadExpenses = async (pageOverride?: number) => {
     try {
+      const pageToLoad = pageOverride ?? page;
       const res = await expensesService.getAll({
         storeId: selectedStoreId,
-        page,
+        page: pageToLoad,
         limit,
       });
       setExpenses(res.data);
       setTotal(res.total);
       setTotalPages(res.totalPages);
+      if (pageOverride !== undefined) setPage(pageOverride);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data pengeluaran', 'error');
       setExpenses([]);
@@ -108,7 +110,7 @@ export default function ExpensesPage() {
     try {
       await expensesService.delete(expense.id);
       showToast('Pengeluaran berhasil dihapus', 'success');
-      await reloadExpenses();
+      await reloadExpenses(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus pengeluaran', 'error');
     }
@@ -125,7 +127,7 @@ export default function ExpensesPage() {
       }
       setShowForm(false);
       setSelectedExpense(null);
-      await reloadExpenses();
+      await reloadExpenses(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menyimpan pengeluaran', 'error');
     }

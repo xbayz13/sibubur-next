@@ -31,6 +31,8 @@ export default function TransactionsPage() {
         setStores(storesRes.data);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
+      } finally {
+        setLoading(false);
       }
     };
     loadStores();
@@ -57,7 +59,6 @@ export default function TransactionsPage() {
         setTransactions([]);
       } finally {
         setTransactionsLoading(false);
-        setLoading(false);
       }
     };
 
@@ -68,12 +69,11 @@ export default function TransactionsPage() {
     setPage(1);
   }, [selectedStoreId]);
 
-  // Calculate totals (memoized)
+  // Calculate totals (memoized) - totalTransactions uses API total, revenue is sum of current page
   const { totalRevenue, totalTransactions } = useMemo(() => {
     const revenue = transactions.reduce((sum, txn) => sum + Number(txn.amount), 0);
-    const count = transactions.length;
-    return { totalRevenue: revenue, totalTransactions: count };
-  }, [transactions]);
+    return { totalRevenue: revenue, totalTransactions: total };
+  }, [transactions, total]);
 
   if (loading && transactions.length === 0) {
     return (

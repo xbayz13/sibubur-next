@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -29,30 +29,47 @@ export default function UsersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
+  // Load roles and stores once on mount (for form dropdowns)
   useEffect(() => {
-    loadData();
-  }, [page, showToast]);
+    const loadStaticData = async () => {
+      try {
+        const [rolesRes, storesRes] = await Promise.all([
+          rolesService.getAll({ limit: 100 }),
+          storesService.getAll({ limit: 100 }),
+        ]);
+        setRoles(rolesRes.data);
+        setStores(storesRes.data);
+      } catch (error: any) {
+        showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+      }
+    };
+    loadStaticData();
+  }, [showToast]);
 
-  const loadData = async () => {
+  const loadUsers = useCallback(async (pageOverride?: number) => {
     try {
       setLoading(true);
-      const [usersRes, rolesRes, storesRes] = await Promise.all([
-        usersService.getAll({ page, limit }),
-        roles.length === 0 ? rolesService.getAll({ limit: 100 }) : Promise.resolve(null),
-        stores.length === 0 ? storesService.getAll({ limit: 100 }) : Promise.resolve(null),
-      ]);
-      setUsers(usersRes.data);
-      setTotal(usersRes.total);
-      setTotalPages(usersRes.totalPages);
-      if (rolesRes) setRoles(rolesRes.data);
-      if (storesRes) setStores(storesRes.data);
+      const pageToLoad = pageOverride ?? pageRef.current;
+      const res = await usersService.getAll({ page: pageToLoad, limit });
+      setUsers(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
+      if (pageOverride !== undefined) setPage(pageOverride);
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data pengguna', 'error');
+      showToastRef.current(error.response?.data?.message || 'Gagal memuat data pengguna', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]);
+
+  useEffect(() => {
+    loadUsers(page);
+  }, [page, loadUsers]);
 
   const handleCreate = () => {
     setSelectedUser(null);
@@ -72,7 +89,7 @@ export default function UsersPage() {
     try {
       await usersService.delete(user.id);
       showToast('Pengguna berhasil dihapus', 'success');
-      await loadData();
+      await loadUsers(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus pengguna', 'error');
     }
@@ -89,7 +106,7 @@ export default function UsersPage() {
       }
       setShowForm(false);
       setSelectedUser(null);
-      await loadData();
+      await loadUsers(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menyimpan pengguna', 'error');
     }

@@ -32,9 +32,11 @@ export default function SuppliesPage() {
     loadData();
   }, [page, filter, showToast]);
 
-  const loadData = async () => {
+  const loadData = async (pageOverride?: number) => {
     try {
       setLoading(true);
+      const pageToLoad = pageOverride ?? page;
+      if (pageOverride !== undefined) setPage(pageOverride);
       if (filter === 'low-stock') {
         const lowStock = await suppliesService.getLowStock();
         setLowStockSupplies(lowStock);
@@ -42,7 +44,7 @@ export default function SuppliesPage() {
         setTotal(lowStock.length);
         setTotalPages(1);
       } else {
-        const res = await suppliesService.getAll({ page, limit });
+        const res = await suppliesService.getAll({ page: pageToLoad, limit });
         setSupplies(res.data);
         setLowStockSupplies([]);
         setTotal(res.total);
@@ -68,7 +70,7 @@ export default function SuppliesPage() {
       showToast('Stok berhasil ditambahkan', 'success');
       setShowRestockModal(false);
       setSelectedSupply(null);
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menambahkan stok', 'error');
     }
@@ -79,7 +81,7 @@ export default function SuppliesPage() {
       await suppliesService.create(supplyData);
       showToast('Persediaan berhasil ditambahkan', 'success');
       setShowSupplyForm(false);
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menambahkan persediaan', 'error');
     }
@@ -89,7 +91,7 @@ export default function SuppliesPage() {
     try {
       await suppliesService.update(id, supplyData);
       showToast('Persediaan berhasil diperbarui', 'success');
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memperbarui persediaan', 'error');
     }
@@ -101,7 +103,7 @@ export default function SuppliesPage() {
     try {
       await suppliesService.delete(id);
       showToast('Persediaan berhasil dihapus', 'success');
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus persediaan', 'error');
     }
@@ -110,7 +112,7 @@ export default function SuppliesPage() {
   const displayedSupplies = filter === 'low-stock' ? lowStockSupplies : supplies;
 
   useEffect(() => {
-    if (filter === 'all') setPage(1);
+    setPage(1);
   }, [filter]);
 
   if (loading) {

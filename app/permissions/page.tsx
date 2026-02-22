@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -27,20 +27,37 @@ export default function PermissionsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
+  const prevModuleFilterRef = useRef<string | null>(null);
+  const skipNextPageLoadRef = useRef(false);
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
   useEffect(() => {
     setPage(1);
   }, [moduleFilter]);
 
   useEffect(() => {
+    if (skipNextPageLoadRef.current) {
+      skipNextPageLoadRef.current = false;
+      return;
+    }
     loadData();
-  }, [moduleFilter, page, showToast]);
+  }, [moduleFilter, page]);
 
-  const loadData = async () => {
+  const loadData = async (pageOverride?: number) => {
     try {
       setLoading(true);
+      // When transitioning from module filter to no filter, use page 1 to avoid stale pagination state
+      const hadModuleFilter = prevModuleFilterRef.current !== null;
+      if (moduleFilter) prevModuleFilterRef.current = moduleFilter;
+      else prevModuleFilterRef.current = null;
+      const pageToLoad = pageOverride ?? (moduleFilter ? 1 : (hadModuleFilter ? 1 : page));
+      if (pageOverride !== undefined) {
+        setPage(pageOverride);
+        skipNextPageLoadRef.current = true;
+      }
       const res = await permissionsService.getAll(
-        moduleFilter ? { module: moduleFilter } : { page, limit }
+        moduleFilter ? { module: moduleFilter } : { page: pageToLoad, limit }
       );
       if (Array.isArray(res)) {
         setPermissions(res);
@@ -52,7 +69,7 @@ export default function PermissionsPage() {
         setTotalPages(res.totalPages);
       }
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data permission', 'error');
+      showToastRef.current(error.response?.data?.message || 'Gagal memuat data permission', 'error');
     } finally {
       setLoading(false);
     }
@@ -76,7 +93,7 @@ export default function PermissionsPage() {
     try {
       await permissionsService.delete(permission.id);
       showToast('Permission berhasil dihapus', 'success');
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus permission', 'error');
     }
@@ -93,7 +110,7 @@ export default function PermissionsPage() {
       }
       setShowForm(false);
       setSelectedPermission(null);
-      await loadData();
+      await loadData(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menyimpan permission', 'error');
     }

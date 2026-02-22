@@ -66,8 +66,10 @@ export default function OrdersPage() {
     setPage(1);
   }, [selectedStoreId]);
 
-  // Load orders when store filter or page changes
+  // Load orders when store filter or page changes (skip until store is selected)
   useEffect(() => {
+    if (!selectedStoreId) return;
+
     const loadOrders = async () => {
       try {
         setOrdersLoading(true);
@@ -88,8 +90,8 @@ export default function OrdersPage() {
       }
     };
 
-    if (!loading) loadOrders();
-  }, [selectedStoreId, page, loading, showToast]);
+    loadOrders();
+  }, [selectedStoreId, page, showToast]);
 
   const reloadOrders = useCallback(async (resetToPage1 = false) => {
     try {
@@ -109,7 +111,7 @@ export default function OrdersPage() {
     } finally {
       setOrdersLoading(false);
     }
-  }, [selectedStoreId, page, showToast]);
+  }, [selectedStoreId, page, limit, showToast]);
 
   const handleCreateOrder = async (orderData: CreateOrderDto) => {
     try {
