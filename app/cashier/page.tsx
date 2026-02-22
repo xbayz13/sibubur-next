@@ -61,19 +61,19 @@ export default function CashierPage() {
       try {
         setLoading(true);
         console.log('Loading products, stores, and payment methods...');
-        const [productsData, storesData, paymentMethodsData] = await Promise.all([
-          productsService.getAll(),
-          storesService.getAll(),
-          paymentMethodsService.getAll(),
+        const [productsRes, storesRes, paymentMethodsRes] = await Promise.all([
+          productsService.getAll({ limit: 100 }),
+          storesService.getAll({ limit: 100 }),
+          paymentMethodsService.getAll({ limit: 100 }),
         ]);
 
-        console.log('Products loaded:', productsData.length, productsData);
-        console.log('Stores loaded:', storesData.length, storesData);
-        console.log('Payment methods loaded:', paymentMethodsData.length, paymentMethodsData);
+        console.log('Products loaded:', productsRes.data.length, productsRes.data);
+        console.log('Stores loaded:', storesRes.data.length, storesRes.data);
+        console.log('Payment methods loaded:', paymentMethodsRes.data.length, paymentMethodsRes.data);
 
-        setProducts(productsData);
-        setStores(storesData);
-        setPaymentMethods(paymentMethodsData);
+        setProducts(productsRes.data);
+        setStores(storesRes.data);
+        setPaymentMethods(paymentMethodsRes.data);
 
         // Load cart from localStorage (for cancel and create new flow)
         const savedCart = localStorage.getItem('cashier_cart');
@@ -85,7 +85,7 @@ export default function CashierPage() {
             // Validate cart data with loaded products
             if (Array.isArray(cartData) && cartData.length > 0) {
               const validCart = cartData.filter((item: CartItem) =>
-                productsData.some((p) => p.id === item.productId)
+                productsRes.data.some((p) => p.id === item.productId)
               );
               if (validCart.length > 0) {
                 setCart(validCart);
@@ -107,6 +107,7 @@ export default function CashierPage() {
 
         // Clear cart if it contains invalid product IDs (only if not loading from localStorage)
         if (!savedCart) {
+          const productsData = productsRes.data;
           setCart((currentCart) => {
             const validCart = currentCart.filter((item) =>
               productsData.some((p) => p.id === item.productId)
@@ -120,8 +121,8 @@ export default function CashierPage() {
         }
 
         // Auto-set store: prioritize user.storeId, then first store
-        if (!storeSetRef.current && storesData.length > 0) {
-          const storeToSet = user?.storeId || storesData[0].id;
+        if (!storeSetRef.current && storesRes.data.length > 0) {
+          const storeToSet = user?.storeId || storesRes.data[0].id;
           console.log('Setting initial store:', storeToSet);
           setSelectedStoreId(storeToSet);
           storeSetRef.current = true;

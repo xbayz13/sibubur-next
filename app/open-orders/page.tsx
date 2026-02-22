@@ -47,8 +47,8 @@ export default function OpenOrdersPage() {
 
   const loadProducts = async () => {
     try {
-      const productsData = await productsService.getAll();
-      setProducts(productsData);
+      const res = await productsService.getAll({ limit: 100 });
+      setProducts(res.data);
     } catch (error: any) {
       console.error('Failed to load products:', error);
     }
@@ -71,8 +71,8 @@ export default function OpenOrdersPage() {
 
   const loadStores = async () => {
     try {
-      const storesData = await storesService.getAll();
-      setStores(storesData);
+      const res = await storesService.getAll({ limit: 100 });
+      setStores(res.data);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
     }
@@ -80,8 +80,8 @@ export default function OpenOrdersPage() {
 
   const loadPaymentMethods = async () => {
     try {
-      const methods = await paymentMethodsService.getAll();
-      setPaymentMethods(methods);
+      const res = await paymentMethodsService.getAll({ limit: 100 });
+      setPaymentMethods(res.data);
     } catch (error: any) {
       console.error('Failed to load payment methods:', error);
     }
@@ -91,8 +91,8 @@ export default function OpenOrdersPage() {
     if (!selectedStoreId) return;
     setLoading(true);
     try {
-      const ordersData = await ordersService.getAll(selectedStoreId);
-      const openOrders = ordersData.filter((o) => o.status === 'open');
+      const res = await ordersService.getAll({ storeId: selectedStoreId, limit: 100 });
+      const openOrders = res.data.filter((o) => o.status === 'open');
       setOrders(openOrders);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat pesanan', 'error');

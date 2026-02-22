@@ -43,8 +43,8 @@ export default function ReportsPage() {
 
   const loadStores = useCallback(async () => {
     try {
-      const storesData = await storesService.getAll();
-      setStores(storesData);
+      const storesRes = await storesService.getAll({ limit: 100 });
+      setStores(storesRes.data);
       // Default to "all stores" (selectedStoreId remains undefined)
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');

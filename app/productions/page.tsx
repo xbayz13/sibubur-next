@@ -8,11 +8,11 @@ import { useToast } from '@/components/ToastContainer';
 import { productionsService, CreateProductionDto } from '@/lib/services/productions';
 import { storesService } from '@/lib/services/stores';
 import { suppliesService } from '@/lib/services/supplies';
-import { weatherService } from '@/lib/services/weather';
 import { reportsService } from '@/lib/services/reports';
 import { Production, Store, Supply, Weather } from '@/types';
 import ProductionForm from '@/components/Productions/ProductionForm';
 import ProductionList from '@/components/Productions/ProductionList';
+import Pagination from '@/components/ui/Pagination';
 
 export default function ProductionsPage() {
   const { showToast } = useToast();
@@ -28,37 +28,48 @@ export default function ProductionsPage() {
   );
   const [recommendationLoading, setRecommendationLoading] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
+
   // Load stores and supplies only once
   useEffect(() => {
     const loadStaticData = async () => {
       try {
-        const [storesData, suppliesData] = await Promise.all([
-          storesService.getAll(),
-          suppliesService.getAll(),
+        const [storesRes, suppliesRes] = await Promise.all([
+          storesService.getAll({ limit: 100 }),
+          suppliesService.getAll({ limit: 100 }),
         ]);
-        setStores(storesData);
-        setSupplies(suppliesData);
+        setStores(storesRes.data);
+        setSupplies(suppliesRes.data);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
       }
     };
-    if (stores.length === 0) {
-      loadStaticData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    loadStaticData();
+  }, [showToast]);
 
-  // Load productions when filters change
   useEffect(() => {
+    setPage(1);
+  }, [selectedStoreId]);
+
+  // Load productions when filters or page change (wait for stores to load first)
+  useEffect(() => {
+    if (stores.length === 0) return;
+
     const loadProductions = async () => {
       try {
         setLoading(true);
-        // Clear productions first to show loading state
         setProductions([]);
-        const productionsData = await productionsService.getAll(
-          selectedStoreId
-        );
-        setProductions(productionsData);
+        const res = await productionsService.getAll({
+          storeId: selectedStoreId,
+          page,
+          limit,
+        });
+        setProductions(res.data);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
         setProductions([]);
@@ -68,7 +79,7 @@ export default function ProductionsPage() {
     };
 
     loadProductions();
-  }, [selectedStoreId, showToast]);
+  }, [selectedStoreId, page, stores.length, showToast]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -95,26 +106,32 @@ export default function ProductionsPage() {
     }
   };
 
-  const reloadProductions = useCallback(async () => {
+  const reloadProductions = useCallback(async (resetToPage1 = false) => {
     try {
       setLoading(true);
-      const productionsData = await productionsService.getAll(
-        selectedStoreId
-      );
-      setProductions(productionsData);
+      const pageToLoad = resetToPage1 ? 1 : page;
+      const res = await productionsService.getAll({
+        storeId: selectedStoreId,
+        page: pageToLoad,
+        limit,
+      });
+      setProductions(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
+      if (resetToPage1) setPage(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
     } finally {
       setLoading(false);
     }
-  }, [selectedStoreId, showToast]);
+  }, [selectedStoreId, page, limit, showToast]);
 
   const handleCreateProduction = async (productionData: CreateProductionDto) => {
     try {
       await productionsService.create(productionData);
       showToast('Produksi berhasil dicatat', 'success');
       setShowProductionForm(false);
-      await reloadProductions();
+      await reloadProductions(true); // Reset to page 1 to show newly created production
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal mencatat produksi', 'error');
     }
@@ -126,7 +143,7 @@ export default function ProductionsPage() {
     try {
       await productionsService.delete(id);
       showToast('Data produksi berhasil dihapus', 'success');
-      await reloadProductions();
+      await reloadProductions(true); // Reset to page 1 (list may have shifted)
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal menghapus data produksi', 'error');
     }
@@ -282,10 +299,19 @@ export default function ProductionsPage() {
 
           </div>
 
-          <ProductionList
-            productions={productions}
-            onDelete={handleDeleteProduction}
-          />
+          <div className="space-y-0">
+            <ProductionList
+              productions={productions}
+              onDelete={handleDeleteProduction}
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+            />
+          </div>
 
           {showProductionForm && (
             <ProductionForm

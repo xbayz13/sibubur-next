@@ -10,6 +10,7 @@ import { attendancesService, CreateAttendanceDto, UpdateAttendanceDto } from '@/
 import { storesService } from '@/lib/services/stores';
 import { Employee, Attendance, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
+import Pagination from '@/components/ui/Pagination';
 
 export default function EmployeesPage() {
   const { showToast } = useToast();
@@ -23,16 +24,21 @@ export default function EmployeesPage() {
   );
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 
-  // Load stores and employees only once
+  const [attPage, setAttPage] = useState(1);
+  const [attTotalPages, setAttTotalPages] = useState(1);
+  const [attTotal, setAttTotal] = useState(0);
+  const attLimit = 20;
+
+  // Load stores and employees only once (limit 100 for dropdown/form)
   useEffect(() => {
     const loadStaticData = async () => {
       try {
-        const [employeesData, storesData] = await Promise.all([
-          employeesService.getAll(),
-          storesService.getAll(),
+        const [employeesRes, storesRes] = await Promise.all([
+          employeesService.getAll({ limit: 100 }),
+          storesService.getAll({ limit: 100 }),
         ]);
-        setEmployees(employeesData);
-        setStores(storesData);
+        setEmployees(employeesRes.data);
+        setStores(storesRes.data);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
       }
@@ -40,13 +46,19 @@ export default function EmployeesPage() {
     loadStaticData();
   }, [showToast]);
 
-  // Load attendances when date or store filter changes
+  // Load attendances when date, store filter, or page changes
   useEffect(() => {
     const loadAttendances = async () => {
       try {
         setLoading(true);
-        const attendancesData = await attendancesService.getAll(undefined, selectedDate);
-        setAttendances(attendancesData);
+        const res = await attendancesService.getAll({
+          date: selectedDate,
+          page: attPage,
+          limit: attLimit,
+        });
+        setAttendances(res.data);
+        setAttTotal(res.total);
+        setAttTotalPages(res.totalPages);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data absensi', 'error');
         setAttendances([]);
@@ -55,7 +67,11 @@ export default function EmployeesPage() {
       }
     };
     loadAttendances();
-  }, [selectedDate, showToast]);
+  }, [selectedDate, attPage, showToast]);
+
+  useEffect(() => {
+    setAttPage(1);
+  }, [selectedDate]);
 
   // Filter employees by store (client-side filtering)
   const filteredEmployees = selectedStoreId
@@ -68,8 +84,14 @@ export default function EmployeesPage() {
 
   const reloadAttendances = async () => {
     try {
-      const attendancesData = await attendancesService.getAll(undefined, selectedDate);
-      setAttendances(attendancesData);
+      const res = await attendancesService.getAll({
+        date: selectedDate,
+        page: attPage,
+        limit: attLimit,
+      });
+      setAttendances(res.data);
+      setAttTotal(res.total);
+      setAttTotalPages(res.totalPages);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data absensi', 'error');
     }
@@ -252,11 +274,12 @@ export default function EmployeesPage() {
 
           {/* Attendance Records Table */}
           {attendances.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold mb-4 text-slate-800">Rekaman Absensi - {new Date(selectedDate).toLocaleDateString('id-ID')}</h2>
-              <DataTable
-                data={attendances}
-                columns={[
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+              <div className="p-6">
+                <h2 className="text-lg font-semibold mb-4 text-slate-800">Rekaman Absensi - {new Date(selectedDate).toLocaleDateString('id-ID')}</h2>
+                <DataTable
+                  data={attendances}
+                  columns={[
                   {
                     header: 'Karyawan',
                     accessor: (attendance) => attendance.employee?.name || '-',
@@ -280,8 +303,16 @@ export default function EmployeesPage() {
                     ),
                   },
                 ]}
-                onDelete={handleDeleteAttendance}
-                keyExtractor={(attendance) => attendance.id}
+                  onDelete={handleDeleteAttendance}
+                  keyExtractor={(attendance) => attendance.id}
+                />
+              </div>
+              <Pagination
+                page={attPage}
+                totalPages={attTotalPages}
+                total={attTotal}
+                limit={attLimit}
+                onPageChange={setAttPage}
               />
             </div>
           )}

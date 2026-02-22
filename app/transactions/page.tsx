@@ -9,6 +9,7 @@ import { transactionsService } from '@/lib/services/transactions';
 import { storesService } from '@/lib/services/stores';
 import { Transaction, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
+import Pagination from '@/components/ui/Pagination';
 
 export default function TransactionsPage() {
   const { showToast } = useToast();
@@ -17,13 +18,17 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   // Load stores only once on mount
   useEffect(() => {
     const loadStores = async () => {
       try {
-        const storesData = await storesService.getAll();
-        setStores(storesData);
+        const storesRes = await storesService.getAll({ limit: 100 });
+        setStores(storesRes.data);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
       }
@@ -31,22 +36,22 @@ export default function TransactionsPage() {
     loadStores();
   }, [showToast]);
 
-  // Load transactions when store filter changes
+  // Load transactions when store filter or page changes (wait for stores to load first)
   useEffect(() => {
-    const loadTransactions = async () => {
-      // Wait for stores to load first
-      if (stores.length === 0) {
-        return;
-      }
+    if (stores.length === 0) return;
 
+    const loadTransactions = async () => {
       try {
         setTransactionsLoading(true);
-        // Clear transactions first to show loading state
         setTransactions([]);
-        const transactionsData = await transactionsService.getAll(
-          selectedStoreId
-        );
-        setTransactions(transactionsData);
+        const res = await transactionsService.getAll({
+          storeId: selectedStoreId,
+          page,
+          limit,
+        });
+        setTransactions(res.data);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data transaksi', 'error');
         setTransactions([]);
@@ -57,7 +62,11 @@ export default function TransactionsPage() {
     };
 
     loadTransactions();
-  }, [selectedStoreId, stores.length, showToast]);
+  }, [selectedStoreId, page, stores.length, showToast]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedStoreId]);
 
   // Calculate totals (memoized)
   const { totalRevenue, totalTransactions } = useMemo(() => {
@@ -130,9 +139,10 @@ export default function TransactionsPage() {
               <div className="text-slate-500">Memuat transaksi...</div>
             </div>
           ) : (
-            <DataTable
-              data={transactions}
-            columns={[
+            <>
+              <DataTable
+                data={transactions}
+                columns={[
               {
                 header: 'No. Transaksi',
                 accessor: (transaction) => (
@@ -182,8 +192,16 @@ export default function TransactionsPage() {
                 ),
               },
             ]}
-            keyExtractor={(transaction) => transaction.id}
-            />
+                keyExtractor={(transaction) => transaction.id}
+              />
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                limit={limit}
+                onPageChange={setPage}
+              />
+            </>
           )}
         </div>
       </MainLayout>

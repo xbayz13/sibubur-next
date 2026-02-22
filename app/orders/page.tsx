@@ -15,6 +15,7 @@ import OrderForm from '@/components/Orders/OrderForm';
 import OrderList from '@/components/Orders/OrderList';
 import PaymentModal from '@/components/Orders/PaymentModal';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
+import Pagination from '@/components/ui/Pagination';
 import { isAutoPrintKitchenEnabled, isAutoPrintCustomerEnabled, shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
 
 export default function OrdersPage() {
@@ -33,20 +34,24 @@ export default function OrdersPage() {
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('customer');
   const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   // Load static data (products, stores, paymentMethods) only once
   useEffect(() => {
     const loadStaticData = async () => {
       try {
-        const [productsData, storesData, paymentMethodsData] = await Promise.all([
-          productsService.getAll(),
-          storesService.getAll(),
-          paymentMethodsService.getAll(),
+        const [productsRes, storesRes, paymentMethodsRes] = await Promise.all([
+          productsService.getAll({ limit: 100 }),
+          storesService.getAll({ limit: 100 }),
+          paymentMethodsService.getAll({ limit: 100 }),
         ]);
 
-        setProducts(productsData);
-        setStores(storesData);
-        setPaymentMethods(paymentMethodsData);
+        setProducts(productsRes.data);
+        setStores(storesRes.data);
+        setPaymentMethods(paymentMethodsRes.data);
         setLoading(false);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
@@ -56,22 +61,25 @@ export default function OrdersPage() {
     loadStaticData();
   }, [showToast]);
 
-  // Load orders when store filter changes
+  // Reset page when store filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [selectedStoreId]);
+
+  // Load orders when store filter or page changes
   useEffect(() => {
     const loadOrders = async () => {
-      // Wait for stores to load first
-      if (stores.length === 0) {
-        return;
-      }
-
       try {
         setOrdersLoading(true);
-        // Clear orders first to show loading state
         setOrders([]);
-        const ordersData = await ordersService.getAll(
-          selectedStoreId
-        );
-        setOrders(ordersData);
+        const res = await ordersService.getAll({
+          storeId: selectedStoreId,
+          page,
+          limit,
+        });
+        setOrders(res.data);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data pesanan', 'error');
         setOrders([]);
@@ -80,29 +88,35 @@ export default function OrdersPage() {
       }
     };
 
-    loadOrders();
-  }, [selectedStoreId, stores.length, showToast]);
+    if (!loading) loadOrders();
+  }, [selectedStoreId, page, loading, showToast]);
 
-  const reloadOrders = useCallback(async () => {
+  const reloadOrders = useCallback(async (resetToPage1 = false) => {
     try {
       setOrdersLoading(true);
-      const ordersData = await ordersService.getAll(
-        selectedStoreId
-      );
-      setOrders(ordersData);
+      const pageToLoad = resetToPage1 ? 1 : page;
+      const res = await ordersService.getAll({
+        storeId: selectedStoreId,
+        page: pageToLoad,
+        limit,
+      });
+      setOrders(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
+      if (resetToPage1) setPage(1);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data pesanan', 'error');
     } finally {
       setOrdersLoading(false);
     }
-  }, [selectedStoreId, showToast]);
+  }, [selectedStoreId, page, showToast]);
 
   const handleCreateOrder = async (orderData: CreateOrderDto) => {
     try {
       const newOrder = await ordersService.create(orderData);
       showToast('Pesanan berhasil dibuat', 'success');
       setShowOrderForm(false);
-      await reloadOrders(); // Reload orders after creating
+      await reloadOrders(true); // Reload orders after creating (reset to page 1)
       
       // Auto-print kitchen receipt after order creation (if enabled)
       if (isAutoPrintKitchenEnabled()) {
@@ -152,7 +166,7 @@ export default function OrdersPage() {
       }
       
       setSelectedOrder(null);
-      await reloadOrders(); // Reload orders after payment
+      await reloadOrders(); // Reload orders after payment (order stays on current page)
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memproses pembayaran', 'error');
     }
@@ -237,12 +251,21 @@ export default function OrdersPage() {
               <div className="text-slate-500">Memuat pesanan...</div>
             </div>
           ) : (
-            <OrderList
-              orders={orders}
-              onPayment={handlePayment}
-              onPrintReceipt={handlePrintReceipt}
-              onCancel={handleCancelOrder}
-            />
+            <>
+              <OrderList
+                orders={orders}
+                onPayment={handlePayment}
+                onPrintReceipt={handlePrintReceipt}
+                onCancel={handleCancelOrder}
+              />
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                limit={limit}
+                onPageChange={setPage}
+              />
+            </>
           )}
 
           {showOrderForm && (

@@ -10,6 +10,7 @@ import { expenseCategoriesService } from '@/lib/services/expense-categories';
 import { storesService } from '@/lib/services/stores';
 import { Expense, ExpenseCategory, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
+import Pagination from '@/components/ui/Pagination';
 
 export default function ExpensesPage() {
   const { showToast } = useToast();
@@ -21,16 +22,21 @@ export default function ExpensesPage() {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
+
   // Load categories and stores only once
   useEffect(() => {
     const loadStaticData = async () => {
       try {
-        const [categoriesData, storesData] = await Promise.all([
-          expenseCategoriesService.getAll(),
-          storesService.getAll(),
+        const [categoriesRes, storesRes] = await Promise.all([
+          expenseCategoriesService.getAll({ limit: 100 }),
+          storesService.getAll({ limit: 100 }),
         ]);
-        setCategories(categoriesData);
-        setStores(storesData);
+        setCategories(categoriesRes.data);
+        setStores(storesRes.data);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
       }
@@ -38,17 +44,22 @@ export default function ExpensesPage() {
     loadStaticData();
   }, [showToast]);
 
-  // Load expenses when store filter changes
+  // Load expenses when store filter or page changes (wait for stores to load first)
   useEffect(() => {
+    if (stores.length === 0) return;
+
     const loadExpenses = async () => {
       try {
         setLoading(true);
-        // Clear expenses first to show loading state
         setExpenses([]);
-        const expensesData = await expensesService.getAll(
-          selectedStoreId
-        );
-        setExpenses(expensesData);
+        const res = await expensesService.getAll({
+          storeId: selectedStoreId,
+          page,
+          limit,
+        });
+        setExpenses(res.data);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
       } catch (error: any) {
         showToast(error.response?.data?.message || 'Gagal memuat data pengeluaran', 'error');
         setExpenses([]);
@@ -57,14 +68,22 @@ export default function ExpensesPage() {
       }
     };
     loadExpenses();
-  }, [selectedStoreId, showToast]);
+  }, [selectedStoreId, page, stores.length, showToast]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedStoreId]);
 
   const reloadExpenses = async () => {
     try {
-        const expensesData = await expensesService.getAll(
-          selectedStoreId
-        );
-      setExpenses(expensesData);
+      const res = await expensesService.getAll({
+        storeId: selectedStoreId,
+        page,
+        limit,
+      });
+      setExpenses(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data pengeluaran', 'error');
       setExpenses([]);
@@ -165,9 +184,10 @@ export default function ExpensesPage() {
           </div>
 
           {/* Expenses Table */}
-          <DataTable
-            data={expenses}
-            columns={[
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <DataTable
+              data={expenses}
+              columns={[
               {
                 header: 'Tanggal',
                 accessor: (expense) => new Date(expense.createdAt).toLocaleDateString('id-ID'),
@@ -188,7 +208,15 @@ export default function ExpensesPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             keyExtractor={(expense) => expense.id}
-          />
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+            />
+          </div>
 
           {/* Form Modal */}
           {showForm && (
