@@ -41,8 +41,8 @@ export default function ProductAddonsManager({
   const loadAddons = async () => {
     try {
       setLoading(true);
-      const addons = await productAddonsService.getAll();
-      setAllAddons(addons);
+      const res = await productAddonsService.getAll({ limit: 100 });
+      setAllAddons(res.data);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data addon', 'error');
     } finally {
