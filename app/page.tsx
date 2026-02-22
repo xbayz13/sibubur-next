@@ -1,39 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import useSWR from 'swr';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useToast } from '@/components/ToastContainer';
 import Card from '@/components/ui/Card';
 import { reportsService } from '@/lib/services/reports';
-import { transactionsService } from '@/lib/services/transactions';
-import { ordersService } from '@/lib/services/orders';
 import { suppliesService } from '@/lib/services/supplies';
-import { productionsService } from '@/lib/services/productions';
 import { bmkgService, BMKGWeatherForecast } from '@/lib/services/bmkg';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  PointElement,
-  LineElement,
-} from 'chart.js';
-import { Bar } from 'react-chartjs-2';
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  PointElement,
-  LineElement
+// Lazy load Chart.js to reduce initial bundle size
+const DashboardCharts = dynamic(
+  () => import('@/components/Dashboard/DashboardCharts'),
+  { ssr: false, loading: () => <div className="h-64 flex items-center justify-center text-gray-500">Memuat chart...</div> }
 );
 
 interface DailyStats {
@@ -49,80 +31,81 @@ interface ChartData {
   orders: number;
 }
 
+const DASHBOARD_STALE_TIME = 60 * 1000; // 1 minute - cache dashboard data
+
+async function fetchDashboardData(): Promise<{ stats: DailyStats; chartData: ChartData[] }> {
+  const today = new Date().toISOString().split('T')[0];
+  const dates: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    dates.push(date.toISOString().split('T')[0]);
+  }
+
+  const [todayReport, lowStockSupplies, ...chartReports] = await Promise.all([
+    reportsService.getDailyReport(today).catch(() => null),
+    suppliesService.getLowStock().catch(() => []),
+    ...dates.map((date) => reportsService.getDailyReport(date).catch(() => null)),
+  ]);
+
+  // Propagate error to SWR when primary data (today report) failed, so error toast is shown
+  if (todayReport === null) {
+    throw new Error('Gagal memuat data dashboard');
+  }
+
+  const chartDataArray: ChartData[] = dates.map((date, index) => {
+    const report = chartReports[index];
+    return {
+      date,
+      revenue: Number(report?.revenue?.total || 0),
+      orders: Number(report?.orders?.total || 0),
+    };
+  });
+
+  return {
+    stats: {
+      revenue: Number(todayReport?.revenue?.total || 0),
+      orders: Number(todayReport?.orders?.total || 0),
+      productions: todayReport?.production ? 1 : 0,
+      lowStock: lowStockSupplies?.length ?? 0,
+    },
+    chartData: chartDataArray,
+  };
+}
+
 export default function Home() {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DailyStats>({
-    revenue: 0,
-    orders: 0,
-    productions: 0,
-    lowStock: 0,
-  });
-  const [chartData, setChartData] = useState<ChartData[]>([]);
   const [currentWeather, setCurrentWeather] = useState<BMKGWeatherForecast['current']>(null);
   const [tomorrowMorningForecast, setTomorrowMorningForecast] = useState<BMKGWeatherForecast['forecasts']['tomorrow']>([]);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [lastWeatherUpdate, setLastWeatherUpdate] = useState<Date | null>(null);
 
-  useEffect(() => {
-    loadDashboardData();
-    loadWeatherData();
-    
-    // Update weather every 4 hours
-    const weatherInterval = setInterval(() => {
-      loadWeatherData();
-    }, 4 * 60 * 60 * 1000); // 4 hours in milliseconds
+  // SWR: cache dashboard data, revalidate after 1 min, show stale data while revalidating
+  const { data, error, isLoading, mutate } = useSWR(
+    'dashboard',
+    fetchDashboardData,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: DASHBOARD_STALE_TIME,
+      revalidateIfStale: true,
+    }
+  );
 
+  const stats = data?.stats ?? { revenue: 0, orders: 0, productions: 0, lowStock: 0 };
+  const chartData = data?.chartData ?? [];
+
+  useEffect(() => {
+    if (error) {
+      showToast(error?.response?.data?.message || 'Gagal memuat data dashboard', 'error');
+    }
+  }, [error, showToast]);
+
+  useEffect(() => {
+    loadWeatherData();
+    const weatherInterval = setInterval(loadWeatherData, 4 * 60 * 60 * 1000);
     return () => clearInterval(weatherInterval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Prepare dates for last 7 days
-      const dates: string[] = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        dates.push(date.toISOString().split('T')[0]);
-      }
-      
-      // Parallelize all API calls
-      const [todayReport, lowStockSupplies, ...chartReports] = await Promise.all([
-        reportsService.getDailyReport(today),
-        suppliesService.getLowStock(),
-        ...dates.map(date => 
-          reportsService.getDailyReport(date).catch(() => null)
-        ),
-      ]);
-
-      // Process chart data - ensure all values are numbers
-      const chartDataArray: ChartData[] = dates.map((date, index) => {
-        const report = chartReports[index];
-        return {
-          date,
-          revenue: Number(report?.revenue?.total || 0),
-          orders: Number(report?.orders?.total || 0),
-        };
-      });
-
-      setStats({
-        revenue: Number(todayReport.revenue?.total || 0),
-        orders: Number(todayReport.orders?.total || 0),
-        productions: todayReport.production ? 1 : 0,
-        lowStock: lowStockSupplies.length,
-      });
-      
-      setChartData(chartDataArray);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data dashboard', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadWeatherData = async () => {
     try {
@@ -142,166 +125,7 @@ export default function Home() {
     }
   };
 
-  // Prepare chart data for Chart.js
-  const revenueChartData = {
-    labels: chartData.length > 0
-      ? chartData.map((d) => {
-          const date = new Date(d.date);
-          const dayName = date.toLocaleDateString('id-ID', { weekday: 'short' });
-          return `${dayName}\n${date.getDate()}`;
-        })
-      : [],
-    datasets: [
-      {
-        label: 'Pendapatan (Rp)',
-        data: chartData.length > 0 ? chartData.map((d) => Number(d.revenue) || 0) : [],
-        backgroundColor: 'rgba(16, 185, 129, 0.8)',
-        borderColor: 'rgba(16, 185, 129, 1)',
-        borderWidth: 1,
-        borderRadius: 4,
-        hoverBackgroundColor: 'rgba(16, 185, 129, 0.95)',
-        hoverBorderColor: 'rgba(16, 185, 129, 1)',
-      },
-    ],
-  };
-
-  const ordersChartData = {
-    labels: chartData.length > 0
-      ? chartData.map((d) => {
-          const date = new Date(d.date);
-          const dayName = date.toLocaleDateString('id-ID', { weekday: 'short' });
-          return `${dayName}\n${date.getDate()}`;
-        })
-      : [],
-    datasets: [
-      {
-        label: 'Jumlah Pesanan',
-        data: chartData.length > 0 ? chartData.map((d) => Number(d.orders) || 0) : [],
-        backgroundColor: 'rgba(99, 102, 241, 0.8)',
-        borderColor: 'rgba(99, 102, 241, 1)',
-        borderWidth: 1,
-        borderRadius: 4,
-        hoverBackgroundColor: 'rgba(99, 102, 241, 0.95)',
-        hoverBorderColor: 'rgba(99, 102, 241, 1)',
-      },
-    ],
-  };
-
-  const revenueChartOptions: any = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: 'rgba(30, 41, 59, 0.95)',
-        padding: 12,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-        },
-        bodyFont: {
-          size: 13,
-        },
-        callbacks: {
-          label: function(context: any) {
-            if (context.dataset.label === 'Pendapatan (Rp)') {
-              return `Rp ${Number(context.parsed.y).toLocaleString('id-ID')}`;
-            }
-            return `${context.parsed.y} pesanan`;
-          },
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(value: any) {
-            if (typeof value === 'number' && value >= 1000000) {
-              return `Rp ${(value / 1000000).toFixed(1)}M`;
-            } else if (typeof value === 'number' && value >= 1000) {
-              return `Rp ${(value / 1000).toFixed(0)}K`;
-            }
-            return value;
-          },
-          color: '#64748b',
-          font: {
-            size: 11,
-          },
-        },
-        grid: {
-          color: 'rgba(148, 163, 184, 0.1)',
-        },
-      },
-      x: {
-        ticks: {
-          color: '#64748b',
-          font: {
-            size: 11,
-          },
-        },
-        grid: {
-          display: false,
-        },
-      },
-    },
-  };
-
-  const ordersChartOptions: any = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        backgroundColor: 'rgba(30, 41, 59, 0.95)',
-        padding: 12,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-        },
-        bodyFont: {
-          size: 13,
-        },
-        callbacks: {
-          label: function(context: any) {
-            return `${context.parsed.y} pesanan`;
-          },
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          color: '#64748b',
-          font: {
-            size: 11,
-          },
-        },
-        grid: {
-          color: 'rgba(148, 163, 184, 0.1)',
-        },
-      },
-      x: {
-        ticks: {
-          color: '#64748b',
-          font: {
-            size: 11,
-          },
-        },
-        grid: {
-          display: false,
-        },
-      },
-    },
-  };
-
-  if (loading) {
+  if (isLoading && !data) {
     return (
       <ProtectedRoute>
         <MainLayout>
@@ -347,10 +171,13 @@ export default function Home() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-4">
                       {currentWeather.image && (
-                        <img 
-                          src={currentWeather.image} 
+                        <Image
+                          src={currentWeather.image}
                           alt={currentWeather.condition}
-                          className="w-16 h-16"
+                          width={64}
+                          height={64}
+                          className="w-16 h-16 object-contain"
+                          unoptimized
                         />
                       )}
                       <div>
@@ -463,48 +290,8 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Revenue Chart */}
-            <Card title="Pendapatan 7 Hari Terakhir">
-              {chartData.length === 0 ? (
-                <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                  Tidak ada data untuk ditampilkan
-                </div>
-              ) : (
-                <>
-                  <div className="h-64">
-                    <Bar data={revenueChartData} options={revenueChartOptions} />
-                  </div>
-                  <div className="mt-4 flex justify-center">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Total: Rp {chartData.reduce((sum, d) => sum + (Number(d.revenue) || 0), 0).toLocaleString('id-ID')}
-                    </div>
-                  </div>
-                </>
-              )}
-            </Card>
-
-            {/* Orders Chart */}
-            <Card title="Pesanan 7 Hari Terakhir">
-              {chartData.length === 0 ? (
-                <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                  Tidak ada data untuk ditampilkan
-                </div>
-              ) : (
-                <>
-                  <div className="h-64">
-                    <Bar data={ordersChartData} options={ordersChartOptions} />
-                  </div>
-                  <div className="mt-4 flex justify-center">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Total: {chartData.reduce((sum, d) => sum + (Number(d.orders) || 0), 0)} pesanan
-                    </div>
-                  </div>
-                </>
-              )}
-            </Card>
-          </div>
+          {/* Charts - lazy loaded to reduce initial bundle */}
+          <DashboardCharts chartData={chartData} />
 
           {/* Recent Activity */}
           <Card title="Ringkasan Hari Ini">
