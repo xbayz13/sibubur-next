@@ -4,6 +4,7 @@ import { Order, CreateOrderDto, UpdateOrderDto, PaginatedResponse } from '@/type
 export interface OrdersGetAllParams {
   storeId?: number;
   date?: string;
+  status?: 'open' | 'paid' | 'cancelled';
   page?: number;
   limit?: number;
 }
@@ -13,6 +14,7 @@ export const ordersService = {
     const queryParams: Record<string, unknown> = { page: 1, limit: 50 };
     if (params?.storeId) queryParams.storeId = params.storeId;
     if (params?.date) queryParams.date = params.date;
+    if (params?.status) queryParams.status = params.status;
     if (params?.page) queryParams.page = params.page;
     if (params?.limit) queryParams.limit = params.limit;
     const response = await apiClient.get<PaginatedResponse<Order>>('/orders', { params: queryParams });
