@@ -13,6 +13,7 @@ import ProductForm from '@/components/MasterData/ProductForm';
 import ProductAddonsManager from '@/components/MasterData/ProductAddonsManager';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
 
 export default function ProductsPage() {
   const { showToast } = useToast();
@@ -22,20 +23,26 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [managingAddons, setManagingAddons] = useState<Product | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, showToast]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsData, categoriesData] = await Promise.all([
-        productsService.getAll(),
-        productCategoriesService.getAll(),
+      const [productsRes, categoriesRes] = await Promise.all([
+        productsService.getAll({ page, limit }),
+        productCategoriesService.getAll({ limit: 100 }),
       ]);
-      setProducts(productsData);
-      setCategories(categoriesData);
+      setProducts(productsRes.data);
+      setCategories(categoriesRes.data);
+      setTotal(productsRes.total);
+      setTotalPages(productsRes.totalPages);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data produk', 'error');
     } finally {
@@ -198,6 +205,13 @@ export default function ProductsPage() {
                 </table>
               </div>
             )}
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+            />
           </Card>
 
           {showForm && (

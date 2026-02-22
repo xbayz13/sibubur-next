@@ -14,6 +14,7 @@ import Input from '@/components/form/Input';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
 import Card from '@/components/ui/Card';
+import Pagination from '@/components/ui/Pagination';
 
 export default function PermissionsPage() {
   const { showToast } = useToast();
@@ -22,18 +23,34 @@ export default function PermissionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState<Permission | null>(null);
   const [moduleFilter, setModuleFilter] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
+
+  useEffect(() => {
+    setPage(1);
+  }, [moduleFilter]);
 
   useEffect(() => {
     loadData();
-  }, [moduleFilter]);
+  }, [moduleFilter, page, showToast]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const permissionsData = await permissionsService.getAll(
-        moduleFilter || undefined
+      const res = await permissionsService.getAll(
+        moduleFilter ? { module: moduleFilter } : { page, limit }
       );
-      setPermissions(permissionsData);
+      if (Array.isArray(res)) {
+        setPermissions(res);
+        setTotal(res.length);
+        setTotalPages(1);
+      } else {
+        setPermissions(res.data);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
+      }
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data permission', 'error');
     } finally {
@@ -129,9 +146,10 @@ export default function PermissionsPage() {
           </Card>
 
           {/* Permissions Table */}
-          <DataTable
-            data={permissions}
-            columns={[
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <DataTable
+              data={permissions}
+              columns={[
               {
                 header: 'Module',
                 accessor: 'module',
@@ -146,9 +164,19 @@ export default function PermissionsPage() {
               },
             ]}
             onEdit={handleEdit}
-            onDelete={handleDelete}
-            keyExtractor={(permission) => permission.id}
-          />
+              onDelete={handleDelete}
+              keyExtractor={(permission) => permission.id}
+            />
+            {!moduleFilter && (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                limit={limit}
+                onPageChange={setPage}
+              />
+            )}
+          </div>
 
           {/* Form Modal */}
           {showForm && (

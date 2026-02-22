@@ -15,6 +15,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/form/Input';
 import Label from '@/components/form/Label';
+import Pagination from '@/components/ui/Pagination';
 
 export default function RolesPage() {
   const { showToast } = useToast();
@@ -22,16 +23,22 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, showToast]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const rolesData = await rolesService.getAll();
-      setRoles(rolesData);
+      const res = await rolesService.getAll({ page, limit });
+      setRoles(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data role', 'error');
     } finally {
@@ -108,9 +115,10 @@ export default function RolesPage() {
           </div>
 
           {/* Roles Table */}
-          <DataTable
-            data={roles}
-            columns={[
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <DataTable
+              data={roles}
+              columns={[
               {
                 header: 'Nama Role',
                 accessor: 'name',
@@ -140,9 +148,17 @@ export default function RolesPage() {
               },
             ]}
             onEdit={handleEdit}
-            onDelete={handleDelete}
-            keyExtractor={(role) => role.id}
-          />
+              onDelete={handleDelete}
+              keyExtractor={(role) => role.id}
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+            />
+          </div>
 
           {/* Form Modal */}
           {showForm && (

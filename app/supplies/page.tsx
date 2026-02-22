@@ -12,6 +12,7 @@ import RestockModal from '@/components/Supplies/RestockModal';
 import SupplyForm from '@/components/Supplies/SupplyForm';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Pagination from '@/components/ui/Pagination';
 
 export default function SuppliesPage() {
   const { showToast } = useToast();
@@ -22,21 +23,31 @@ export default function SuppliesPage() {
   const [showSupplyForm, setShowSupplyForm] = useState(false);
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
   const [filter, setFilter] = useState<'all' | 'low-stock'>('all');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, filter, showToast]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [allSupplies, lowStock] = await Promise.all([
-        suppliesService.getAll(),
-        suppliesService.getLowStock(),
-      ]);
-
-      setSupplies(allSupplies);
-      setLowStockSupplies(lowStock);
+      if (filter === 'low-stock') {
+        const lowStock = await suppliesService.getLowStock();
+        setLowStockSupplies(lowStock);
+        setSupplies([]);
+        setTotal(lowStock.length);
+        setTotalPages(1);
+      } else {
+        const res = await suppliesService.getAll({ page, limit });
+        setSupplies(res.data);
+        setLowStockSupplies([]);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
+      }
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data persediaan', 'error');
     } finally {
@@ -97,6 +108,10 @@ export default function SuppliesPage() {
   };
 
   const displayedSupplies = filter === 'low-stock' ? lowStockSupplies : supplies;
+
+  useEffect(() => {
+    if (filter === 'all') setPage(1);
+  }, [filter]);
 
   if (loading) {
     return (
@@ -174,12 +189,23 @@ export default function SuppliesPage() {
             </div>
           </Card>
 
-          <SupplyList
-            supplies={displayedSupplies}
-            onRestock={handleRestock}
-            onUpdate={handleUpdateSupply}
-            onDelete={handleDeleteSupply}
-          />
+          <div className="space-y-0">
+            <SupplyList
+              supplies={displayedSupplies}
+              onRestock={handleRestock}
+              onUpdate={handleUpdateSupply}
+              onDelete={handleDeleteSupply}
+            />
+            {filter === 'all' && (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                limit={limit}
+                onPageChange={setPage}
+              />
+            )}
+          </div>
 
           {showRestockModal && selectedSupply && (
             <RestockModal

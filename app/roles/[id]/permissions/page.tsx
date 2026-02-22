@@ -30,14 +30,14 @@ export default function RolePermissionsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [roleData, allPermsData, rolePermsData] = await Promise.all([
+      const [roleData, allPermsRes, rolePermsData] = await Promise.all([
         rolesService.getById(roleId),
-        permissionsService.getAll(),
+        permissionsService.getAll({ limit: 100 }),
         rolePermissionsService.getRolePermissions(roleId),
       ]);
 
       setRole(roleData);
-      setAllPermissions(allPermsData);
+      setAllPermissions(Array.isArray(allPermsRes) ? allPermsRes : allPermsRes.data);
       setRolePermissions(rolePermsData);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data', 'error');

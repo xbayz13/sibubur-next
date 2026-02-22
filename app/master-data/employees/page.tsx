@@ -11,6 +11,7 @@ import { Employee, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import EmployeeForm from '@/components/MasterData/EmployeeForm';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
 
 export default function EmployeesPage() {
   const { showToast } = useToast();
@@ -19,20 +20,26 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, showToast]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [employeesData, storesData] = await Promise.all([
-        employeesService.getAll(),
-        storesService.getAll(),
+      const [employeesRes, storesRes] = await Promise.all([
+        employeesService.getAll({ page, limit }),
+        storesService.getAll({ limit: 100 }),
       ]);
-      setEmployees(employeesData);
-      setStores(storesData);
+      setEmployees(employeesRes.data);
+      setStores(storesRes.data);
+      setTotal(employeesRes.total);
+      setTotalPages(employeesRes.totalPages);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data karyawan', 'error');
     } finally {
@@ -145,6 +152,13 @@ export default function EmployeesPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             keyExtractor={(item) => item.id}
+          />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={limit}
+            onPageChange={setPage}
           />
 
           {showForm && (

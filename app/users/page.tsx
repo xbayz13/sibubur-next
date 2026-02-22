@@ -15,6 +15,7 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/form/Input';
 import Select from '@/components/form/Select';
 import Label from '@/components/form/Label';
+import Pagination from '@/components/ui/Pagination';
 
 export default function UsersPage() {
   const { showToast } = useToast();
@@ -24,23 +25,28 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, showToast]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [usersData, rolesData, storesData] = await Promise.all([
-        usersService.getAll(),
-        rolesService.getAll(),
-        storesService.getAll(),
+      const [usersRes, rolesRes, storesRes] = await Promise.all([
+        usersService.getAll({ page, limit }),
+        roles.length === 0 ? rolesService.getAll({ limit: 100 }) : Promise.resolve(null),
+        stores.length === 0 ? storesService.getAll({ limit: 100 }) : Promise.resolve(null),
       ]);
-
-      setUsers(usersData);
-      setRoles(rolesData);
-      setStores(storesData);
+      setUsers(usersRes.data);
+      setTotal(usersRes.total);
+      setTotalPages(usersRes.totalPages);
+      if (rolesRes) setRoles(rolesRes.data);
+      if (storesRes) setStores(storesRes.data);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data pengguna', 'error');
     } finally {
@@ -117,9 +123,10 @@ export default function UsersPage() {
           </div>
 
           {/* Users Table */}
-          <DataTable
-            data={users}
-            columns={[
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <DataTable
+              data={users}
+              columns={[
               {
                 header: 'Username',
                 accessor: 'username',
@@ -145,9 +152,17 @@ export default function UsersPage() {
               },
             ]}
             onEdit={handleEdit}
-            onDelete={handleDelete}
-            keyExtractor={(user) => user.id}
-          />
+              onDelete={handleDelete}
+              keyExtractor={(user) => user.id}
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+            />
+          </div>
 
           {/* Form Modal */}
           {showForm && (

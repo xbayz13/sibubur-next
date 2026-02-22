@@ -10,6 +10,7 @@ import { ProductCategory } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import CategoryForm from '@/components/MasterData/CategoryForm';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
 
 export default function ProductCategoriesPage() {
   const { showToast } = useToast();
@@ -18,15 +19,22 @@ export default function ProductCategoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
+
   useEffect(() => {
     loadData();
-  }, []);
+  }, [page, showToast]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const data = await productCategoriesService.getAll();
-      setCategories(data);
+      const res = await productCategoriesService.getAll({ page, limit });
+      setCategories(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat data kategori', 'error');
     } finally {
@@ -112,6 +120,13 @@ export default function ProductCategoriesPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             keyExtractor={(item) => item.id}
+          />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={limit}
+            onPageChange={setPage}
           />
 
           {showForm && (
