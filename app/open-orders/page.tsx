@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import { productsService } from '@/lib/services/products';
 import { shouldShowKitchenPrintButton, shouldShowCustomerPrintButton, isAutoPrintCustomerEnabled } from '@/lib/print-settings';
+import Pagination from '@/components/ui/Pagination';
 
 export default function OpenOrdersPage() {
   const { showToast } = useToast();
@@ -38,6 +39,10 @@ export default function OpenOrdersPage() {
   const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     loadStores();
@@ -63,11 +68,8 @@ export default function OpenOrdersPage() {
     }
   }, [stores, user?.storeId]);
 
-  useEffect(() => {
-    if (selectedStoreId) {
-      loadOrders();
-    }
-  }, [selectedStoreId]);
+  const prevSelectedStoreIdRef = useRef<number | undefined>(undefined);
+  const skipNextPageLoadRef = useRef(false);
 
   const loadStores = async () => {
     try {
@@ -87,19 +89,44 @@ export default function OpenOrdersPage() {
     }
   };
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async (pageOverride?: number) => {
     if (!selectedStoreId) return;
     setLoading(true);
+    const pageToLoad = pageOverride ?? page;
     try {
-      const res = await ordersService.getAll({ storeId: selectedStoreId, limit: 100 });
-      const openOrders = res.data.filter((o) => o.status === 'open');
-      setOrders(openOrders);
+      const res = await ordersService.getAll({
+        storeId: selectedStoreId,
+        status: 'open',
+        page: pageToLoad,
+        limit,
+      });
+      setOrders(res.data);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
+      if (pageOverride !== undefined) setPage(pageOverride);
     } catch (error: any) {
       showToast(error.response?.data?.message || 'Gagal memuat pesanan', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStoreId, page, limit, showToast]);
+
+  useEffect(() => {
+    if (!selectedStoreId) return;
+    const storeJustChanged = prevSelectedStoreIdRef.current !== selectedStoreId;
+    prevSelectedStoreIdRef.current = selectedStoreId;
+
+    if (storeJustChanged) {
+      loadOrders(1); // loadOrders(1) sets page internally; skip next run when page updates
+      skipNextPageLoadRef.current = true;
+      return;
+    }
+    if (skipNextPageLoadRef.current) {
+      skipNextPageLoadRef.current = false;
+      return;
+    }
+    loadOrders(page);
+  }, [selectedStoreId, page, loadOrders]);
 
   // Filter orders by search query (orderNumber or customerName)
   const filteredOrders = useMemo(() => {
@@ -482,23 +509,33 @@ export default function OpenOrdersPage() {
             )}
 
             {!loading && filteredOrders.length > 0 && (
-              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-slate-600">
-                    Menampilkan {filteredOrders.length} dari {orders.length}{' '}
-                    pesanan terbuka
-                  </div>
-                  <div className="text-sm font-semibold text-slate-900">
-                    Total: Rp{' '}
-                    {filteredOrders
-                      .reduce(
-                        (sum, order) => sum + Number(order.totalAmount),
-                        0
-                      )
-                      .toLocaleString('id-ID')}
+              <>
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={total}
+                  limit={limit}
+                  onPageChange={setPage}
+                />
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-slate-600">
+                      {searchQuery.trim()
+                        ? `Menampilkan ${filteredOrders.length} dari ${orders.length} pada halaman ini`
+                        : `Menampilkan ${filteredOrders.length} dari ${total} pesanan terbuka`}
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900">
+                      Total: Rp{' '}
+                      {filteredOrders
+                        .reduce(
+                          (sum, order) => sum + Number(order.totalAmount),
+                          0
+                        )
+                        .toLocaleString('id-ID')}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
