@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import Image from 'next/image';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import Sidebar from '@/components/Layout/Sidebar';
 import Header from '@/components/Layout/Header';
@@ -577,11 +578,14 @@ export default function CashierPage() {
                         className="bg-white rounded-lg shadow-sm border border-slate-200 p-4 hover:shadow-md hover:border-indigo-300 transition-all text-left group"
                       >
                         {product.imageUrl && (
-                          <div className="w-full h-32 mb-3 rounded-lg overflow-hidden bg-slate-100">
-                            <img
+                          <div className="relative w-full h-32 mb-3 rounded-lg overflow-hidden bg-slate-100">
+                            <Image
                               src={product.imageUrl}
                               alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform"
+                              sizes="(max-width: 768px) 50vw, 200px"
+                              unoptimized
                             />
                           </div>
                         )}

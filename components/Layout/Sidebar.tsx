@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -264,9 +265,11 @@ export default function Sidebar() {
           <Link href="/" className="flex items-center gap-3">
             {(isExpanded || isHovered || isMobileOpen) ? (
               <>
-                <img
+                <Image
                   src="/sibubur-high-resolution-logo-transparent.png"
                   alt="SiBubur Logo"
+                  width={32}
+                  height={32}
                   className="h-8 w-8 object-contain"
                 />
                 <div>
@@ -275,9 +278,11 @@ export default function Sidebar() {
                 </div>
               </>
             ) : (
-              <img
+              <Image
                 src="/sibubur-high-resolution-logo-transparent.png"
                 alt="SiBubur Logo"
+                width={32}
+                height={32}
                 className="h-8 w-8 object-contain"
               />
             )}

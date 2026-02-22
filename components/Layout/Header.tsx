@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { ThemeToggleButton } from '@/components/common/ThemeToggleButton';
@@ -155,9 +156,11 @@ export default function Header() {
           </button>
 
           <Link href="/" className="lg:hidden">
-            <img
+            <Image
               src="/sibubur-high-resolution-logo-transparent.png"
               alt="SiBubur Logo"
+              width={32}
+              height={32}
               className="h-8 w-8 object-contain"
             />
           </Link>
