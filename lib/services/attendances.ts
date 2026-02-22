@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { Attendance } from '@/types';
+import { Attendance, PaginatedResponse } from '@/types';
 
 export interface CreateAttendanceDto {
   date: string;
@@ -13,12 +13,21 @@ export interface UpdateAttendanceDto {
   status?: 'present' | 'absent';
 }
 
+export interface AttendancesGetAllParams {
+  employeeId?: number;
+  date?: string;
+  page?: number;
+  limit?: number;
+}
+
 export const attendancesService = {
-  async getAll(employeeId?: number, date?: string): Promise<Attendance[]> {
-    const params: any = {};
-    if (employeeId) params.employeeId = employeeId;
-    if (date) params.date = date;
-    const response = await apiClient.get<Attendance[]>('/attendances', { params });
+  async getAll(params?: AttendancesGetAllParams): Promise<PaginatedResponse<Attendance>> {
+    const queryParams: Record<string, unknown> = { page: 1, limit: 50 };
+    if (params?.employeeId) queryParams.employeeId = params.employeeId;
+    if (params?.date) queryParams.date = params.date;
+    if (params?.page) queryParams.page = params.page;
+    if (params?.limit) queryParams.limit = params.limit;
+    const response = await apiClient.get<PaginatedResponse<Attendance>>('/attendances', { params: queryParams });
     return response.data;
   },
 

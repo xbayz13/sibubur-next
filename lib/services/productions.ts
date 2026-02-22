@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { Production } from '@/types';
+import { Production, PaginatedResponse } from '@/types';
 
 export interface CreateProductionDto {
   date: string;
@@ -23,12 +23,21 @@ export interface UpdateProductionDto {
   }>;
 }
 
+export interface ProductionsGetAllParams {
+  storeId?: number;
+  date?: string;
+  page?: number;
+  limit?: number;
+}
+
 export const productionsService = {
-  async getAll(storeId?: number, date?: string): Promise<Production[]> {
-    const params: any = {};
-    if (storeId) params.storeId = storeId;
-    if (date) params.date = date;
-    const response = await apiClient.get<Production[]>('/productions', { params });
+  async getAll(params?: ProductionsGetAllParams): Promise<PaginatedResponse<Production>> {
+    const queryParams: Record<string, unknown> = { page: 1, limit: 50 };
+    if (params?.storeId) queryParams.storeId = params.storeId;
+    if (params?.date) queryParams.date = params.date;
+    if (params?.page) queryParams.page = params.page;
+    if (params?.limit) queryParams.limit = params.limit;
+    const response = await apiClient.get<PaginatedResponse<Production>>('/productions', { params: queryParams });
     return response.data;
   },
 

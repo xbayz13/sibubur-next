@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { Permission } from '@/types';
+import { Permission, PaginatedResponse } from '@/types';
 
 export interface CreatePermissionDto {
   module: string;
@@ -13,11 +13,21 @@ export interface UpdatePermissionDto {
   slug?: string;
 }
 
+export interface PermissionsGetAllParams {
+  module?: string;
+  page?: number;
+  limit?: number;
+}
+
 export const permissionsService = {
-  async getAll(module?: string): Promise<Permission[]> {
-    const params = module ? { module } : {};
-    const response = await apiClient.get<Permission[]>('/permissions', { params });
-    return response.data;
+  async getAll(params?: PermissionsGetAllParams): Promise<PaginatedResponse<Permission> | Permission[]> {
+    const queryParams: Record<string, unknown> = params?.module
+      ? { module: params.module }
+      : { page: params?.page ?? 1, limit: params?.limit ?? 100 };
+    const response = await apiClient.get<PaginatedResponse<Permission> | Permission[]>('/permissions', { params: queryParams });
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    return data as PaginatedResponse<Permission>;
   },
 
   async getById(id: number): Promise<Permission> {

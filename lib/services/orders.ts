@@ -1,12 +1,21 @@
 import apiClient from '../api';
-import { Order, CreateOrderDto, UpdateOrderDto } from '@/types';
+import { Order, CreateOrderDto, UpdateOrderDto, PaginatedResponse } from '@/types';
+
+export interface OrdersGetAllParams {
+  storeId?: number;
+  date?: string;
+  page?: number;
+  limit?: number;
+}
 
 export const ordersService = {
-  async getAll(storeId?: number, date?: string): Promise<Order[]> {
-    const params: any = {};
-    if (storeId) params.storeId = storeId;
-    if (date) params.date = date;
-    const response = await apiClient.get<Order[]>('/orders', { params });
+  async getAll(params?: OrdersGetAllParams): Promise<PaginatedResponse<Order>> {
+    const queryParams: Record<string, unknown> = { page: 1, limit: 50 };
+    if (params?.storeId) queryParams.storeId = params.storeId;
+    if (params?.date) queryParams.date = params.date;
+    if (params?.page) queryParams.page = params.page;
+    if (params?.limit) queryParams.limit = params.limit;
+    const response = await apiClient.get<PaginatedResponse<Order>>('/orders', { params: queryParams });
     return response.data;
   },
 

@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { User } from '@/types';
+import { User, PaginatedResponse } from '@/types';
 
 export interface CreateUserDto {
   username: string;
@@ -15,9 +15,15 @@ export interface UpdateUserDto {
   roleId?: number;
 }
 
+export interface UsersGetAllParams {
+  page?: number;
+  limit?: number;
+}
+
 export const usersService = {
-  async getAll(): Promise<User[]> {
-    const response = await apiClient.get<User[]>('/users');
+  async getAll(params?: UsersGetAllParams): Promise<PaginatedResponse<User>> {
+    const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
+    const response = await apiClient.get<PaginatedResponse<User>>('/users', { params: queryParams });
     return response.data;
   },
 

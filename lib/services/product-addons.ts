@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { ProductAddon } from '@/types';
+import { ProductAddon, PaginatedResponse } from '@/types';
 
 export interface CreateProductAddonDto {
   name: string;
@@ -13,9 +13,15 @@ export interface UpdateProductAddonDto {
   description?: string;
 }
 
+export interface ProductAddonsGetAllParams {
+  page?: number;
+  limit?: number;
+}
+
 export const productAddonsService = {
-  async getAll(): Promise<ProductAddon[]> {
-    const response = await apiClient.get<ProductAddon[]>('/product-addons');
+  async getAll(params?: ProductAddonsGetAllParams): Promise<PaginatedResponse<ProductAddon>> {
+    const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
+    const response = await apiClient.get<PaginatedResponse<ProductAddon>>('/product-addons', { params: queryParams });
     return response.data;
   },
 

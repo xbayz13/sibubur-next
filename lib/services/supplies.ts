@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { Supply } from '@/types';
+import { Supply, PaginatedResponse } from '@/types';
 
 export interface CreateSupplyDto {
   name: string;
@@ -17,9 +17,15 @@ export interface UpdateSupplyDto {
   price?: number;
 }
 
+export interface SuppliesGetAllParams {
+  page?: number;
+  limit?: number;
+}
+
 export const suppliesService = {
-  async getAll(): Promise<Supply[]> {
-    const response = await apiClient.get<Supply[]>('/supplies');
+  async getAll(params?: SuppliesGetAllParams): Promise<PaginatedResponse<Supply>> {
+    const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
+    const response = await apiClient.get<PaginatedResponse<Supply>>('/supplies', { params: queryParams });
     return response.data;
   },
 
@@ -29,8 +35,9 @@ export const suppliesService = {
   },
 
   async getLowStock(): Promise<Supply[]> {
-    const response = await apiClient.get<Supply[]>('/supplies/low-stock');
-    return response.data;
+    const response = await apiClient.get<PaginatedResponse<Supply> | Supply[]>('/supplies/low-stock');
+    const data = Array.isArray(response.data) ? response.data : (response.data as PaginatedResponse<Supply>).data;
+    return data;
   },
 
   async create(supply: CreateSupplyDto): Promise<Supply> {

@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { ExpenseCategory } from '@/types';
+import { ExpenseCategory, PaginatedResponse } from '@/types';
 
 export interface CreateExpenseCategoryDto {
   name: string;
@@ -11,9 +11,15 @@ export interface UpdateExpenseCategoryDto {
   description?: string;
 }
 
+export interface ExpenseCategoriesGetAllParams {
+  page?: number;
+  limit?: number;
+}
+
 export const expenseCategoriesService = {
-  async getAll(): Promise<ExpenseCategory[]> {
-    const response = await apiClient.get<ExpenseCategory[]>('/expense-categories');
+  async getAll(params?: ExpenseCategoriesGetAllParams): Promise<PaginatedResponse<ExpenseCategory>> {
+    const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
+    const response = await apiClient.get<PaginatedResponse<ExpenseCategory>>('/expense-categories', { params: queryParams });
     return response.data;
   },
 

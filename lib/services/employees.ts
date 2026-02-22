@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { Employee } from '@/types';
+import { Employee, PaginatedResponse } from '@/types';
 
 export interface CreateEmployeeDto {
   name: string;
@@ -15,9 +15,15 @@ export interface UpdateEmployeeDto {
   dailySalary?: number;
 }
 
+export interface EmployeesGetAllParams {
+  page?: number;
+  limit?: number;
+}
+
 export const employeesService = {
-  async getAll(): Promise<Employee[]> {
-    const response = await apiClient.get<Employee[]>('/employees');
+  async getAll(params?: EmployeesGetAllParams): Promise<PaginatedResponse<Employee>> {
+    const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
+    const response = await apiClient.get<PaginatedResponse<Employee>>('/employees', { params: queryParams });
     return response.data;
   },
 

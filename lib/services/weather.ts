@@ -29,9 +29,13 @@ const transformWeather = (weather: any): Weather => {
 };
 
 export const weatherService = {
-  async getAll(): Promise<Weather[]> {
-    const response = await apiClient.get<any[]>('/weather');
-    return response.data.map(transformWeather);
+  async getAll(params?: { page?: number; limit?: number }): Promise<{ data: Weather[]; total: number; page: number; limit: number; totalPages: number }> {
+    const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
+    const response = await apiClient.get<{ data: any[]; total: number; page: number; limit: number; totalPages: number }>('/weather', { params: queryParams });
+    return {
+      ...response.data,
+      data: response.data.data.map(transformWeather),
+    };
   },
 
   async getByDate(date: string): Promise<Weather | null> {

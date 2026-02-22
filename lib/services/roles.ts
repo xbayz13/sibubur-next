@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { Role } from '@/types';
+import { Role, PaginatedResponse } from '@/types';
 
 export interface CreateRoleDto {
   name: string;
@@ -9,9 +9,15 @@ export interface UpdateRoleDto {
   name?: string;
 }
 
+export interface RolesGetAllParams {
+  page?: number;
+  limit?: number;
+}
+
 export const rolesService = {
-  async getAll(): Promise<Role[]> {
-    const response = await apiClient.get<Role[]>('/roles');
+  async getAll(params?: RolesGetAllParams): Promise<PaginatedResponse<Role>> {
+    const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
+    const response = await apiClient.get<PaginatedResponse<Role>>('/roles', { params: queryParams });
     return response.data;
   },
 
