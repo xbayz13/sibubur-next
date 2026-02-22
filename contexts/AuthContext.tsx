@@ -1,9 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { User, LoginRequest } from '@/types';
 import { authService } from '@/lib/auth';
 import { permissionsService } from '@/lib/services/permissions-service';
+
+const PERMISSIONS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+interface PermissionCache {
+  permissions: string[];
+  isSuperAdmin: boolean;
+  timestamp: number;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -24,11 +32,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const permissionsCacheRef = useRef<PermissionCache | null>(null);
 
-  const loadPermissions = useCallback(async () => {
+  const loadPermissions = useCallback(async (forceRefresh = false) => {
     if (!authService.isAuthenticated()) {
       setPermissions([]);
       setIsSuperAdmin(false);
+      permissionsCacheRef.current = null;
+      return;
+    }
+
+    const now = Date.now();
+    const cached = permissionsCacheRef.current;
+    if (!forceRefresh && cached && now - cached.timestamp < PERMISSIONS_CACHE_TTL) {
+      setPermissions(cached.permissions);
+      setIsSuperAdmin(cached.isSuperAdmin);
       return;
     }
 
@@ -37,15 +55,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsSuperAdmin(isAdmin);
 
       if (isAdmin) {
-        setPermissions(['superadmin:*']);
+        const perms = ['superadmin:*'];
+        setPermissions(perms);
+        permissionsCacheRef.current = { permissions: perms, isSuperAdmin: true, timestamp: now };
       } else {
         const userPermissions = await permissionsService.getUserPermissions();
         setPermissions(userPermissions);
+        permissionsCacheRef.current = { permissions: userPermissions, isSuperAdmin: false, timestamp: now };
       }
     } catch (error) {
       console.error('Failed to load permissions:', error);
       setPermissions([]);
       setIsSuperAdmin(false);
+      permissionsCacheRef.current = null;
     }
   }, []);
 
@@ -70,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setPermissions([]);
     setIsSuperAdmin(false);
+    permissionsCacheRef.current = null;
   };
 
   const hasPermission = (permission: string): boolean => {
@@ -81,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshPermissions = useCallback(async () => {
-    await loadPermissions();
+    await loadPermissions(true);
   }, [loadPermissions]);
 
   return (
