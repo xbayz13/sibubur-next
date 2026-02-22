@@ -32,8 +32,8 @@ export default function ReceiptPrint({
       setIsBluetoothConnected(connection !== null && connection.connected);
     };
     checkConnection();
-    // Check periodically
-    const interval = setInterval(checkConnection, 1000);
+    // Check periodically (3s to reduce CPU usage from frequent re-renders)
+    const interval = setInterval(checkConnection, 3000);
     return () => clearInterval(interval);
   }, []);
 

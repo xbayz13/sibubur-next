@@ -44,11 +44,11 @@ export default function SettingsPage() {
       setSelectedMethod(currentConnection.method as 'bluetooth' | 'serial');
     }
 
-    // Poll for connection status
+    // Poll for connection status (3s to reduce CPU usage from frequent re-renders)
     const interval = setInterval(() => {
       const status = printerService.getConnectionStatus();
       setConnection(status);
-    }, 1000);
+    }, 3000);
 
     // Check if PWA is already installed
     if (typeof window !== 'undefined') {
@@ -62,18 +62,19 @@ export default function SettingsPage() {
         setDeferredPrompt(e);
       };
 
-      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-      // Listen for app installed event
-      window.addEventListener('appinstalled', () => {
+      const handleAppInstalled = () => {
         setIsInstalled(true);
         setDeferredPrompt(null);
         showToast('Aplikasi berhasil diinstall!', 'success');
-      });
+      };
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.addEventListener('appinstalled', handleAppInstalled);
 
       return () => {
         clearInterval(interval);
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.removeEventListener('appinstalled', handleAppInstalled);
       };
     }
 
