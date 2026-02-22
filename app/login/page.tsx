@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, ChangeEvent } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,11 +58,14 @@ export default function LoginPage() {
           <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
             <div>
               <div className="mb-6 sm:mb-8">
-                <div className="flex justify-center mb-4 sm:mb-6">
-                  <img
+                <div className="relative flex justify-center mb-4 sm:mb-6 w-16 h-16 sm:w-20 sm:h-20">
+                  <Image
                     src="/sibubur-high-resolution-logo-transparent.png"
                     alt="SiBubur Logo"
-                    className="h-16 w-16 sm:h-20 sm:w-20 object-contain"
+                    fill
+                    className="object-contain"
+                    sizes="(min-width: 640px) 80px, 64px"
+                    priority
                   />
                 </div>
                 <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md text-center sm:text-left">
@@ -161,10 +165,12 @@ export default function LoginPage() {
           <div className="relative flex items-center justify-center px-6 py-12">
             <div className="flex flex-col items-center max-w-md">
               <Link href="/" className="block mb-6">
-                <img
+                <Image
                   src="/sibubur-high-resolution-logo-transparent.png"
                   alt="SiBubur Logo"
-                  className="h-20 w-auto object-contain"
+                  width={80}
+                  height={80}
+                  className="h-20 w-20 object-contain"
                 />
               </Link>
               <p className="text-center text-sm sm:text-base text-gray-400 dark:text-white/60 leading-relaxed">
