@@ -1,0 +1,27 @@
+2026-02-23T07:02:21: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2026-02-23T07:02:21:     at ignore-listed frames
+2026-02-23T07:02:42: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2026-02-23T07:02:42:     at ignore-listed frames
+2026-02-23T07:03:04: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2026-02-23T07:03:04:     at ignore-listed frames
+2026-02-23T07:03:25: Error: ENOENT: no such file or directory, open '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:25:     at ignore-listed frames {
+2026-02-23T07:03:25:   errno: -2,
+2026-02-23T07:03:25:   code: 'ENOENT',
+2026-02-23T07:03:25:   syscall: 'open',
+2026-02-23T07:03:25:   path: '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:25: }
+2026-02-23T07:03:47: Error: ENOENT: no such file or directory, open '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:47:     at ignore-listed frames {
+2026-02-23T07:03:47:   errno: -2,
+2026-02-23T07:03:47:   code: 'ENOENT',
+2026-02-23T07:03:47:   syscall: 'open',
+2026-02-23T07:03:47:   path: '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:47: }
+2026-02-23T07:04:09: Error: ENOENT: no such file or directory, open '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:04:09:     at ignore-listed frames {
+2026-02-23T07:04:09:   errno: -2,
+2026-02-23T07:04:09:   code: 'ENOENT',
+2026-02-23T07:04:09:   syscall: 'open',
+2026-02-23T07:04:09:   path: '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:04:09: }

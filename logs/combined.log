@@ -1,0 +1,69 @@
+2026-02-23T07:02:07: ▲ Next.js 16.1.2
+2026-02-23T07:02:07: - Local:         http://localhost:3001
+2026-02-23T07:02:07: - Network:       http://72.61.208.109:3001
+2026-02-23T07:02:07: 
+2026-02-23T07:02:07: ✓ Starting...
+2026-02-23T07:02:21: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2026-02-23T07:02:21:     at ignore-listed frames
+2026-02-23T07:02:27: ▲ Next.js 16.1.2
+2026-02-23T07:02:27: - Local:         http://localhost:3001
+2026-02-23T07:02:27: - Network:       http://72.61.208.109:3001
+2026-02-23T07:02:27: 
+2026-02-23T07:02:27: ✓ Starting...
+2026-02-23T07:02:42: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2026-02-23T07:02:42:     at ignore-listed frames
+2026-02-23T07:02:49: ▲ Next.js 16.1.2
+2026-02-23T07:02:49: - Local:         http://localhost:3001
+2026-02-23T07:02:49: - Network:       http://72.61.208.109:3001
+2026-02-23T07:02:49: 
+2026-02-23T07:02:49: ✓ Starting...
+2026-02-23T07:03:04: Error: Could not find a production build in the '.next' directory. Try building your app with 'next build' before starting the production server. https://nextjs.org/docs/messages/production-start-no-build-id
+2026-02-23T07:03:04:     at ignore-listed frames
+2026-02-23T07:03:10: ▲ Next.js 16.1.2
+2026-02-23T07:03:10: - Local:         http://localhost:3001
+2026-02-23T07:03:10: - Network:       http://72.61.208.109:3001
+2026-02-23T07:03:10: 
+2026-02-23T07:03:10: ✓ Starting...
+2026-02-23T07:03:25: Error: ENOENT: no such file or directory, open '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:25:     at ignore-listed frames {
+2026-02-23T07:03:25:   errno: -2,
+2026-02-23T07:03:25:   code: 'ENOENT',
+2026-02-23T07:03:25:   syscall: 'open',
+2026-02-23T07:03:25:   path: '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:25: }
+2026-02-23T07:03:32: ▲ Next.js 16.1.2
+2026-02-23T07:03:32: - Local:         http://localhost:3001
+2026-02-23T07:03:32: - Network:       http://72.61.208.109:3001
+2026-02-23T07:03:32: 
+2026-02-23T07:03:32: ✓ Starting...
+2026-02-23T07:03:47: Error: ENOENT: no such file or directory, open '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:47:     at ignore-listed frames {
+2026-02-23T07:03:47:   errno: -2,
+2026-02-23T07:03:47:   code: 'ENOENT',
+2026-02-23T07:03:47:   syscall: 'open',
+2026-02-23T07:03:47:   path: '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:03:47: }
+2026-02-23T07:03:53: ▲ Next.js 16.1.2
+2026-02-23T07:03:53: - Local:         http://localhost:3001
+2026-02-23T07:03:53: - Network:       http://72.61.208.109:3001
+2026-02-23T07:03:53: 
+2026-02-23T07:03:53: ✓ Starting...
+2026-02-23T07:04:09: Error: ENOENT: no such file or directory, open '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:04:09:     at ignore-listed frames {
+2026-02-23T07:04:09:   errno: -2,
+2026-02-23T07:04:09:   code: 'ENOENT',
+2026-02-23T07:04:09:   syscall: 'open',
+2026-02-23T07:04:09:   path: '/root/sibubur-next/.next/prerender-manifest.json'
+2026-02-23T07:04:09: }
+2026-02-23T07:04:16: ▲ Next.js 16.1.2
+2026-02-23T07:04:16: - Local:         http://localhost:3001
+2026-02-23T07:04:16: - Network:       http://72.61.208.109:3001
+2026-02-23T07:04:16: 
+2026-02-23T07:04:16: ✓ Starting...
+2026-02-23T07:04:31: ✓ Ready in 18.1s
+2026-02-23T07:05:46: ▲ Next.js 16.1.2
+2026-02-23T07:05:46: - Local:         http://localhost:3031
+2026-02-23T07:05:46: - Network:       http://72.61.208.109:3031
+2026-02-23T07:05:46: 
+2026-02-23T07:05:46: ✓ Starting...
+2026-02-23T07:06:06: ✓ Ready in 22.5s

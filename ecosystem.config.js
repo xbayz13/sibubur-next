@@ -11,19 +11,19 @@ module.exports = {
   apps: [{
     name: 'sibubur-frontend',
     script: 'node_modules/next/dist/bin/next',
-    args: 'start -p 3001',
+    args: 'start -p 3031',
     cwd: process.cwd(),
     instances: 1,
     exec_mode: 'fork',
     env: {
       NODE_ENV: 'production',
-      PORT: 3001,
+      PORT: 3031,
       // NEXT_PUBLIC_API_URL sudah di-set saat build time
       // Next.js akan embed value ini ke dalam bundle
     },
     env_production: {
       NODE_ENV: 'production',
-      PORT: 3001,
+      PORT: 3031,
       // NEXT_PUBLIC_API_URL sudah di-set saat build time
     },
     error_file: './logs/err.log',
