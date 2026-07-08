@@ -1,17 +1,50 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Store, Supply, Weather } from '@/types';
 import { CreateProductionDto } from '@/lib/services/productions';
 import { weatherService } from '@/lib/services/weather';
-import { bmkgService } from '@/lib/services/bmkg';
+import { bmkgService, BMKGWeatherForecast } from '@/lib/services/bmkg';
+
+type ProductionRecommendation = {
+  recommendedAmount: number;
+  avgSalesForDayOfWeek: number;
+  targetWeather?: {
+    condition?: string;
+    description?: string;
+  };
+  historicalData: {
+    productionCount: number;
+    orderCount: number;
+    lookbackDays: number;
+  };
+  weatherMultiplier: number;
+  recommendations: string[];
+};
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.message) return apiError.response.data.message;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+};
 
 interface ProductionFormProps {
   stores: Store[];
   supplies: Supply[];
   defaultStoreId?: number;
   defaultDate?: string;
-  recommendations?: any;
+  recommendations?: ProductionRecommendation | null;
   onSubmit: (production: CreateProductionDto) => void;
   onCancel: () => void;
 }
@@ -37,23 +70,14 @@ export default function ProductionForm({
   );
   const [weatherId, setWeatherId] = useState<number | undefined>();
   const [existingWeather, setExistingWeather] = useState<Weather | null>(null);
-  const [bmkgWeather, setBmkgWeather] = useState<any>(null);
+  const [bmkgWeather, setBmkgWeather] = useState<
+    BMKGWeatherForecast['current'] | BMKGWeatherForecast['forecasts']['today'][number] | null
+  >(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [productionSupplies, setProductionSupplies] = useState<ProductionSupply[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Reset weather data when date changes
-    setExistingWeather(null);
-    setBmkgWeather(null);
-    setWeatherId(undefined);
-    
-    // Load weather for new date
-    checkExistingWeather();
-    loadBMKGWeather();
-  }, [date]);
-
-  const checkExistingWeather = async () => {
+  const checkExistingWeather = useCallback(async () => {
     try {
       const weather = await weatherService.getByDate(date);
       if (weather) {
@@ -62,12 +86,12 @@ export default function ProductionForm({
       } else {
         setExistingWeather(null);
       }
-    } catch (error) {
+    } catch {
       setExistingWeather(null);
     }
-  };
+  }, [date]);
 
-  const loadBMKGWeather = async () => {
+  const loadBMKGWeather = useCallback(async () => {
     try {
       setLoadingWeather(true);
       const forecast = await bmkgService.getForecast();
@@ -76,25 +100,27 @@ export default function ProductionForm({
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       selectedDate.setHours(0, 0, 0, 0);
-      
+
       const daysDiff = Math.floor((selectedDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      
-      let weatherData = null;
+
+      let weatherData: BMKGWeatherForecast['current'] | BMKGWeatherForecast['forecasts']['today'][number] | null = null;
       if (daysDiff === 0) {
         // Today - use current weather
         weatherData = forecast.current;
       } else if (daysDiff === 1) {
         // Tomorrow - use first forecast from tomorrow (morning forecast for production time)
-        weatherData = forecast.forecasts.tomorrow.find(f => {
-          const time = new Date(f.datetime);
-          return time.getHours() >= 5 && time.getHours() <= 10;
-        }) || forecast.forecasts.tomorrow[0] || null;
+        weatherData =
+          forecast.forecasts.tomorrow.find((forecastItem) => {
+            const time = new Date(forecastItem.datetime);
+            return time.getHours() >= 5 && time.getHours() <= 10;
+          }) || forecast.forecasts.tomorrow[0] || null;
       } else if (daysDiff === 2) {
         // Day after tomorrow - use first forecast from day after
-        weatherData = forecast.forecasts.dayAfter.find(f => {
-          const time = new Date(f.datetime);
-          return time.getHours() >= 5 && time.getHours() <= 10;
-        }) || forecast.forecasts.dayAfter[0] || null;
+        weatherData =
+          forecast.forecasts.dayAfter.find((forecastItem) => {
+            const time = new Date(forecastItem.datetime);
+            return time.getHours() >= 5 && time.getHours() <= 10;
+          }) || forecast.forecasts.dayAfter[0] || null;
       } else if (daysDiff < 0) {
         // Past date - try to get from database first, if not available, use today's forecast as fallback
         weatherData = null; // Will be handled by existingWeather check
@@ -102,19 +128,26 @@ export default function ProductionForm({
         // Future date beyond 3 days - use latest available forecast
         weatherData = forecast.forecasts.dayAfter[forecast.forecasts.dayAfter.length - 1] || null;
       }
-      
-      if (weatherData) {
-        setBmkgWeather(weatherData);
-      } else {
-        setBmkgWeather(null);
-      }
-    } catch (error) {
+
+      setBmkgWeather(weatherData);
+    } catch (error: unknown) {
       console.error('Failed to load BMKG weather:', error);
       setBmkgWeather(null);
     } finally {
       setLoadingWeather(false);
     }
-  };
+  }, [date]);
+
+  useEffect(() => {
+    // Reset weather data when date changes
+    setExistingWeather(null);
+    setBmkgWeather(null);
+    setWeatherId(undefined);
+
+    // Load weather for new date
+    checkExistingWeather();
+    loadBMKGWeather();
+  }, [checkExistingWeather, loadBMKGWeather]);
 
   const addSupply = () => {
     setProductionSupplies([...productionSupplies, { supplyId: 0, quantity: 0 }]);
@@ -171,8 +204,9 @@ export default function ProductionForm({
       };
 
       onSubmit(productionData);
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Gagal menyimpan produksi');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal menyimpan produksi');
+      alert(message);
     } finally {
       setLoading(false);
     }
@@ -388,4 +422,3 @@ export default function ProductionForm({
     </div>
   );
 }
-

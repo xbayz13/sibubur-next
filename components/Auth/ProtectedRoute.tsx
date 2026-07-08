@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
-  const { isAuthenticated, loading, hasPermission, permissions, isSuperAdmin, user } = useAuth();
+  const { isAuthenticated, loading, permissions, isSuperAdmin, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { showToast } = useToast();
@@ -21,41 +21,8 @@ export default function ProtectedRoute({ children, requiredPermission }: Protect
     if (!loading && !isAuthenticated) {
       showToast('Anda harus login terlebih dahulu', 'error');
       router.push('/login');
-      return;
     }
-
-    // Check permissions if user is authenticated
-    if (!loading && isAuthenticated) {
-      // SuperAdmin and Owner have access to everything
-      if (isSuperAdmin || user?.role?.name === 'Owner') {
-        return;
-      }
-
-      // Get required permissions for this route
-      let requiredPermissions: string[] = [];
-      
-      if (requiredPermission) {
-        requiredPermissions = Array.isArray(requiredPermission) 
-          ? requiredPermission 
-          : [requiredPermission];
-      } else {
-        // Auto-detect permissions from route
-        requiredPermissions = getPermissionsForRoute(pathname);
-      }
-
-      // If no permissions required, allow access
-      if (requiredPermissions.length === 0) {
-        return;
-      }
-
-      // Check if user has any of the required permissions
-      if (!hasAnyPermission(permissions, requiredPermissions)) {
-        showToast('Anda tidak memiliki akses ke halaman ini', 'error');
-        router.push('/');
-        return;
-      }
-    }
-  }, [loading, isAuthenticated, pathname, requiredPermission, hasPermission, permissions, isSuperAdmin, user, router, showToast]);
+  }, [loading, isAuthenticated, router, showToast]);
 
   if (loading) {
     return (
@@ -72,7 +39,7 @@ export default function ProtectedRoute({ children, requiredPermission }: Protect
     return null;
   }
 
-  // Check permissions before rendering
+  // SuperAdmin and Owner bypass all checks
   if (isSuperAdmin || user?.role?.name === 'Owner') {
     return <>{children}</>;
   }
@@ -94,4 +61,3 @@ export default function ProtectedRoute({ children, requiredPermission }: Protect
 
   return <>{children}</>;
 }
-

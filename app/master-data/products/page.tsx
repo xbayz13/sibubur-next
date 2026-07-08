@@ -8,12 +8,29 @@ import { useToast } from '@/components/ToastContainer';
 import { productsService } from '@/lib/services/products';
 import { productCategoriesService } from '@/lib/services/product-categories';
 import { Product, ProductCategory } from '@/types';
-import DataTable from '@/components/MasterData/DataTable';
 import ProductForm from '@/components/MasterData/ProductForm';
 import ProductAddonsManager from '@/components/MasterData/ProductAddonsManager';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.message) return apiError.response.data.message;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+};
 
 export default function ProductsPage() {
   const { showToast } = useToast();
@@ -23,6 +40,7 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [managingAddons, setManagingAddons] = useState<Product | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Product | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -38,8 +56,9 @@ export default function ProductsPage() {
       try {
         const res = await productCategoriesService.getAll({ limit: 100 });
         setCategories(res.data);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data kategori', 'error');
+      } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Gagal memuat data kategori');
+        showToast(message, 'error');
       }
     };
     loadCategories();
@@ -54,8 +73,9 @@ export default function ProductsPage() {
       setTotal(res.total);
       setTotalPages(res.totalPages);
       if (pageToLoad !== undefined) setPage(pageToLoad);
-    } catch (error: any) {
-      showToastRef.current(error.response?.data?.message || 'Gagal memuat data produk', 'error');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal memuat data produk');
+      showToastRef.current(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -75,7 +95,13 @@ export default function ProductsPage() {
     setShowForm(true);
   };
 
-  const handleSubmit = async (productData: any) => {
+  const handleSubmit = async (productData: {
+    name: string;
+    description?: string;
+    price: number;
+    productCategoryId?: number;
+    pictureId?: number;
+  }) => {
     try {
       if (editingProduct) {
         await productsService.update(editingProduct.id, productData);
@@ -87,20 +113,28 @@ export default function ProductsPage() {
       setShowForm(false);
       setEditingProduct(null);
       await loadProducts(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan produk', 'error');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal menyimpan produk');
+      showToast(message, 'error');
     }
   };
 
   const handleDelete = async (product: Product) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus produk "${product.name}"?`)) return;
+    setDeleteConfirm(product);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await productsService.delete(product.id);
+      await productsService.delete(deleteConfirm.id);
       showToast('Produk berhasil dihapus', 'success');
       await loadProducts(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus produk', 'error');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal menghapus produk');
+      showToast(message, 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -231,6 +265,7 @@ export default function ProductsPage() {
 
           {showForm && (
             <ProductForm
+              key={editingProduct?.id ?? 'new-product'}
               product={editingProduct}
               categories={categories}
               onSubmit={handleSubmit}
@@ -243,14 +278,25 @@ export default function ProductsPage() {
 
           {managingAddons && (
             <ProductAddonsManager
+              key={`addons-${managingAddons.id}`}
               product={managingAddons}
               onClose={() => setManagingAddons(null)}
               onUpdate={loadProducts}
             />
           )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
 
+           <ConfirmationModal
+             isOpen={!!deleteConfirm}
+             title="Hapus Produk?"
+             message={`Hapus produk "${deleteConfirm?.name}"?`}
+             confirmText="Ya, Hapus"
+             cancelText="Batal"
+             onConfirm={confirmDelete}
+             onCancel={() => setDeleteConfirm(null)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }

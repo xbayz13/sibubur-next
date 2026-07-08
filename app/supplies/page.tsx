@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -13,6 +13,15 @@ import SupplyForm from '@/components/Supplies/SupplyForm';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+
+type SupplyPayload = {
+  name: string;
+  unit: string;
+  stock: number;
+  minStock: number;
+  price?: number;
+};
 
 export default function SuppliesPage() {
   const { showToast } = useToast();
@@ -22,17 +31,23 @@ export default function SuppliesPage() {
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [showSupplyForm, setShowSupplyForm] = useState(false);
   const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Supply | null>(null);
   const [filter, setFilter] = useState<'all' | 'low-stock'>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
 
-  useEffect(() => {
-    loadData();
-  }, [page, filter, showToast]);
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
-  const loadData = async (pageOverride?: number) => {
+  const loadData = useCallback(async (pageOverride?: number) => {
     try {
       setLoading(true);
       const pageToLoad = pageOverride ?? page;
@@ -50,12 +65,16 @@ export default function SuppliesPage() {
         setTotal(res.total);
         setTotalPages(res.totalPages);
       }
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data persediaan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data persediaan'), 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, limit, page, showToast]);
+
+  useEffect(() => {
+    loadData();
+  }, [page, filter, loadData]);
 
   const handleRestock = (supply: Supply) => {
     setSelectedSupply(supply);
@@ -71,41 +90,38 @@ export default function SuppliesPage() {
       setShowRestockModal(false);
       setSelectedSupply(null);
       await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menambahkan stok', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menambahkan stok'), 'error');
     }
   };
 
-  const handleCreateSupply = async (supplyData: any) => {
+  const handleCreateSupply = async (supplyData: SupplyPayload) => {
     try {
       await suppliesService.create(supplyData);
       showToast('Persediaan berhasil ditambahkan', 'success');
       setShowSupplyForm(false);
       await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menambahkan persediaan', 'error');
-    }
-  };
-
-  const handleUpdateSupply = async (id: number, supplyData: any) => {
-    try {
-      await suppliesService.update(id, supplyData);
-      showToast('Persediaan berhasil diperbarui', 'success');
-      await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memperbarui persediaan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menambahkan persediaan'), 'error');
     }
   };
 
   const handleDeleteSupply = async (id: number) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus persediaan ini?')) return;
+    const supply = supplies.find((s) => s.id === id) || null;
+    setDeleteConfirm(supply);
+  };
+
+  const confirmDeleteSupply = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await suppliesService.delete(id);
+      await suppliesService.delete(deleteConfirm.id);
       showToast('Persediaan berhasil dihapus', 'success');
       await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus persediaan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menghapus persediaan'), 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -195,7 +211,6 @@ export default function SuppliesPage() {
             <SupplyList
               supplies={displayedSupplies}
               onRestock={handleRestock}
-              onUpdate={handleUpdateSupply}
               onDelete={handleDeleteSupply}
             />
             {filter === 'all' && (
@@ -220,14 +235,25 @@ export default function SuppliesPage() {
             />
           )}
 
-          {showSupplyForm && (
-            <SupplyForm
-              onSubmit={handleCreateSupply}
-              onCancel={() => setShowSupplyForm(false)}
-            />
-          )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+           {showSupplyForm && (
+             <SupplyForm
+               onSubmit={handleCreateSupply}
+               onCancel={() => setShowSupplyForm(false)}
+             />
+           )}
+
+           <ConfirmationModal
+             isOpen={!!deleteConfirm}
+             title="Hapus Persediaan?"
+             message="Hapus persediaan ini?"
+             confirmText="Ya, Hapus"
+             cancelText="Batal"
+             onConfirm={confirmDeleteSupply}
+             onCancel={() => setDeleteConfirm(null)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }

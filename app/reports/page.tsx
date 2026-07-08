@@ -5,7 +5,7 @@ import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
-import { reportsService } from '@/lib/services/reports';
+import { reportsService, ProductionRecommendation } from '@/lib/services/reports';
 import { storesService } from '@/lib/services/stores';
 import { DailyReport, MonthlyReport, YearlyReport, Store } from '@/types';
 import DailyReportView from '@/components/Reports/DailyReportView';
@@ -30,7 +30,9 @@ export default function ReportsPage() {
   const [dailyDate, setDailyDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
-  const [dailyReport, setDailyReport] = useState<DailyReport | null>(null);
+  const [dailyReport, setDailyReport] = useState<
+    (DailyReport & { recommendations?: ProductionRecommendation }) | null
+  >(null);
 
   // Monthly report state
   const [monthlyYear, setMonthlyYear] = useState<number>(new Date().getFullYear());
@@ -41,13 +43,22 @@ export default function ReportsPage() {
   const [yearlyYear, setYearlyYear] = useState<number>(new Date().getFullYear());
   const [yearlyReport, setYearlyReport] = useState<YearlyReport | null>(null);
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
+
   const loadStores = useCallback(async () => {
     try {
       const storesRes = await storesService.getAll({ limit: 100 });
       setStores(storesRes.data);
       // Default to "all stores" (selectedStoreId remains undefined)
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data toko'), 'error');
     }
   }, [showToast]);
 
@@ -57,9 +68,9 @@ export default function ReportsPage() {
     try {
       setLoading(true);
       const report = await reportsService.getDailyReport(dailyDate, selectedStoreId);
-      setDailyReport(report as any);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat laporan harian', 'error');
+      setDailyReport(report);
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat laporan harian'), 'error');
       setDailyReport(null);
     } finally {
       setLoading(false);
@@ -75,8 +86,8 @@ export default function ReportsPage() {
         selectedStoreId
       );
       setMonthlyReport(report);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat laporan bulanan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat laporan bulanan'), 'error');
       setMonthlyReport(null);
     } finally {
       setLoading(false);
@@ -88,8 +99,8 @@ export default function ReportsPage() {
       setLoading(true);
       const report = await reportsService.getYearlyReport(yearlyYear, selectedStoreId);
       setYearlyReport(report);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat laporan tahunan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat laporan tahunan'), 'error');
       setYearlyReport(null);
     } finally {
       setLoading(false);

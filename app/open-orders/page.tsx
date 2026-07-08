@@ -10,7 +10,7 @@ import { ordersService } from '@/lib/services/orders';
 import { storesService } from '@/lib/services/stores';
 import { transactionsService, CreateTransactionDto } from '@/lib/services/transactions';
 import { paymentMethodsService } from '@/lib/services/payment-methods';
-import { Order, Store, PaymentMethod, Product } from '@/types';
+import { Order, Store, PaymentMethod, Product, Transaction } from '@/types';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
@@ -36,7 +36,9 @@ export default function OpenOrdersPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('kitchen');
-  const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
+  const [receiptTransaction, setReceiptTransaction] = useState<Transaction | undefined>(
+    undefined
+  );
   const [products, setProducts] = useState<Product[]>([]);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [page, setPage] = useState(1);
@@ -44,20 +46,23 @@ export default function OpenOrdersPage() {
   const [total, setTotal] = useState(0);
   const limit = 20;
 
-  useEffect(() => {
-    loadStores();
-    loadPaymentMethods();
-    loadProducts();
-  }, []);
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const res = await productsService.getAll({ limit: 100 });
       setProducts(res.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load products:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Auto-set store for cashier users, otherwise use first store
@@ -66,28 +71,34 @@ export default function OpenOrdersPage() {
     } else if (stores.length > 0 && !selectedStoreId) {
       setSelectedStoreId(stores[0].id);
     }
-  }, [stores, user?.storeId]);
+  }, [stores, user?.storeId, selectedStoreId]);
 
   const prevSelectedStoreIdRef = useRef<number | undefined>(undefined);
   const skipNextPageLoadRef = useRef(false);
 
-  const loadStores = async () => {
+  const loadStores = useCallback(async () => {
     try {
       const res = await storesService.getAll({ limit: 100 });
       setStores(res.data);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data toko'), 'error');
     }
-  };
+  }, [showToast]);
 
-  const loadPaymentMethods = async () => {
+  const loadPaymentMethods = useCallback(async () => {
     try {
       const res = await paymentMethodsService.getAll({ limit: 100 });
       setPaymentMethods(res.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load payment methods:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadStores();
+    loadPaymentMethods();
+    loadProducts();
+  }, [loadPaymentMethods, loadProducts, loadStores]);
 
   const loadOrders = useCallback(async (pageOverride?: number) => {
     if (!selectedStoreId) return;
@@ -104,8 +115,8 @@ export default function OpenOrdersPage() {
       setTotal(res.total);
       setTotalPages(res.totalPages);
       if (pageOverride !== undefined) setPage(pageOverride);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat pesanan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat pesanan'), 'error');
     } finally {
       setLoading(false);
     }
@@ -154,11 +165,6 @@ export default function OpenOrdersPage() {
     setShowDetailModal(true);
   };
 
-  const handleEdit = (order: Order) => {
-    setSelectedOrder(order);
-    setShowEditModal(true);
-  };
-
   const handlePrintReceipt = (order: Order, type: 'kitchen' | 'customer') => {
     setSelectedOrder(order);
     setReceiptType(type);
@@ -172,8 +178,8 @@ export default function OpenOrdersPage() {
       setShowEditModal(false);
       setSelectedOrder(null);
       await loadOrders();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memperbarui pesanan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memperbarui pesanan'), 'error');
     }
   };
 
@@ -222,8 +228,8 @@ export default function OpenOrdersPage() {
         setSelectedOrder(null);
         await loadOrders();
       }
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal membatalkan pesanan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal membatalkan pesanan'), 'error');
     }
   };
 
@@ -251,9 +257,9 @@ export default function OpenOrdersPage() {
       const change = Math.max(0, amount - totalAmount);
       
       // Add change to transaction data
-      const transactionWithChange = {
+      const transactionWithChange: Transaction = {
         ...transaction,
-        change: change,
+        change,
       };
 
       showToast('Pembayaran berhasil diproses', 'success');
@@ -268,11 +274,8 @@ export default function OpenOrdersPage() {
       }
       
       await loadOrders();
-    } catch (error: any) {
-      showToast(
-        error.response?.data?.message || 'Gagal memproses pembayaran',
-        'error'
-      );
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memproses pembayaran'), 'error');
       console.error('Error processing payment:', error);
     }
   };
@@ -568,7 +571,6 @@ export default function OpenOrdersPage() {
         {showEditModal && selectedOrder && products.length > 0 && (
           <EditOrderModal
             order={selectedOrder}
-            products={products}
             onUpdate={handleUpdateOrder}
             onClose={() => {
               setShowEditModal(false);
@@ -587,7 +589,7 @@ export default function OpenOrdersPage() {
               onClose={() => {
                 setShowReceipt(false);
                 setSelectedOrder(null);
-                setReceiptTransaction(null);
+                setReceiptTransaction(undefined);
               }}
               transaction={receiptTransaction}
               autoPrint={receiptType === 'kitchen'}
@@ -626,38 +628,32 @@ function PaymentModal({
   onProcess,
   onClose,
 }: PaymentModalProps) {
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    number | null
-  >(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<number | null>(null);
   const [amountPaid, setAmountPaid] = useState<string>('');
-  const [change, setChange] = useState<number>(0);
 
   const numericTotal =
     typeof order.totalAmount === 'string'
       ? parseFloat(order.totalAmount)
       : Number(order.totalAmount);
 
-  // Get selected payment method details
   const selectedMethod = paymentMethods.find((m) => m.id === selectedPaymentMethod);
   const isCash = selectedMethod?.name?.toLowerCase().includes('cash') || false;
 
-  // Auto-set amount for non-cash payment methods
-  useEffect(() => {
-    if (selectedPaymentMethod && !isCash) {
-      setAmountPaid(numericTotal.toString());
-    } else if (!selectedPaymentMethod) {
+  const handlePaymentMethodChange = (value: string) => {
+    const id = value ? Number(value) : null;
+    setSelectedPaymentMethod(id);
+    if (!id) {
       setAmountPaid('');
+      return;
     }
-  }, [selectedPaymentMethod, isCash, numericTotal]);
 
-  useEffect(() => {
-    if (amountPaid && selectedPaymentMethod) {
-      const paid = parseFloat(amountPaid) || 0;
-      setChange(Math.max(0, paid - numericTotal));
-    } else {
-      setChange(0);
-    }
-  }, [amountPaid, numericTotal, selectedPaymentMethod]);
+    const method = paymentMethods.find((m) => m.id === id);
+    const methodIsCash = method?.name?.toLowerCase().includes('cash') || false;
+    setAmountPaid(methodIsCash ? '' : numericTotal.toString());
+  };
+
+  const paidAmount = parseFloat(amountPaid) || 0;
+  const change = Math.max(0, paidAmount - numericTotal);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -665,12 +661,11 @@ function PaymentModal({
       alert('Pilih metode pembayaran');
       return;
     }
-    const paid = parseFloat(amountPaid) || 0;
-    if (paid < numericTotal) {
+    if (paidAmount < numericTotal) {
       alert('Jumlah pembayaran kurang');
       return;
     }
-    onProcess(selectedPaymentMethod, paid);
+    onProcess(selectedPaymentMethod, paidAmount);
   };
 
   return (
@@ -699,7 +694,7 @@ function PaymentModal({
             </label>
             <select
               value={selectedPaymentMethod || ''}
-              onChange={(e) => setSelectedPaymentMethod(Number(e.target.value))}
+              onChange={(e) => handlePaymentMethodChange(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             >
@@ -877,12 +872,11 @@ function DetailModal({ order, onClose }: DetailModalProps) {
 // Edit Order Modal Component
 interface EditOrderModalProps {
   order: Order;
-  products: Product[];
   onUpdate: (orderId: number, updateData: { customerName?: string }) => Promise<void>;
   onClose: () => void;
 }
 
-function EditOrderModal({ order, products, onUpdate, onClose }: EditOrderModalProps) {
+function EditOrderModal({ order, onUpdate, onClose }: EditOrderModalProps) {
   const [customerName, setCustomerName] = useState(order.customerName || '');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1125,4 +1119,3 @@ function CancelOrderModal({
     </div>
   );
 }
-

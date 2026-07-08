@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ProductAddon } from '@/types';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/form/Input';
@@ -18,14 +18,6 @@ export default function AddonForm({ addon, onSubmit, onCancel }: AddonFormProps)
   const [name, setName] = useState(addon?.name || '');
   const [price, setPrice] = useState<string>(addon?.price?.toString() || '');
   const [description, setDescription] = useState(addon?.description || '');
-
-  useEffect(() => {
-    if (addon) {
-      setName(addon.name || '');
-      setPrice(addon.price?.toString() || '');
-      setDescription(addon.description || '');
-    }
-  }, [addon]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,4 +95,3 @@ export default function AddonForm({ addon, onSubmit, onCancel }: AddonFormProps)
     </Modal>
   );
 }
-

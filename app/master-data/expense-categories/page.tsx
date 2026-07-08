@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -11,6 +11,24 @@ import DataTable from '@/components/MasterData/DataTable';
 import CategoryForm from '@/components/MasterData/CategoryForm';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.message) return apiError.response.data.message;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+};
 
 export default function ExpenseCategoriesPage() {
   const { showToast } = useToast();
@@ -18,29 +36,31 @@ export default function ExpenseCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<ExpenseCategory | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<ExpenseCategory | null>(null);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
 
-  useEffect(() => {
-    loadData();
-  }, [page, showToast]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await expenseCategoriesService.getAll({ page, limit });
       setCategories(res.data);
       setTotal(res.total);
       setTotalPages(res.totalPages);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data kategori', 'error');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal memuat data kategori');
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit, page, showToast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreate = () => {
     setEditingCategory(null);
@@ -64,20 +84,28 @@ export default function ExpenseCategoriesPage() {
       setShowForm(false);
       setEditingCategory(null);
       await loadData();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan kategori', 'error');
+    } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Gagal menyimpan kategori');
+        showToast(message, 'error');
     }
   };
 
   const handleDelete = async (category: ExpenseCategory) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus kategori "${category.name}"?`)) return;
+    setDeleteConfirm(category);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await expenseCategoriesService.delete(category.id);
+      await expenseCategoriesService.delete(deleteConfirm.id);
       showToast('Kategori berhasil dihapus', 'success');
       await loadData();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus kategori', 'error');
+    } catch (error: unknown) {
+        const message = getErrorMessage(error, 'Gagal menghapus kategori');
+        showToast(message, 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -131,17 +159,28 @@ export default function ExpenseCategoriesPage() {
 
           {showForm && (
             <CategoryForm
+              key={editingCategory?.id ?? 'new-expense-category'}
               category={editingCategory}
               onSubmit={handleSubmit}
               onCancel={() => {
                 setShowForm(false);
                 setEditingCategory(null);
-              }}
-            />
-          )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+               }}
+             />
+           )}
 
+           <ConfirmationModal
+             isOpen={!!deleteConfirm}
+             title="Hapus Kategori Pengeluaran?"
+             message={`Hapus kategori "${deleteConfirm?.name}"?`}
+             confirmText="Ya, Hapus"
+             cancelText="Batal"
+             onConfirm={confirmDelete}
+             onCancel={() => setDeleteConfirm(null)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import Sidebar from '@/components/Layout/Sidebar';
@@ -14,7 +14,7 @@ import { storesService } from '@/lib/services/stores';
 import { paymentMethodsService } from '@/lib/services/payment-methods';
 import { ordersService } from '@/lib/services/orders';
 import { transactionsService, CreateTransactionDto } from '@/lib/services/transactions';
-import { Product, Store, PaymentMethod, CreateOrderDto } from '@/types';
+import { Product, Store, PaymentMethod, CreateOrderDto, Order, Transaction } from '@/types';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import Link from 'next/link';
 import { isAutoPrintKitchenEnabled, isAutoPrintCustomerEnabled, shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
@@ -46,17 +46,28 @@ export default function CashierPage() {
   const [customerName, setCustomerName] = useState('');
   const [showPayment, setShowPayment] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [receiptOrder, setReceiptOrder] = useState<any>(null);
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('kitchen');
-  const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
+  const [receiptTransaction, setReceiptTransaction] = useState<Transaction | undefined>(
+    undefined
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [currentOrder, setCurrentOrder] = useState<any>(null); // Store the created order
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null); // Store the created order
   const [loading, setLoading] = useState(true);
   const [showCart, setShowCart] = useState(false); // Mobile cart visibility
   const storeSetRef = useRef(false); // Track if store has been set
 
   // Load products, stores, and payment methods on mount (these don't depend on selectedStoreId)
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
+
   useEffect(() => {
     const loadStaticData = async () => {
       try {
@@ -128,16 +139,16 @@ export default function CashierPage() {
           setSelectedStoreId(storeToSet);
           storeSetRef.current = true;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error loading static data:', error);
-        showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+        showToast(getErrorMessage(error, 'Gagal memuat data'), 'error');
       } finally {
         setLoading(false);
       }
     };
 
     loadStaticData();
-  }, []); // Run only once on mount
+  }, [showToast, user?.storeId]); // Run only once on mount
 
   // Auto-set store from user when user data is loaded (if stores are already loaded)
   useEffect(() => {
@@ -276,7 +287,7 @@ export default function CashierPage() {
   };
 
   // Calculate totals
-  const { subtotal, total } = useMemo(() => {
+  const total = useMemo(() => {
     let sub = 0;
     cart.forEach((item) => {
       sub += item.product.price * item.quantity;
@@ -284,10 +295,7 @@ export default function CashierPage() {
         sub += addon.price * addon.quantity * item.quantity;
       });
     });
-    return {
-      subtotal: sub,
-      total: sub,
-    };
+    return sub;
   }, [cart]);
 
   // Create order (without payment)
@@ -356,8 +364,8 @@ export default function CashierPage() {
 
       // Clear cart but keep customer name for next order
       setCart([]);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Gagal membuat pesanan';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Gagal membuat pesanan');
       showToast(errorMessage, 'error');
       console.error('Error creating order:', error);
       console.error('Order data that failed:', {
@@ -400,7 +408,7 @@ export default function CashierPage() {
       const updatedOrder = await ordersService.getById(currentOrder.id);
       
       // Add change to transaction data
-      const transactionWithChange = {
+      const transactionWithChange: Transaction = {
         ...transaction,
         change: Math.max(0, change),
       };
@@ -417,8 +425,8 @@ export default function CashierPage() {
       }
       
       setCurrentOrder(null);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memproses pembayaran', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memproses pembayaran'), 'error');
       console.error('Error processing payment:', error);
     }
   };
@@ -828,32 +836,28 @@ interface PaymentModalProps {
 function PaymentModal({ total, paymentMethods, onProcess, onClose }: PaymentModalProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<number | null>(null);
   const [amountPaid, setAmountPaid] = useState<string>('');
-  const [change, setChange] = useState<number>(0);
 
   // Ensure total is a number (PostgreSQL returns decimals as strings sometimes)
   const numericTotal = typeof total === 'string' ? parseFloat(total) : Number(total);
 
-  // Get selected payment method details
   const selectedMethod = paymentMethods.find((m) => m.id === selectedPaymentMethod);
   const isCash = selectedMethod?.name?.toLowerCase().includes('cash') || false;
 
-  // Auto-set amount for non-cash payment methods
-  useEffect(() => {
-    if (selectedPaymentMethod && !isCash) {
-      setAmountPaid(numericTotal.toString());
-    } else if (!selectedPaymentMethod) {
+  const handlePaymentMethodChange = (value: string) => {
+    const id = value ? Number(value) : null;
+    setSelectedPaymentMethod(id);
+    if (!id) {
       setAmountPaid('');
+      return;
     }
-  }, [selectedPaymentMethod, isCash, numericTotal]);
 
-  useEffect(() => {
-    if (amountPaid && selectedPaymentMethod) {
-      const paid = parseFloat(amountPaid) || 0;
-      setChange(Math.max(0, paid - numericTotal));
-    } else {
-      setChange(0);
-    }
-  }, [amountPaid, numericTotal, selectedPaymentMethod]);
+    const method = paymentMethods.find((m) => m.id === id);
+    const methodIsCash = method?.name?.toLowerCase().includes('cash') || false;
+    setAmountPaid(methodIsCash ? '' : numericTotal.toString());
+  };
+
+  const paidAmount = parseFloat(amountPaid) || 0;
+  const change = Math.max(0, paidAmount - numericTotal);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -861,12 +865,11 @@ function PaymentModal({ total, paymentMethods, onProcess, onClose }: PaymentModa
       alert('Pilih metode pembayaran');
       return;
     }
-    const paid = parseFloat(amountPaid) || 0;
-    if (paid < numericTotal) {
+    if (paidAmount < numericTotal) {
       alert('Jumlah pembayaran kurang');
       return;
     }
-    onProcess(selectedPaymentMethod, paid, change);
+    onProcess(selectedPaymentMethod, paidAmount, change);
   };
 
   return (
@@ -887,7 +890,7 @@ function PaymentModal({ total, paymentMethods, onProcess, onClose }: PaymentModa
             </label>
             <select
               value={selectedPaymentMethod || ''}
-              onChange={(e) => setSelectedPaymentMethod(Number(e.target.value))}
+              onChange={(e) => handlePaymentMethodChange(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               required
             >
@@ -952,4 +955,3 @@ function PaymentModal({ total, paymentMethods, onProcess, onClose }: PaymentModa
     </div>
   );
 }
-

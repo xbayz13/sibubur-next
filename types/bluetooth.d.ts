@@ -11,12 +11,12 @@ interface BluetoothDevice extends EventTarget {
   unwatchAdvertisements(): void;
   addEventListener(
     type: 'advertisementreceived',
-    listener: (this: this, ev: BluetoothAdvertisingEvent) => any,
+    listener: (this: this, ev: BluetoothAdvertisingEvent) => void,
     useCapture?: boolean
   ): void;
   addEventListener(
     type: 'gattserverdisconnected',
-    listener: (this: this, ev: Event) => any,
+    listener: (this: this, ev: Event) => void,
     useCapture?: boolean
   ): void;
 }
@@ -54,7 +54,7 @@ interface BluetoothRemoteGATTCharacteristic extends EventTarget {
   stopNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
   addEventListener(
     type: 'characteristicvaluechanged',
-    listener: (this: this, ev: Event) => any,
+    listener: (this: this, ev: Event) => void,
     useCapture?: boolean
   ): void;
 }
@@ -126,7 +126,7 @@ interface Bluetooth extends EventTarget {
   requestDevice(options?: RequestDeviceOptions): Promise<BluetoothDevice>;
   addEventListener(
     type: 'availabilitychanged',
-    listener: (this: this, ev: Event) => any,
+    listener: (this: this, ev: Event) => void,
     useCapture?: boolean
   ): void;
 }
@@ -134,8 +134,6 @@ interface Bluetooth extends EventTarget {
 interface Navigator {
   bluetooth?: Bluetooth;
 }
-
-
 
 
 

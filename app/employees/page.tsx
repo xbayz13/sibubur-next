@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { employeesService } from '@/lib/services/employees';
-import { attendancesService, CreateAttendanceDto, UpdateAttendanceDto } from '@/lib/services/attendances';
+import { attendancesService } from '@/lib/services/attendances';
 import { storesService } from '@/lib/services/stores';
 import { Employee, Attendance, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 export default function EmployeesPage() {
   const { showToast } = useToast();
@@ -19,6 +20,7 @@ export default function EmployeesPage() {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAttendanceForm, setShowAttendanceForm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<Attendance | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -28,6 +30,15 @@ export default function EmployeesPage() {
   const [attTotalPages, setAttTotalPages] = useState(1);
   const [attTotal, setAttTotal] = useState(0);
   const attLimit = 20;
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
   // Load stores and employees only once (limit 100 for dropdown/form)
   useEffect(() => {
@@ -39,14 +50,14 @@ export default function EmployeesPage() {
         ]);
         setEmployees(employeesRes.data);
         setStores(storesRes.data);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Gagal memuat data'), 'error');
       }
     };
     loadStaticData();
   }, [showToast]);
 
-  // Load attendances when date, store filter, or page changes
+  // Load attendances when date or page changes
   useEffect(() => {
     const loadAttendances = async () => {
       try {
@@ -59,8 +70,8 @@ export default function EmployeesPage() {
         setAttendances(res.data);
         setAttTotal(res.total);
         setAttTotalPages(res.totalPages);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data absensi', 'error');
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Gagal memuat data absensi'), 'error');
         setAttendances([]);
       } finally {
         setLoading(false);
@@ -82,32 +93,39 @@ export default function EmployeesPage() {
     setShowAttendanceForm(true);
   };
 
-  const reloadAttendances = async () => {
+  const reloadAttendances = async (pageOverride?: number) => {
     try {
+      const pageToLoad = pageOverride ?? attPage;
       const res = await attendancesService.getAll({
         date: selectedDate,
-        page: attPage,
+        page: pageToLoad,
         limit: attLimit,
       });
       setAttendances(res.data);
       setAttTotal(res.total);
       setAttTotalPages(res.totalPages);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data absensi', 'error');
+      if (pageOverride !== undefined) setAttPage(pageOverride);
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data absensi'), 'error');
     }
   };
 
   const handleDeleteAttendance = async (attendance: Attendance) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus absensi ini?`)) {
-      return;
-    }
+    setDeleteConfirm(attendance);
+  };
+
+  const confirmDeleteAttendance = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await attendancesService.delete(attendance.id);
+      await attendancesService.delete(deleteConfirm.id);
       showToast('Absensi berhasil dihapus', 'success');
-      await reloadAttendances();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus absensi', 'error');
+      await reloadAttendances(1);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal menghapus absensi';
+      showToast(message, 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -134,7 +152,7 @@ export default function EmployeesPage() {
             });
           }
           successCount++;
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error(`Failed to save attendance for employee ${data.employeeId}:`, error);
           errorCount++;
         }
@@ -148,8 +166,8 @@ export default function EmployeesPage() {
       
       setShowAttendanceForm(false);
       await reloadAttendances();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan absensi', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menyimpan absensi'), 'error');
     }
   };
 
@@ -327,13 +345,24 @@ export default function EmployeesPage() {
               onCancel={() => setShowAttendanceForm(false)}
             />
           )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+         </div>
 
-interface AttendanceFormProps {
+         <ConfirmationModal
+           isOpen={!!deleteConfirm}
+           title="Hapus Absensi?"
+           message="Hapus data absensi ini?"
+           confirmText="Ya, Hapus"
+           cancelText="Batal"
+           onConfirm={confirmDeleteAttendance}
+           onCancel={() => setDeleteConfirm(null)}
+           variant="danger"
+         />
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }
+
+ interface AttendanceFormProps {
   employees: Employee[];
   date: string;
   existingAttendances: Attendance[];
@@ -348,22 +377,17 @@ function AttendanceForm({
   onSubmit,
   onCancel,
 }: AttendanceFormProps) {
-  // State to track attendance for each employee
-  const [attendanceMap, setAttendanceMap] = useState<Map<number, 'present' | 'absent' | null>>(
-    new Map()
-  );
-
-  // Initialize attendance map when employees or date changes
-  useEffect(() => {
+  // Build initial map once per render from props
+  const initialMap = useMemo(() => {
     const newMap = new Map<number, 'present' | 'absent' | null>();
     employees.forEach((emp) => {
-      const existing = existingAttendances.find(
-        (att) => att.employeeId === emp.id && att.date === date
-      );
+      const existing = existingAttendances.find((att) => att.employeeId === emp.id && att.date === date);
       newMap.set(emp.id, existing ? existing.status : null);
     });
-    setAttendanceMap(newMap);
-  }, [employees, date, existingAttendances]);
+    return newMap;
+  }, [employees, existingAttendances, date]);
+
+  const [attendanceMap, setAttendanceMap] = useState<Map<number, 'present' | 'absent' | null>>(initialMap);
 
   const handleToggleEmployee = (employeeId: number) => {
     setAttendanceMap((prev) => {

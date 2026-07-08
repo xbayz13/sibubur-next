@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -9,12 +9,13 @@ import { permissionsService, CreatePermissionDto, UpdatePermissionDto } from '@/
 import { Permission } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
-import Input from '@/components/form/Input';
 import Label from '@/components/form/Label';
 import Select from '@/components/form/Select';
-import Card from '@/components/ui/Card';
-import Pagination from '@/components/ui/Pagination';
+import Input from '@/components/form/Input';
 
 export default function PermissionsPage() {
   const { showToast } = useToast();
@@ -22,6 +23,7 @@ export default function PermissionsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState<Permission | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Permission | null>(null);
   const [moduleFilter, setModuleFilter] = useState<string>('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -29,22 +31,21 @@ export default function PermissionsPage() {
   const limit = 20;
   const prevModuleFilterRef = useRef<string | null>(null);
   const skipNextPageLoadRef = useRef(false);
-  const showToastRef = useRef(showToast);
-  showToastRef.current = showToast;
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
   useEffect(() => {
     setPage(1);
   }, [moduleFilter]);
 
-  useEffect(() => {
-    if (skipNextPageLoadRef.current) {
-      skipNextPageLoadRef.current = false;
-      return;
-    }
-    loadData();
-  }, [moduleFilter, page]);
-
-  const loadData = async (pageOverride?: number) => {
+  const loadData = useCallback(async (pageOverride?: number) => {
     try {
       setLoading(true);
       // When transitioning from module filter to no filter, use page 1 to avoid stale pagination state
@@ -68,12 +69,20 @@ export default function PermissionsPage() {
         setTotal(res.total);
         setTotalPages(res.totalPages);
       }
-    } catch (error: any) {
-      showToastRef.current(error.response?.data?.message || 'Gagal memuat data permission', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data permission'), 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [moduleFilter, page, limit, showToast]);
+
+  useEffect(() => {
+    if (skipNextPageLoadRef.current) {
+      skipNextPageLoadRef.current = false;
+      return;
+    }
+    loadData();
+  }, [moduleFilter, page, loadData]);
 
   const handleCreate = () => {
     setSelectedPermission(null);
@@ -86,16 +95,20 @@ export default function PermissionsPage() {
   };
 
   const handleDelete = async (permission: Permission) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus permission ${permission.slug}?`)) {
-      return;
-    }
+    setDeleteConfirm(permission);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await permissionsService.delete(permission.id);
+      await permissionsService.delete(deleteConfirm.id);
       showToast('Permission berhasil dihapus', 'success');
       await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus permission', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menghapus permission'), 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -111,8 +124,8 @@ export default function PermissionsPage() {
       setShowForm(false);
       setSelectedPermission(null);
       await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan permission', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menyimpan permission'), 'error');
     }
   };
 
@@ -206,13 +219,25 @@ export default function PermissionsPage() {
               }}
             />
           )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
 
-interface PermissionFormProps {
+          <ConfirmationModal
+            isOpen={!!deleteConfirm}
+            title="Hapus Permission?"
+            message={`Hapus permission "${deleteConfirm?.slug}"?`}
+            confirmText="Ya, Hapus"
+            cancelText="Batal"
+            onConfirm={confirmDelete}
+            onCancel={() => setDeleteConfirm(null)}
+            variant="danger"
+          />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+
+ }
+
+ interface PermissionFormProps {
   permission: Permission | null;
   onSubmit: (data: CreatePermissionDto | UpdatePermissionDto) => void;
   onCancel: () => void;
@@ -296,4 +321,3 @@ function PermissionForm({ permission, onSubmit, onCancel }: PermissionFormProps)
     </Modal>
   );
 }
-

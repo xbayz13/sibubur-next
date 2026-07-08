@@ -18,19 +18,17 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
-  const [isHovered, setIsHovered] = useState<boolean>(false);
-
-  // Load saved state from localStorage on mount
-  useEffect(() => {
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sidebarCollapsed');
       if (saved !== null) {
-        setIsCollapsed(saved === 'true');
+        return saved === 'true';
       }
     }
-  }, []);
+    return false;
+  });
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -39,10 +37,10 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     }
   }, [isCollapsed]);
 
-  // Close mobile menu when window is resized to desktop
+  // Close mobile menu when window is resized to tablet/desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) {
+      if (window.innerWidth >= 768) {
         setIsMobileOpen(false);
       }
     };
@@ -97,4 +95,3 @@ export function useSidebar() {
   }
   return context;
 }
-

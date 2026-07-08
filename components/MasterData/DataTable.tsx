@@ -1,7 +1,8 @@
 'use client';
 
-import { ReactNode, useRef } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 interface Column<T> {
   header: string;
@@ -27,7 +28,7 @@ const DEFAULT_ROW_HEIGHT = 52;
 const DEFAULT_MAX_HEIGHT = 400;
 const DEFAULT_VIRTUALIZATION_THRESHOLD = 30;
 
-export default function DataTable<T extends Record<string, any>>({
+export default function DataTable<T extends object>({
   data,
   columns,
   onEdit,
@@ -38,6 +39,7 @@ export default function DataTable<T extends Record<string, any>>({
   virtualizationThreshold = DEFAULT_VIRTUALIZATION_THRESHOLD,
 }: DataTableProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ item: T; isOpen: boolean } | null>(null);
 
   const shouldVirtualize =
     virtualized && data.length > virtualizationThreshold;
@@ -66,9 +68,11 @@ export default function DataTable<T extends Record<string, any>>({
       {columns.map((column, idx) => (
         <td key={idx} className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900">
           <div className="whitespace-nowrap sm:whitespace-normal">
-            {typeof column.accessor === 'function'
-              ? column.accessor(item)
-              : item[column.accessor]}
+            {(
+              typeof column.accessor === 'function'
+                ? column.accessor(item)
+                : (item[column.accessor] as ReactNode)
+            )}
           </div>
         </td>
       ))}
@@ -80,12 +84,12 @@ export default function DataTable<T extends Record<string, any>>({
                 onClick={() => onEdit(item)}
                 className="text-indigo-600 hover:text-indigo-900 text-xs sm:text-sm"
               >
-                Edit
+                Ubah
               </button>
             )}
             {onDelete && (
               <button
-                onClick={() => onDelete(item)}
+                onClick={() => setDeleteConfirm({ item, isOpen: true })}
                 className="text-rose-600 hover:text-rose-900 text-xs sm:text-sm"
               >
                 Hapus
@@ -146,6 +150,21 @@ export default function DataTable<T extends Record<string, any>>({
             </table>
           </div>
         </div>
+        <ConfirmationModal
+          isOpen={!!deleteConfirm}
+          title="Hapus Data?"
+          message="Data akan dihapus permanen. Yakin?"
+          confirmText="Ya, Hapus"
+          cancelText="Batal"
+          onConfirm={() => {
+            if (deleteConfirm && onDelete) {
+              onDelete(deleteConfirm.item);
+            }
+            setDeleteConfirm(null);
+          }}
+          onCancel={() => setDeleteConfirm(null)}
+          variant="danger"
+        />
       </div>
     );
   }
@@ -183,9 +202,24 @@ export default function DataTable<T extends Record<string, any>>({
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+           </div>
+         </div>
+         <ConfirmationModal
+           isOpen={!!deleteConfirm}
+           title="Hapus Data?"
+           message="Data akan dihapus permanen. Yakin?"
+           confirmText="Ya, Hapus"
+           cancelText="Batal"
+           onConfirm={() => {
+             if (deleteConfirm && onDelete) {
+               onDelete(deleteConfirm.item);
+             }
+             setDeleteConfirm(null);
+           }}
+           onCancel={() => setDeleteConfirm(null)}
+           variant="danger"
+         />
+       </div>
+     </div>
+   );
+ }

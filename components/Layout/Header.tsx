@@ -1,12 +1,42 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { ThemeToggleButton } from '@/components/common/ThemeToggleButton';
 import UserDropdown from '@/components/header/UserDropdown';
-import { ChevronLeftIcon } from '@/components/icons';
+type ScreenWithOrientation = Screen & {
+  orientation?: ScreenOrientation & {
+    angle?: number;
+  };
+};
+
+type ElementWithFullscreen = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+};
+
+type DocumentWithFullscreen = Document & {
+  webkitExitFullscreen?: () => Promise<void>;
+  mozCancelFullScreen?: () => Promise<void>;
+  msExitFullscreen?: () => Promise<void>;
+};
+
+type OrientationLock =
+  | 'any'
+  | 'landscape'
+  | 'portrait'
+  | 'portrait-primary'
+  | 'portrait-secondary'
+  | 'landscape-primary'
+  | 'landscape-secondary';
+
+type OrientationWithLock = {
+  lock: (orientation: OrientationLock) => Promise<void>;
+  unlock?: () => void;
+};
 
 export default function Header() {
   const { isMobileOpen, toggleSidebar, toggleMobileMenu } = useSidebar();
@@ -19,7 +49,7 @@ export default function Header() {
     };
 
     const handleOrientationChange = () => {
-      const orientation = (screen as any).orientation;
+      const orientation = (window.screen as ScreenWithOrientation).orientation;
       if (orientation && orientation.angle !== undefined) {
         setIsLandscape(
           orientation.angle === 90 || orientation.angle === -90 || orientation.angle === 270
@@ -50,63 +80,75 @@ export default function Header() {
   const toggleFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
-        if (document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen();
-        } else if ((document.documentElement as any).webkitRequestFullscreen) {
-          await (document.documentElement as any).webkitRequestFullscreen();
-        } else if ((document.documentElement as any).mozRequestFullScreen) {
-          await (document.documentElement as any).mozRequestFullScreen();
-        } else if ((document.documentElement as any).msRequestFullscreen) {
-          await (document.documentElement as any).msRequestFullscreen();
+        const docEl = document.documentElement as ElementWithFullscreen;
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          await docEl.webkitRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+          await docEl.mozRequestFullScreen();
+        } else if (docEl.msRequestFullscreen) {
+          await docEl.msRequestFullscreen();
         }
       } else {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen();
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen();
+        const doc = document as DocumentWithFullscreen;
+        if (doc.exitFullscreen) {
+          await doc.exitFullscreen();
+        } else if (doc.webkitExitFullscreen) {
+          await doc.webkitExitFullscreen();
+        } else if (doc.mozCancelFullScreen) {
+          await doc.mozCancelFullScreen();
+        } else if (doc.msExitFullscreen) {
+          await doc.msExitFullscreen();
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error toggling fullscreen:', error);
     }
   };
 
   const toggleScreenRotation = async () => {
     try {
-      const orientation = (screen as any).orientation;
+      const orientation = (window.screen as ScreenWithOrientation).orientation;
       if (!orientation) {
         alert('Rotasi layar tidak didukung di browser ini.');
         return;
       }
-      if (orientation.lock) {
+      const orientationWithLock = orientation as Partial<OrientationWithLock>;
+      const canLock = typeof orientationWithLock.lock === 'function';
+      if (canLock && orientationWithLock.lock) {
+        const lockFn = orientationWithLock.lock;
         if (isLandscape) {
-          await orientation.lock('portrait');
+          await lockFn('portrait');
           setIsLandscape(false);
         } else {
-          await orientation.lock('landscape');
+          await lockFn('landscape');
           setIsLandscape(true);
         }
-      } else {
-        if (orientation.unlock) {
-          orientation.unlock();
+        return;
+      }
+
+      const canUnlock = typeof orientationWithLock.unlock === 'function';
+      if (canUnlock && orientationWithLock.unlock) {
+        orientationWithLock.unlock();
+      }
+      alert('Rotasi layar tidak dapat dikunci.');
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'name' in error) {
+        const errName = (error as { name?: string }).name;
+        if (errName === 'NotSupportedError' || errName === 'SecurityError') {
+          alert('Rotasi layar memerlukan mode fullscreen.');
+          return;
         }
-        alert('Rotasi layar tidak dapat dikunci.');
       }
-    } catch (error: any) {
-      if (error.name === 'NotSupportedError' || error.name === 'SecurityError') {
-        alert('Rotasi layar memerlukan mode fullscreen.');
-      } else {
-        console.error('Error toggling screen rotation:', error);
-      }
+      alert('Rotasi layar memerlukan mode fullscreen.');
+      console.error('Error toggling screen rotation:', error);
     }
   };
 
   const handleToggle = () => {
-    if (window.innerWidth >= 1024) {
+    // Use 768px breakpoint for better tablet support (portrait & landscape)
+    if (window.innerWidth >= 768) {
       toggleSidebar();
     } else {
       toggleMobileMenu();
@@ -114,11 +156,11 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 lg:border-b">
-      <div className="flex flex-col items-center justify-between grow lg:flex-row lg:px-6">
-        <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 lg:justify-normal lg:border-b-0 lg:px-0 lg:py-4">
+    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 md:border-b">
+      <div className="flex flex-col items-center justify-between grow md:flex-row md:px-6">
+        <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 md:justify-normal md:border-b-0 md:px-0 md:py-4">
           <button
-            className="items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg z-99999 dark:border-gray-800 lg:flex dark:text-gray-400 lg:h-11 lg:w-11 lg:border"
+            className="items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg z-99999 dark:border-gray-800 md:flex dark:text-gray-400 md:h-11 md:w-11 md:border"
             onClick={handleToggle}
             aria-label="Toggle Sidebar"
           >
@@ -155,7 +197,7 @@ export default function Header() {
             )}
           </button>
 
-          <Link href="/" className="lg:hidden">
+          <Link href="/" className="md:hidden">
             <Image
               src="/sibubur-high-resolution-logo-transparent.png"
               alt="SiBubur Logo"
@@ -166,7 +208,7 @@ export default function Header() {
           </Link>
         </div>
 
-        <div className="flex items-center justify-between w-full gap-4 px-5 py-4 lg:flex lg:justify-end lg:px-0">
+        <div className="flex items-center justify-between w-full gap-4 px-5 py-4 md:flex md:justify-end md:px-0">
           <div className="flex items-center gap-2 2xsm:gap-3">
             {/* Screen Rotation Button */}
             <button

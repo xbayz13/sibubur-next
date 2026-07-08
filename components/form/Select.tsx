@@ -1,6 +1,6 @@
 'use client';
 
-import { SelectHTMLAttributes, ReactNode } from 'react';
+import { SelectHTMLAttributes } from 'react';
 import { ChevronDownIcon } from '@/components/icons';
 
 interface Option {
@@ -29,7 +29,7 @@ export default function Select({
   defaultValue,
   ...props
 }: SelectProps) {
-  let selectClasses = `h-11 w-full appearance-none rounded-lg border bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
+  let selectClasses = `h-12 w-full appearance-none rounded-lg border bg-transparent px-4 py-3.5 pr-11 text-base shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
   if (error) {
     selectClasses += ` border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:text-error-400 dark:border-error-500 dark:focus:border-error-800`;

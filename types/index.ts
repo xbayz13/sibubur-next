@@ -219,7 +219,7 @@ export interface Weather {
     condition?: WeatherCondition;
     temperature?: number;
     description?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   // Computed/transformed fields for easier access
   condition?: WeatherCondition;
@@ -237,6 +237,7 @@ export interface Expense {
   storeId: number;
   store?: Store;
   totalAmount: number;
+  description?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -258,7 +259,7 @@ export interface DailyReport {
   orders: {
     total: number;
     items: number;
-    ordersDetail?: any[];
+    ordersDetail?: Order[];
   };
   expenses: {
     total: number;
@@ -270,10 +271,10 @@ export interface DailyReport {
     present: number;
     absent: number;
     total: number;
-    attendancesDetail?: any[];
+    attendancesDetail?: Attendance[];
   };
   netProfit: number;
-  recommendations?: any;
+  recommendations?: unknown;
 }
 
 export interface MonthlyReport {
@@ -331,4 +332,3 @@ export interface PaginatedResponse<T> {
   limit: number;
   totalPages: number;
 }
-

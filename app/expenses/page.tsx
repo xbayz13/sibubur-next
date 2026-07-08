@@ -11,6 +11,7 @@ import { storesService } from '@/lib/services/stores';
 import { Expense, ExpenseCategory, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 export default function ExpensesPage() {
   const { showToast } = useToast();
@@ -20,6 +21,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Expense | null>(null);
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
 
   const [page, setPage] = useState(1);
@@ -37,8 +39,9 @@ export default function ExpensesPage() {
         ]);
         setCategories(categoriesRes.data);
         setStores(storesRes.data);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Gagal memuat data';
+        showToast(message, 'error');
       }
     };
     loadStaticData();
@@ -60,8 +63,9 @@ export default function ExpensesPage() {
         setExpenses(res.data);
         setTotal(res.total);
         setTotalPages(res.totalPages);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data pengeluaran', 'error');
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Gagal memuat data pengeluaran';
+        showToast(message, 'error');
         setExpenses([]);
       } finally {
         setLoading(false);
@@ -86,8 +90,9 @@ export default function ExpensesPage() {
       setTotal(res.total);
       setTotalPages(res.totalPages);
       if (pageOverride !== undefined) setPage(pageOverride);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data pengeluaran', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal memuat data pengeluaran';
+      showToast(message, 'error');
       setExpenses([]);
     }
   };
@@ -103,16 +108,21 @@ export default function ExpensesPage() {
   };
 
   const handleDelete = async (expense: Expense) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus pengeluaran ini?`)) {
-      return;
-    }
+    setDeleteConfirm(expense);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await expensesService.delete(expense.id);
+      await expensesService.delete(deleteConfirm.id);
       showToast('Pengeluaran berhasil dihapus', 'success');
       await reloadExpenses(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus pengeluaran', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal menghapus pengeluaran';
+      showToast(message, 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -128,8 +138,9 @@ export default function ExpensesPage() {
       setShowForm(false);
       setSelectedExpense(null);
       await reloadExpenses(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan pengeluaran', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal menyimpan pengeluaran';
+      showToast(message, 'error');
     }
   };
 
@@ -233,13 +244,24 @@ export default function ExpensesPage() {
               }}
             />
           )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+         </div>
 
-interface ExpenseFormProps {
+         <ConfirmationModal
+           isOpen={!!deleteConfirm}
+           title="Hapus Pengeluaran?"
+           message="Hapus pengeluaran ini?"
+           confirmText="Ya, Hapus"
+           cancelText="Batal"
+           onConfirm={confirmDelete}
+           onCancel={() => setDeleteConfirm(null)}
+           variant="danger"
+         />
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }
+
+ interface ExpenseFormProps {
   expense: Expense | null;
   categories: ExpenseCategory[];
   stores: Store[];

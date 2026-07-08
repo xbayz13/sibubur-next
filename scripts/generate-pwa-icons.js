@@ -2,8 +2,8 @@
 // Run: node scripts/generate-pwa-icons.js
 // Requires: canvas package (npm install canvas)
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // For now, create a simple note
 // In production, you should replace these with proper icons
@@ -38,4 +38,3 @@ fs.writeFileSync(path.join(__dirname, '../public/icon-192x192.svg'), svgIcon192)
 fs.writeFileSync(path.join(__dirname, '../public/icon-512x512.svg'), svgIcon512);
 
 console.log('SVG placeholder icons created. Please convert to PNG format.');
-

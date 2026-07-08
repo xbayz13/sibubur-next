@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { rolesService } from '@/lib/services/roles';
 import { permissionsService } from '@/lib/services/permissions';
 import { rolePermissionsService } from '@/lib/services/role-permissions';
@@ -13,21 +14,24 @@ import { Role, Permission } from '@/types';
 
 export default function RolePermissionsPage() {
   const params = useParams();
-  const router = useRouter();
   const { showToast } = useToast();
   const roleId = Number(params.id);
   const [role, setRole] = useState<Role | null>(null);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [rolePermissions, setRolePermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (roleId) {
-      loadData();
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
     }
-  }, [roleId]);
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [roleData, allPermsRes, rolePermsData] = await Promise.all([
@@ -39,12 +43,18 @@ export default function RolePermissionsPage() {
       setRole(roleData);
       setAllPermissions(Array.isArray(allPermsRes) ? allPermsRes : allPermsRes.data);
       setRolePermissions(rolePermsData);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data'), 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [roleId, showToast]);
+
+  useEffect(() => {
+    if (roleId) {
+      loadData();
+    }
+  }, [roleId, loadData]);
 
   const handleTogglePermission = async (permissionId: number) => {
     const isAssigned = rolePermissions.some((p) => p.id === permissionId);
@@ -58,8 +68,8 @@ export default function RolePermissionsPage() {
         showToast('Permission berhasil ditambahkan', 'success');
       }
       await loadData();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal mengubah permission', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal mengubah permission'), 'error');
     }
   };
 
@@ -69,22 +79,24 @@ export default function RolePermissionsPage() {
       await rolePermissionsService.assignPermissions(roleId, allPermissionIds);
       showToast('Semua permission berhasil ditetapkan', 'success');
       await loadData();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menetapkan permission', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menetapkan permission'), 'error');
     }
   };
 
   const handleRemoveAll = async () => {
-    if (!confirm('Apakah Anda yakin ingin menghapus semua permission dari role ini?')) {
-      return;
-    }
+    setDeleteConfirm(true);
+  };
 
+  const confirmRemoveAll = async () => {
     try {
       await rolePermissionsService.assignPermissions(roleId, []);
       showToast('Semua permission berhasil dihapus', 'success');
       await loadData();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus permission', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menghapus permission'), 'error');
+    } finally {
+      setDeleteConfirm(false);
     }
   };
 
@@ -97,8 +109,8 @@ export default function RolePermissionsPage() {
           </div>
         </MainLayout>
       </ProtectedRoute>
-    );
-  }
+   );
+ }
 
   // Group permissions by module
   const permissionsByModule = allPermissions.reduce((acc, perm) => {
@@ -174,10 +186,20 @@ export default function RolePermissionsPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+           </div>
 
+           <ConfirmationModal
+             isOpen={deleteConfirm}
+             title="Hapus Semua Permission?"
+             message="Hapus semua permission dari role ini?"
+             confirmText="Ya, Hapus Semua"
+             cancelText="Batal"
+             onConfirm={confirmRemoveAll}
+             onCancel={() => setDeleteConfirm(false)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }

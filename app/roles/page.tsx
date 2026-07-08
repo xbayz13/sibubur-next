@@ -1,21 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
 import { useToast } from '@/components/ToastContainer';
 import { rolesService, CreateRoleDto, UpdateRoleDto } from '@/lib/services/roles';
-import { permissionsService } from '@/lib/services/permissions';
-import { rolePermissionsService } from '@/lib/services/role-permissions';
-import { Role, Permission } from '@/types';
+import { Role } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
-import Link from 'next/link';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import Input from '@/components/form/Input';
-import Label from '@/components/form/Label';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import Link from 'next/link';
+import Modal from '@/components/ui/Modal';
+import Label from '@/components/form/Label';
+import Input from '@/components/form/Input';
 
 export default function RolesPage() {
   const { showToast } = useToast();
@@ -23,16 +22,22 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Role | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
 
-  useEffect(() => {
-    loadData();
-  }, [page, showToast]);
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
-  const loadData = async (pageOverride?: number) => {
+  const loadData = useCallback(async (pageOverride?: number) => {
     try {
       setLoading(true);
       const pageToLoad = pageOverride ?? page;
@@ -41,12 +46,16 @@ export default function RolesPage() {
       setRoles(res.data);
       setTotal(res.total);
       setTotalPages(res.totalPages);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data role', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data role'), 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit, page, showToast]);
+
+  useEffect(() => {
+    loadData();
+  }, [page, loadData]);
 
   const handleCreate = () => {
     setSelectedRole(null);
@@ -59,16 +68,20 @@ export default function RolesPage() {
   };
 
   const handleDelete = async (role: Role) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus role ${role.name}?`)) {
-      return;
-    }
+    setDeleteConfirm(role);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await rolesService.delete(role.id);
+      await rolesService.delete(deleteConfirm.id);
       showToast('Role berhasil dihapus', 'success');
       await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus role', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menghapus role'), 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -84,8 +97,8 @@ export default function RolesPage() {
       setShowForm(false);
       setSelectedRole(null);
       await loadData(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan role', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menyimpan role'), 'error');
     }
   };
 
@@ -172,14 +185,24 @@ export default function RolesPage() {
                 setSelectedRole(null);
               }}
             />
-          )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+           )}
+           <ConfirmationModal
+             isOpen={!!deleteConfirm}
+             title="Hapus Role?"
+             message={`Hapus role "${deleteConfirm?.name}"?`}
+             confirmText="Ya, Hapus"
+             cancelText="Batal"
+             onConfirm={confirmDelete}
+             onCancel={() => setDeleteConfirm(null)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }
 
-interface RoleFormProps {
+ interface RoleFormProps {
   role: Role | null;
   onSubmit: (data: CreateRoleDto | UpdateRoleDto) => void;
   onCancel: () => void;
@@ -230,4 +253,3 @@ function RoleForm({ role, onSubmit, onCancel }: RoleFormProps) {
     </Modal>
   );
 }
-

@@ -72,13 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = authService.getUser();
-    if (storedUser && authService.isAuthenticated()) {
-      setUser(storedUser);
-      loadPermissions();
-    }
-    setLoading(false);
+    const initAuth = async () => {
+      const storedUser = authService.getUser();
+      if (storedUser && authService.isAuthenticated()) {
+        setUser(storedUser);
+        await loadPermissions();
+      }
+      setLoading(false);
+    };
+    initAuth();
   }, [loadPermissions]);
 
   const login = async (credentials: LoginRequest) => {

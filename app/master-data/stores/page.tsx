@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -11,6 +11,24 @@ import DataTable from '@/components/MasterData/DataTable';
 import StoreForm from '@/components/MasterData/StoreForm';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.message) return apiError.response.data.message;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+};
 
 export default function StoresPage() {
   const { showToast } = useToast();
@@ -18,29 +36,31 @@ export default function StoresPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Store | null>(null);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
 
-  useEffect(() => {
-    loadData();
-  }, [page, showToast]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await storesService.getAll({ page, limit });
       setStores(res.data);
       setTotal(res.total);
       setTotalPages(res.totalPages);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal memuat data toko');
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit, page, showToast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreate = () => {
     setEditingStore(null);
@@ -64,20 +84,28 @@ export default function StoresPage() {
       setShowForm(false);
       setEditingStore(null);
       await loadData();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan toko', 'error');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal menyimpan toko');
+      showToast(message, 'error');
     }
   };
 
   const handleDelete = async (store: Store) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus toko "${store.name}"?`)) return;
+    setDeleteConfirm(store);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await storesService.delete(store.id);
+      await storesService.delete(deleteConfirm.id);
       showToast('Toko berhasil dihapus', 'success');
       await loadData();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus toko', 'error');
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Gagal menghapus toko');
+      showToast(message, 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -134,17 +162,28 @@ export default function StoresPage() {
 
           {showForm && (
             <StoreForm
+              key={editingStore?.id ?? 'new-store'}
               store={editingStore}
               onSubmit={handleSubmit}
               onCancel={() => {
                 setShowForm(false);
-                setEditingStore(null);
-              }}
-            />
-          )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+                 setEditingStore(null);
+               }}
+             />
+           )}
 
+           <ConfirmationModal
+             isOpen={!!deleteConfirm}
+             title="Hapus Toko?"
+             message={`Hapus toko "${deleteConfirm?.name}"?`}
+             confirmText="Ya, Hapus"
+             cancelText="Batal"
+             onConfirm={confirmDelete}
+             onCancel={() => setDeleteConfirm(null)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }

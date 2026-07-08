@@ -6,14 +6,12 @@ import Card from '@/components/ui/Card';
 interface SupplyListProps {
   supplies: Supply[];
   onRestock: (supply: Supply) => void;
-  onUpdate: (id: number, supply: any) => void;
   onDelete: (id: number) => void;
 }
 
 export default function SupplyList({
   supplies,
   onRestock,
-  onUpdate,
   onDelete,
 }: SupplyListProps) {
   const getStockStatus = (supply: Supply) => {

@@ -10,6 +10,11 @@ import { getInstantPaymentSettings, saveInstantPaymentSettings, type InstantPaym
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => void;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+};
+
 export default function SettingsPage() {
   const { showToast } = useToast();
   const [availableMethods, setAvailableMethods] = useState<string[]>([]);
@@ -18,10 +23,18 @@ export default function SettingsPage() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'bluetooth' | 'serial'>('bluetooth');
   const [browserCompatibility, setBrowserCompatibility] = useState<BrowserCompatibility | null>(null);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [printSettings, setPrintSettings] = useState<PrintSettings>(getPrintSettings());
   const [instantPaymentSettings, setInstantPaymentSettings] = useState<InstantPaymentSettings>(getInstantPaymentSettings());
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'message' in error) {
+      const message = (error as { message?: string }).message;
+      if (message) return message;
+    }
+    return fallback;
+  };
 
   useEffect(() => {
     // Load print settings
@@ -52,14 +65,15 @@ export default function SettingsPage() {
 
     // Check if PWA is already installed
     if (typeof window !== 'undefined') {
-      if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      const navWithStandalone = window.navigator as Navigator & { standalone?: boolean };
+      if (window.matchMedia('(display-mode: standalone)').matches || navWithStandalone.standalone) {
         setIsInstalled(true);
       }
 
       // Listen for beforeinstallprompt event
       const handleBeforeInstallPrompt = (e: Event) => {
         e.preventDefault();
-        setDeferredPrompt(e);
+        setDeferredPrompt(e as BeforeInstallPromptEvent);
       };
 
       const handleAppInstalled = () => {
@@ -93,8 +107,8 @@ export default function SettingsPage() {
       }
       const status = printerService.getConnectionStatus();
       setConnection(status);
-    } catch (error: any) {
-      showToast(error.message || 'Gagal terhubung ke printer', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal terhubung ke printer'), 'error');
     } finally {
       setIsConnecting(false);
     }
@@ -110,8 +124,8 @@ export default function SettingsPage() {
       }
       setConnection(null);
       showToast('Berhasil memutuskan koneksi printer', 'success');
-    } catch (error: any) {
-      showToast(error.message || 'Gagal memutuskan koneksi', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memutuskan koneksi'), 'error');
     } finally {
       setIsDisconnecting(false);
     }
@@ -126,8 +140,8 @@ export default function SettingsPage() {
     try {
       await printerService.testPrint();
       showToast('Test print berhasil dikirim ke printer', 'success');
-    } catch (error: any) {
-      showToast(error.message || 'Gagal mengirim test print', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal mengirim test print'), 'error');
     }
   };
 
@@ -148,8 +162,8 @@ export default function SettingsPage() {
       }
       
       setDeferredPrompt(null);
-    } catch (error: any) {
-      showToast('Gagal menginstall aplikasi', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menginstall aplikasi'), 'error');
     }
   };
 
@@ -214,8 +228,8 @@ export default function SettingsPage() {
                 disabled={!availableMethods.includes('bluetooth')}
                 className={`p-4 rounded-lg border-2 transition-all ${
                   selectedMethod === 'bluetooth'
-                    ? 'border-brand-500 bg-brand-50'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
+                    : 'border-gray-300 bg-white hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500'
                 } ${
                   !availableMethods.includes('bluetooth')
                     ? 'opacity-50 cursor-not-allowed'
@@ -225,14 +239,14 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white/90">Bluetooth</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                       Untuk printer Bluetooth wireless
                     </p>
                   </div>
                   {availableMethods.includes('bluetooth') ? (
-                    <span className="text-green-600 text-sm">✓ Tersedia</span>
+                    <span className="text-green-600 dark:text-green-300 text-sm">✓ Tersedia</span>
                   ) : (
-                    <span className="text-gray-400 text-sm">✗ Tidak didukung</span>
+                    <span className="text-gray-400 dark:text-gray-500 text-sm">✗ Tidak didukung</span>
                   )}
                 </div>
               </button>
@@ -242,8 +256,8 @@ export default function SettingsPage() {
                 disabled={!availableMethods.includes('serial')}
                 className={`p-4 rounded-lg border-2 transition-all ${
                   selectedMethod === 'serial'
-                    ? 'border-brand-500 bg-brand-50'
-                    : 'border-gray-300 bg-white hover:border-gray-400'
+                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
+                    : 'border-gray-300 bg-white hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-500'
                 } ${
                   !availableMethods.includes('serial')
                     ? 'opacity-50 cursor-not-allowed'
@@ -253,14 +267,14 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white/90">Serial/USB</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                       Untuk printer USB atau Serial
                     </p>
                   </div>
                   {availableMethods.includes('serial') ? (
-                    <span className="text-green-600 text-sm">✓ Tersedia</span>
+                    <span className="text-green-600 dark:text-green-300 text-sm">✓ Tersedia</span>
                   ) : (
-                    <span className="text-gray-400 text-sm">✗ Tidak didukung</span>
+                    <span className="text-gray-400 dark:text-gray-500 text-sm">✗ Tidak didukung</span>
                   )}
                 </div>
               </button>
@@ -271,15 +285,15 @@ export default function SettingsPage() {
           {browserCompatibility && (
             <div className={`mb-6 p-4 border rounded-lg ${
               browserCompatibility.supported && !browserCompatibility.requiresHttps
-                ? 'bg-green-50 border-green-200'
-                : 'bg-yellow-50 border-yellow-200'
+                ? 'bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-700'
+                : 'bg-amber-50 border-amber-200 dark:bg-amber-900/30 dark:border-amber-700'
             }`}>
               <div className="flex items-start">
                 <svg
                   className={`w-5 h-5 mt-0.5 mr-3 ${
                     browserCompatibility.supported && !browserCompatibility.requiresHttps
-                      ? 'text-green-600'
-                      : 'text-yellow-600'
+                      ? 'text-green-600 dark:text-green-300'
+                      : 'text-amber-600 dark:text-amber-300'
                   }`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
@@ -301,8 +315,8 @@ export default function SettingsPage() {
                 <div className="flex-1">
                   <h3 className={`text-sm font-medium ${
                     browserCompatibility.supported && !browserCompatibility.requiresHttps
-                      ? 'text-green-800'
-                      : 'text-yellow-800'
+                      ? 'text-green-800 dark:text-green-200'
+                      : 'text-amber-800 dark:text-amber-200'
                   }`}>
                     {browserCompatibility.supported && !browserCompatibility.requiresHttps
                       ? 'Browser Mendukung Web Bluetooth'
@@ -310,29 +324,29 @@ export default function SettingsPage() {
                   </h3>
                   <div className="mt-2 space-y-1 text-sm">
                     <p className={browserCompatibility.supported && !browserCompatibility.requiresHttps
-                      ? 'text-green-700'
-                      : 'text-yellow-700'
+                      ? 'text-green-700 dark:text-green-200'
+                      : 'text-amber-700 dark:text-amber-200'
                     }>
                       {browserCompatibility.message}
                     </p>
-                    <div className="text-xs text-gray-600 mt-2">
+                    <div className="text-xs text-gray-600 dark:text-gray-200 mt-2">
                       <p><strong>Browser:</strong> {browserCompatibility.browser}</p>
                       <p><strong>Platform:</strong> {browserCompatibility.platform}</p>
                       {browserCompatibility.requiresHttps && (
-                        <p className="text-yellow-700 font-medium mt-1">
+                        <p className="text-amber-700 dark:text-amber-200 font-medium mt-1">
                           ⚠️ Web Bluetooth memerlukan HTTPS (kecuali localhost)
                         </p>
                       )}
                     </div>
                     {!browserCompatibility.supported && (
-                      <div className="mt-3 p-2 bg-white rounded border border-yellow-300">
-                        <p className="text-xs font-semibold text-gray-800 mb-1">Browser yang Didukung:</p>
-                        <ul className="text-xs text-gray-700 list-disc list-inside space-y-0.5">
+                      <div className="mt-3 p-2 bg-white dark:bg-gray-900 rounded border border-amber-300 dark:border-amber-700/80">
+                        <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 mb-1">Browser yang Didukung:</p>
+                        <ul className="text-xs text-gray-700 dark:text-gray-200 list-disc list-inside space-y-0.5">
                           <li>Chrome (Windows, Android, Chrome OS)</li>
                           <li>Microsoft Edge</li>
                           <li>Opera</li>
                         </ul>
-                        <p className="text-xs text-gray-600 mt-2">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">
                           <strong>Catatan:</strong> Firefox dan Safari tidak mendukung Web Bluetooth API.
                           Alternatif: gunakan print browser standar atau aplikasi mobile.
                         </p>
@@ -410,10 +424,10 @@ export default function SettingsPage() {
           </div>
 
           {/* Print Settings */}
-          <Card title="Pengaturan Print Struk">
-            <div className="space-y-4">
-              {/* Auto Print Kitchen Receipt */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <Card title="Pengaturan Print Struk">
+              <div className="space-y-4">
+                {/* Auto Print Kitchen Receipt */}
+                <div className="bg-gray-50 dark:bg-gray-900/60 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900 dark:text-white/90 mb-1">
@@ -441,7 +455,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Auto Print Customer Receipt */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                <div className="bg-gray-50 dark:bg-gray-900/60 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900 dark:text-white/90 mb-1">
@@ -471,10 +485,10 @@ export default function SettingsPage() {
           </Card>
 
           {/* Instant Payment Settings */}
-          <Card title="Pengaturan Pembayaran">
-            <div className="space-y-4">
-              {/* Instant Payment */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <Card title="Pengaturan Pembayaran">
+              <div className="space-y-4">
+                {/* Instant Payment */}
+                <div className="bg-gray-50 dark:bg-gray-900/60 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900 dark:text-white/90 mb-1">
@@ -566,37 +580,37 @@ export default function SettingsPage() {
 
         {/* Instructions */}
         <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+             <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">
               Petunjuk Penggunaan
             </h2>
-            <div className="bg-blue-50 rounded-lg p-4">
+            <div className="bg-blue-50 dark:bg-gray-900/60 rounded-lg p-4 border border-blue-100 dark:border-gray-800">
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">
                     Untuk Printer Bluetooth:
                   </h4>
-                  <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 ml-2">
+                  <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-200 ml-2">
                     <li>Pastikan printer Bluetooth dalam keadaan menyala</li>
                     <li>Pastikan printer sudah dipasangkan (paired) dengan perangkat</li>
-                    <li>Pilih metode "Bluetooth" dan klik "Hubungkan Bluetooth"</li>
+                    <li>Pilih metode &quot;Bluetooth&quot; dan klik &quot;Hubungkan Bluetooth&quot;</li>
                     <li>Pilih printer dari daftar yang muncul (browser akan meminta izin)</li>
                   </ol>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-800 mb-2">
+                  <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">
                     Untuk Printer USB/Serial:
                   </h4>
-                  <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 ml-2">
+                  <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-200 ml-2">
                     <li>Hubungkan printer ke komputer via USB</li>
                     <li>Pastikan printer dalam keadaan menyala</li>
-                    <li>Pilih metode "Serial/USB" dan klik "Hubungkan Serial/USB"</li>
+                    <li>Pilih metode &quot;Serial/USB&quot; dan klik &quot;Hubungkan Serial/USB&quot;</li>
                     <li>Pilih port printer dari daftar yang muncul</li>
                   </ol>
                 </div>
-                <div className="pt-2 border-t border-blue-200">
-                  <p className="text-sm text-gray-700">
+                <div className="pt-2 border-t border-blue-200 dark:border-gray-800">
+                  <p className="text-sm text-gray-700 dark:text-gray-200">
                     <strong>Catatan:</strong> Setelah terhubung, printer akan otomatis digunakan untuk mencetak struk. 
-                    Gunakan tombol "Test Print" untuk menguji koneksi printer.
+                    Gunakan tombol &quot;Test Print&quot; untuk menguji koneksi printer.
                   </p>
                 </div>
               </div>
@@ -650,4 +664,3 @@ export default function SettingsPage() {
     </MainLayout>
   );
 }
-

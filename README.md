@@ -1,158 +1,76 @@
 # SiBubur Frontend
 
-Frontend aplikasi SiBubur Point of Sale System yang dibangun dengan Next.js, TypeScript, dan Tailwind CSS.
+Frontend aplikasi Point of Sale (POS) untuk SiBubur yang dibangun menggunakan Next.js 16 dengan TypeScript dan Tailwind CSS.
 
-## Fitur
+## Fitur Utama
 
-- **Autentikasi**: Sistem login dengan JWT token
-- **Dashboard**: Ringkasan data penjualan, pesanan, dan produksi
-- **Produksi Harian**: Pencatatan produksi bubur per toko dengan data cuaca
-- **Pesanan**: Sistem pencatatan pesanan dengan nomor order yang dapat dicetak
-- **Transaksi**: Pencatatan pembayaran pelanggan
-- **Persediaan**: Manajemen stok bahan baku
-- **Pengeluaran**: Pencatatan pengeluaran operasional
-- **Karyawan**: Manajemen data karyawan dan absensi
-- **Laporan**: Laporan harian, bulanan, dan tahunan dengan rekomendasi produksi
-- **Data Master**: Pengelolaan produk, addon, toko, kategori, dll.
+- Autentikasi pengguna dengan JWT
+- Dashboard ringkasan operasional
+- Pencatatan produksi harian dengan data cuaca
+- Sistem kasir dan pesanan
+- Manajemen transaksi dan pembayaran
+- Pengelolaan persediaan dan pengeluaran
+- Manajemen karyawan dan absensi
+- Laporan harian, bulanan, dan tahunan
+- Pengelolaan data master (produk, toko, kategori, dll)
 
 ## Teknologi
 
-- **Next.js 16**: React framework dengan App Router
-- **TypeScript**: Type safety untuk kode yang lebih robust
-- **Tailwind CSS**: Utility-first CSS framework untuk styling
-- **Axios**: HTTP client untuk komunikasi dengan backend API
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS
+- Axios
 
 ## Prasyarat
 
-- Node.js 18+ 
+- Node.js 18 atau lebih baru
 - npm atau yarn
-- Backend API berjalan di `http://localhost:3000`
+- Backend API harus berjalan
 
 ## Instalasi
 
-1. Clone repository atau navigasi ke folder frontend
+1. Clone repository dan masuk ke folder `frontend`
+
 2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm install
-```
-
-3. Buat file `.env.local` di root project:
-
-```env
-# Development
-NEXT_PUBLIC_API_URL=http://localhost:3000
-
-# Production (jika deploy)
-# NEXT_PUBLIC_API_URL=http://72.61.208.109:3000
-```
+3. Buat file `.env.local` di root project (sesuaikan dengan port backend yang Anda pakai; backend `.env.example` menggunakan 3030):
+   ```env
+NEXT_PUBLIC_API_URL=http://localhost:3030
+   ```
 
 4. Jalankan development server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
-```
+   Aplikasi akan berjalan di `http://localhost:3031`
 
-5. Buka browser di `http://localhost:3001` (default port adalah 3001)
+## Scripts
+
+| Perintah           | Deskripsi                          |
+|--------------------|------------------------------------|
+| `npm run dev`      | Menjalankan development server     |
+| `npm run build`    | Build untuk production             |
+| `npm run start`    | Menjalankan production server      |
+| `npm run lint`     | Menjalankan ESLint                 |
+
+## Catatan Penting
+
+- Port development menggunakan **3031** (bukan 3001)
+- Semua halaman kecuali `/login` memerlukan autentikasi
+- Token JWT disimpan di `localStorage` dan otomatis dihapus saat menerima response 401
+- Pastikan backend sudah berjalan sebelum menjalankan frontend
 
 ## Struktur Project
 
 ```
 frontend/
-├── app/                    # Next.js App Router pages
-│   ├── login/             # Halaman login
-│   ├── layout.tsx         # Root layout dengan AuthProvider
-│   └── page.tsx           # Dashboard
-├── components/            # React components
-│   ├── Auth/             # Komponen autentikasi
-│   └── Layout/           # Komponen layout (Sidebar, Header)
-├── contexts/              # React contexts
-│   └── AuthContext.tsx   # Context untuk autentikasi
-├── lib/                   # Utility functions
-│   ├── api.ts            # Axios client configuration
-│   └── auth.ts           # Auth service functions
-└── types/                 # TypeScript type definitions
-    └── index.ts          # Semua type definitions
+├── app/                    # Halaman Next.js (App Router)
+├── components/             # Komponen React
+├── contexts/               # React Context (Auth, Theme, dll)
+├── lib/                    # Utility & API client
+└── types/                  # TypeScript type definitions
 ```
-
-## API Integration
-
-Backend API tersedia di:
-- **Development**: `http://localhost:3000`
-- **Production**: `http://72.61.208.109:3000`
-- **Swagger Docs**: `http://localhost:3000/api` (development)
-
-Frontend menggunakan Axios untuk komunikasi dengan backend. Token JWT disimpan di localStorage dan otomatis ditambahkan ke setiap request.
-
-API URL dikonfigurasi melalui environment variable `NEXT_PUBLIC_API_URL`:
-- Development: `http://localhost:3000` (default)
-- Production: `http://72.61.208.109:3000`
-
-## Scripts
-
-- `npm run dev` - Jalankan development server (port 3001)
-- `npm run build` - Build untuk production
-- `npm run start` - Jalankan production server (port 3001)
-- `npm run lint` - Lint kode
-
-## Production Deployment
-
-Untuk deployment ke production, lihat [PRODUCTION.md](./PRODUCTION.md) untuk panduan lengkap menggunakan PM2.
-
-## Alur Aplikasi
-
-1. **Persiapan Data**: Setup produk, addon, karyawan, toko, persediaan, kategori pengeluaran
-2. **Produksi Harian**: Record produksi bubur per toko dengan data cuaca
-3. **Pesanan**: Cashier mencatat pesanan dan generate nomor order (print 2x: dapur & customer)
-4. **Pembayaran**: Customer membayar setelah selesai makan, data transaksi dicatat
-5. **Restock**: Owner restock persediaan yang rendah dan input pengeluaran
-6. **Absensi**: Owner mencatat absensi karyawan
-7. **Laporan Harian**: Generate laporan dari data produksi, cuaca, pengeluaran, dan transaksi
-8. **Rekomendasi**: Laporan harian digunakan untuk rekomendasi produksi ke depan
-9. **Laporan Akumulasi**: Dari laporan harian, bisa dibuat laporan bulanan dan tahunan
-
-## Development
-
-### Menambah Halaman Baru
-
-1. Buat file di `app/[nama-halaman]/page.tsx`
-2. Gunakan `ProtectedRoute` untuk halaman yang memerlukan autentikasi
-3. Gunakan `MainLayout` untuk layout dengan sidebar dan header
-
-Contoh:
-
-```tsx
-'use client';
-
-import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import MainLayout from '@/components/Layout/MainLayout';
-
-export default function MyPage() {
-  return (
-    <ProtectedRoute>
-      <MainLayout>
-        <div>Konten halaman</div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
-```
-
-### Menggunakan API
-
-```tsx
-import apiClient from '@/lib/api';
-import { Product } from '@/types';
-
-// GET request
-const products = await apiClient.get<Product[]>('/products');
-
-// POST request
-const newProduct = await apiClient.post<Product>('/products', productData);
-```
-
-## Catatan
-
-- Pastikan backend API sudah berjalan sebelum menggunakan frontend
-- Token JWT akan otomatis dihapus jika mendapat response 401 (Unauthorized)
-- Semua halaman kecuali `/login` memerlukan autentikasi

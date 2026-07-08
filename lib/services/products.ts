@@ -1,9 +1,13 @@
 import apiClient from '../api';
 import { Product, ProductCategory, ProductAddon, PaginatedResponse } from '@/types';
 
-const transformProduct = (product: any) => ({
+type ProductWithAddons = Product & {
+  productAddons?: Array<{ addon: ProductAddon; addonPriceOverride?: number }>;
+};
+
+const transformProduct = (product: ProductWithAddons) => ({
   ...product,
-  addons: product.productAddons?.map((pap: any) => ({
+  addons: product.productAddons?.map((pap) => ({
     id: pap.addon?.id,
     name: pap.addon?.name,
     price: pap.addonPriceOverride || pap.addon?.price,
@@ -20,7 +24,7 @@ export const productsService = {
   async getAll(params?: ProductsGetAllParams): Promise<PaginatedResponse<Product>> {
     try {
       const queryParams = { page: params?.page ?? 1, limit: params?.limit ?? 50 };
-      const response = await apiClient.get<PaginatedResponse<any>>('/products', { params: queryParams });
+      const response = await apiClient.get<PaginatedResponse<ProductWithAddons>>('/products', { params: queryParams });
       const rawData = response.data.data || [];
       return {
         data: rawData.map(transformProduct),
@@ -29,7 +33,7 @@ export const productsService = {
         limit: response.data.limit,
         totalPages: response.data.totalPages,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching products:', error);
       throw error;
     }
@@ -37,11 +41,11 @@ export const productsService = {
 
   async getById(id: number): Promise<Product> {
     const response = await apiClient.get<Product>(`/products/${id}`);
-    const product: any = response.data;
+    const product = response.data as ProductWithAddons;
     // Transform productAddons to addons for easier use
     return {
       ...product,
-      addons: product.productAddons?.map((pap: any) => ({
+      addons: product.productAddons?.map((pap) => ({
         id: pap.addon.id,
         name: pap.addon.name,
         price: pap.addonPriceOverride || pap.addon.price,
@@ -87,14 +91,14 @@ export const productsService = {
   },
 
   async addAddon(productId: number, addonId: number, addonPriceOverride?: number): Promise<Product> {
-    const response = await apiClient.post<Product>(`/products/${productId}/addons`, {
+    const response = await apiClient.post<ProductWithAddons>(`/products/${productId}/addons`, {
       addonId,
       addonPriceOverride,
     });
-    const product: any = response.data;
+    const product = response.data as ProductWithAddons;
     return {
       ...product,
-      addons: product.productAddons?.map((pap: any) => ({
+      addons: product.productAddons?.map((pap) => ({
         id: pap.addon.id,
         name: pap.addon.name,
         price: pap.addonPriceOverride || pap.addon.price,
@@ -104,11 +108,11 @@ export const productsService = {
   },
 
   async removeAddon(productId: number, addonId: number): Promise<Product> {
-    const response = await apiClient.delete<Product>(`/products/${productId}/addons/${addonId}`);
-    const product: any = response.data;
+    const response = await apiClient.delete<ProductWithAddons>(`/products/${productId}/addons/${addonId}`);
+    const product = response.data as ProductWithAddons;
     return {
       ...product,
-      addons: product.productAddons?.map((pap: any) => ({
+      addons: product.productAddons?.map((pap) => ({
         id: pap.addon.id,
         name: pap.addon.name,
         price: pap.addonPriceOverride || pap.addon.price,
@@ -117,4 +121,3 @@ export const productsService = {
     };
   },
 };
-

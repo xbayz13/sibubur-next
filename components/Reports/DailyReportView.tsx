@@ -1,6 +1,6 @@
 'use client';
 
-import { DailyReport } from '@/types';
+import { DailyReport, Transaction, Expense } from '@/types';
 import { ProductionRecommendation } from '@/lib/services/reports';
 
 interface DailyReportViewProps {
@@ -23,42 +23,42 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 shadow-sm">
-          <div className="text-sm text-emerald-700 font-medium">Total Pendapatan</div>
-          <div className="text-2xl font-bold text-emerald-900">
-            Rp {Number(report.revenue?.total || 0).toLocaleString('id-ID')}
-          </div>
-          <div className="text-xs text-emerald-600 mt-1">
-            {report.revenue?.transactions || 0} transaksi
-          </div>
+           <div className="text-sm text-emerald-700 font-medium">Total Pendapatan</div>
+           <div className="text-3xl font-bold text-emerald-900">
+             Rp {Number(report.revenue?.total || 0).toLocaleString('id-ID')}
+           </div>
+           <div className="text-sm text-emerald-600 mt-1">
+             {report.revenue?.transactions || 0} transaksi
+           </div>
         </div>
 
         <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 shadow-sm">
-          <div className="text-sm text-rose-700 font-medium">Total Pengeluaran</div>
-          <div className="text-2xl font-bold text-rose-900">
-            Rp {Number(report.expenses?.total || 0).toLocaleString('id-ID')}
-          </div>
-          <div className="text-xs text-rose-600 mt-1">
-            {report.expenses?.expensesDetail?.length || 0} item
-          </div>
+           <div className="text-sm text-rose-700 font-medium">Total Pengeluaran</div>
+           <div className="text-3xl font-bold text-rose-900">
+             Rp {Number(report.expenses?.total || 0).toLocaleString('id-ID')}
+           </div>
+           <div className="text-sm text-rose-600 mt-1">
+             {report.expenses?.expensesDetail?.length || 0} item
+           </div>
         </div>
 
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 shadow-sm">
-          <div className="text-sm text-indigo-700 font-medium">Laba Bersih</div>
-          <div className={`text-2xl font-bold ${
-            (report.netProfit || 0) >= 0 ? 'text-indigo-900' : 'text-rose-600'
-          }`}>
-            Rp {Number(report.netProfit || 0).toLocaleString('id-ID')}
+           <div className="text-sm text-indigo-700 font-medium">Laba Bersih</div>
+           <div className={`text-3xl font-bold ${
+             (report.netProfit || 0) >= 0 ? 'text-indigo-900' : 'text-rose-600'
+           }`}>
+             Rp {Number(report.netProfit || 0).toLocaleString('id-ID')}
           </div>
         </div>
 
         <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 shadow-sm">
-          <div className="text-sm text-violet-700 font-medium">Total Pesanan</div>
-          <div className="text-2xl font-bold text-violet-900">
-            {report.orders?.total || 0}
-          </div>
-          <div className="text-xs text-violet-600 mt-1">
-            {report.orders?.items || 0} item
-          </div>
+           <div className="text-sm text-violet-700 font-medium">Total Pesanan</div>
+           <div className="text-3xl font-bold text-violet-900">
+             {report.orders?.total || 0}
+           </div>
+           <div className="text-sm text-violet-600 mt-1">
+             {report.orders?.items || 0} item
+           </div>
         </div>
       </div>
 
@@ -72,9 +72,9 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
             ).toLocaleDateString('id-ID')}
           </h3>
           <div className="space-y-2">
-            {report.recommendations.recommendations.map((rec: string, idx: number) => (
-              <p key={idx} className="text-sm text-indigo-800">
-                • {rec}
+            {report.recommendations.recommendations.map((recommendation, index) => (
+              <p key={`${index}-${recommendation}`} className="text-sm text-indigo-800">
+                • {recommendation}
               </p>
             ))}
           </div>
@@ -197,15 +197,15 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {report.revenue.transactionsDetail.map((txn: any) => (
-                    <tr key={txn.id}>
-                      <td className="px-4 py-2 text-slate-900">{txn.transactionNumber}</td>
-                      <td className="px-4 py-2 text-slate-900">{txn.paymentMethod?.name || '-'}</td>
+                  {report.revenue.transactionsDetail.map((transaction: Transaction) => (
+                    <tr key={transaction.id}>
+                      <td className="px-4 py-2 text-slate-900">{transaction.transactionNumber}</td>
+                      <td className="px-4 py-2 text-slate-900">{transaction.paymentMethod?.name || '-'}</td>
                       <td className="px-4 py-2 text-right text-slate-900">
-                        Rp {Number(txn.amount).toLocaleString('id-ID')}
+                        Rp {Number(transaction.amount).toLocaleString('id-ID')}
                       </td>
                       <td className="px-4 py-2 text-slate-900">
-                        {new Date(txn.createdAt).toLocaleString('id-ID')}
+                        {new Date(transaction.createdAt).toLocaleString('id-ID')}
                       </td>
                     </tr>
                   ))}
@@ -230,12 +230,12 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
-                  {report.expenses.expensesDetail.map((exp: any) => (
-                    <tr key={exp.id}>
-                      <td className="px-4 py-2 text-slate-900">{exp.category?.name || '-'}</td>
-                      <td className="px-4 py-2 text-slate-900">{exp.description || '-'}</td>
+                  {report.expenses.expensesDetail.map((expense: Expense) => (
+                    <tr key={expense.id}>
+                      <td className="px-4 py-2 text-slate-900">{expense.category?.name || '-'}</td>
+                      <td className="px-4 py-2 text-slate-900">{expense.description || '-'}</td>
                       <td className="px-4 py-2 text-right text-slate-900">
-                        Rp {Number(exp.totalAmount).toLocaleString('id-ID')}
+                        Rp {Number(expense.totalAmount).toLocaleString('id-ID')}
                       </td>
                     </tr>
                   ))}
@@ -247,4 +247,3 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
     </div>
   );
 }
-

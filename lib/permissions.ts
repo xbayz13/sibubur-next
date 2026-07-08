@@ -22,8 +22,9 @@ const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/master-data/expense-categories': ['expense-categories.read', 'expense-categories.create', 'expense-categories.update', 'expense-categories.delete'],
   '/users': ['users.read', 'users.create', 'users.update', 'users.delete'],
   '/roles': ['roles.read', 'roles.create', 'roles.update', 'roles.delete'],
+  '/roles/[id]/permissions': ['roles.update'],
   '/permissions': ['permissions.read'],
-  '/settings': [], // Settings page - accessible to all authenticated users
+  '/settings': [],
 };
 
 // Menu items with their required permissions
@@ -32,16 +33,15 @@ const MENU_ITEMS_PERMISSIONS: Record<string, string[]> = {
   'Kasir': ['cashier.read'],
   'Pesanan Terbuka': ['orders.read'],
   'Produksi Harian': ['productions.read'],
-  'Pesanan': ['orders.read'],
   'Transaksi': ['transactions.read'],
-  'Persediaan': ['supplies.read'],
   'Pengeluaran': ['expenses.read'],
+  'Persediaan': ['supplies.read'],
   'Karyawan': ['employees.read'],
-  'Laporan': ['reports.read'],
   'Data Master': ['products.read', 'stores.read', 'product-categories.read', 'product-addons.read', 'employees.read', 'expense-categories.read'],
+  'Laporan': ['reports.read'],
   'Pengguna': ['users.read'],
-  'Role & Izin': ['roles.read'],
-  'Pengaturan': [], // Settings - accessible to all authenticated users
+  'Pengaturan Hak Akses': ['roles.read'],
+  'Pengaturan': [],
 };
 
 /**
@@ -117,18 +117,26 @@ export function hasAllPermissions(
  * Menu items configuration
  */
 export const MENU_ITEMS = [
+  // Operasional Harian
   { name: 'Dashboard', href: '/', icon: '📊' },
   { name: 'Kasir', href: '/cashier', icon: '💳' },
   { name: 'Pesanan Terbuka', href: '/open-orders', icon: '🛒' },
   { name: 'Produksi Harian', href: '/productions', icon: '🍲' },
-  { name: 'Pesanan', href: '/orders', icon: '📝' },
+
+  // Keuangan & Persediaan
   { name: 'Transaksi', href: '/transactions', icon: '💰' },
-  { name: 'Persediaan', href: '/supplies', icon: '📦' },
   { name: 'Pengeluaran', href: '/expenses', icon: '💸' },
+  { name: 'Persediaan', href: '/supplies', icon: '📦' },
+
+  // Manajemen
   { name: 'Karyawan', href: '/employees', icon: '👥' },
-  { name: 'Laporan', href: '/reports', icon: '📈' },
   { name: 'Data Master', href: '/master-data', icon: '⚙️' },
+
+  // Laporan
+  { name: 'Laporan', href: '/reports', icon: '📈' },
+
+  // Pengaturan
   { name: 'Pengguna', href: '/users', icon: '👤' },
-  { name: 'Role & Izin', href: '/roles', icon: '🔐' },
+  { name: 'Pengaturan Hak Akses', href: '/roles', icon: '🔐' },
   { name: 'Pengaturan', href: '/settings', icon: '🔧' },
 ] as const;

@@ -5,7 +5,7 @@ export interface ProductionRecommendation {
   recommendedAmount: number;
   baseRecommendation: number;
   weatherMultiplier: number;
-  avgSalesForDayOfWeek: string;
+  avgSalesForDayOfWeek: number | string;
   targetDayOfWeek: number;
   targetWeather?: {
     id: number;
@@ -54,7 +54,7 @@ export const reportsService = {
     storeId?: number,
     lookbackDays: number = 30
   ): Promise<ProductionRecommendation> {
-    const params: any = { lookbackDays };
+    const params: { lookbackDays: number; storeId?: number } = { lookbackDays };
     if (storeId) params.storeId = storeId;
     const response = await apiClient.get<ProductionRecommendation>(
       `/reports/recommendations/${date}`,
@@ -63,4 +63,3 @@ export const reportsService = {
     return response.data;
   },
 };
-

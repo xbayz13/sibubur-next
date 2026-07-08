@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Store } from '@/types';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/form/Input';
@@ -15,12 +15,6 @@ interface StoreFormProps {
 
 export default function StoreForm({ store, onSubmit, onCancel }: StoreFormProps) {
   const [name, setName] = useState(store?.name || '');
-
-  useEffect(() => {
-    if (store) {
-      setName(store.name || '');
-    }
-  }, [store]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,4 +61,3 @@ export default function StoreForm({ store, onSubmit, onCancel }: StoreFormProps)
     </Modal>
   );
 }
-

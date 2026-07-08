@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Product, ProductCategory } from '@/types';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/form/Input';
@@ -33,15 +33,6 @@ export default function ProductForm({
   const [categoryId, setCategoryId] = useState<number | undefined>(
     product?.category?.id || undefined
   );
-
-  useEffect(() => {
-    if (product) {
-      setName(product.name || '');
-      setDescription(product.description || '');
-      setPrice(product.price?.toString() || '');
-      setCategoryId(product.category?.id);
-    }
-  }, [product]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,4 +130,3 @@ export default function ProductForm({
     </Modal>
   );
 }
-

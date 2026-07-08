@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Employee, Store } from '@/types';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/form/Input';
@@ -28,21 +28,8 @@ export default function EmployeeForm({
 }: EmployeeFormProps) {
   const [name, setName] = useState(employee?.name || '');
   const [storeId, setStoreId] = useState<number | undefined>(employee?.store?.id);
-  const [status, setStatus] = useState<'active' | 'inactive'>(
-    (employee as any)?.status || 'active'
-  );
-  const [dailySalary, setDailySalary] = useState<string>(
-    (employee as any)?.dailySalary?.toString() || ''
-  );
-
-  useEffect(() => {
-    if (employee) {
-      setName(employee.name || '');
-      setStoreId(employee.store?.id);
-      setStatus((employee as any)?.status || 'active');
-      setDailySalary((employee as any)?.dailySalary?.toString() || '');
-    }
-  }, [employee]);
+  const [status, setStatus] = useState<'active' | 'inactive'>(employee?.status || 'active');
+  const [dailySalary, setDailySalary] = useState<string>(employee?.dailySalary?.toString() || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,4 +121,3 @@ export default function EmployeeForm({
     </Modal>
   );
 }
-

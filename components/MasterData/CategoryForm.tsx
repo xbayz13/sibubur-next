@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ProductCategory, ExpenseCategory } from '@/types';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/form/Input';
@@ -17,13 +17,6 @@ interface CategoryFormProps {
 export default function CategoryForm({ category, onSubmit, onCancel }: CategoryFormProps) {
   const [name, setName] = useState(category?.name || '');
   const [description, setDescription] = useState(category?.description || '');
-
-  useEffect(() => {
-    if (category) {
-      setName(category.name || '');
-      setDescription(category.description || '');
-    }
-  }, [category]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,4 +77,3 @@ export default function CategoryForm({ category, onSubmit, onCancel }: CategoryF
     </Modal>
   );
 }
-

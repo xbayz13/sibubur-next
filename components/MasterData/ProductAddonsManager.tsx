@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Product, ProductAddon } from '@/types';
 import { productsService } from '@/lib/services/products';
 import { productAddonsService } from '@/lib/services/product-addons';
@@ -26,29 +26,40 @@ export default function ProductAddonsManager({
   );
   const [priceOverrides, setPriceOverrides] = useState<Record<number, number>>({});
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
+
+  const loadAddons = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await productAddonsService.getAll({ limit: 100 });
+      setAllAddons(res.data);
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data addon'), 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
   useEffect(() => {
     loadAddons();
-    // Initialize price overrides from existing product addons
     if (product.addons) {
       const overrides: Record<number, number> = {};
       product.addons.forEach((addon) => {
         overrides[addon.id] = addon.price;
       });
       setPriceOverrides(overrides);
+    } else {
+      setPriceOverrides({});
     }
-  }, [product]);
-
-  const loadAddons = async () => {
-    try {
-      setLoading(true);
-      const res = await productAddonsService.getAll({ limit: 100 });
-      setAllAddons(res.data);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data addon', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    setSelectedAddonIds(product.addons?.map((a) => a.id) || []);
+  }, [loadAddons, product.addons]);
 
   const handleToggleAddon = (addonId: number) => {
     if (selectedAddonIds.includes(addonId)) {
@@ -131,8 +142,8 @@ export default function ProductAddonsManager({
       showToast('Addon produk berhasil diperbarui', 'success');
       onUpdate();
       onClose();
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan perubahan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menyimpan perubahan'), 'error');
     } finally {
       setSaving(false);
     }
@@ -267,4 +278,3 @@ export default function ProductAddonsManager({
     </div>
   );
 }
-

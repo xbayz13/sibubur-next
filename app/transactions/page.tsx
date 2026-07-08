@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import BackButton from '@/components/Layout/BackButton';
@@ -23,14 +23,23 @@ export default function TransactionsPage() {
   const [total, setTotal] = useState(0);
   const limit = 20;
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
+
   // Load stores only once on mount
   useEffect(() => {
     const loadStores = async () => {
       try {
         const storesRes = await storesService.getAll({ limit: 100 });
         setStores(storesRes.data);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Gagal memuat data toko'), 'error');
       } finally {
         setLoading(false);
       }
@@ -54,8 +63,8 @@ export default function TransactionsPage() {
         setTransactions(res.data);
         setTotal(res.total);
         setTotalPages(res.totalPages);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data transaksi', 'error');
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Gagal memuat data transaksi'), 'error');
         setTransactions([]);
       } finally {
         setTransactionsLoading(false);

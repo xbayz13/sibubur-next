@@ -31,57 +31,57 @@ layer(base);
   --text-title-md--line-height: 44px;
   --text-title-sm: 30px;
   --text-title-sm--line-height: 38px;
-  --text-theme-xl: 20px;
+  --text-theme-xl: 22px;
   --text-theme-xl--line-height: 30px;
-  --text-theme-sm: 14px;
-  --text-theme-sm--line-height: 20px;
-  --text-theme-xs: 12px;
-  --text-theme-xs--line-height: 18px;
+  --text-theme-sm: 16px;
+  --text-theme-sm--line-height: 24px;
+  --text-theme-xs: 14px;
+  --text-theme-xs--line-height: 20px;
 
   --color-current: currentColor;
   --color-transparent: transparent;
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #f2f7ff;
-  --color-brand-50: #ecf3ff;
-  --color-brand-100: #dde9ff;
-  --color-brand-200: #c2d6ff;
-  --color-brand-300: #9cb9ff;
-  --color-brand-400: #7592ff;
-  --color-brand-500: #465fff;
-  --color-brand-600: #3641f5;
-  --color-brand-700: #2a31d8;
-  --color-brand-800: #252dae;
-  --color-brand-900: #262e89;
-  --color-brand-950: #161950;
+  --color-brand-25: #f7f7ff;
+  --color-brand-50: #f0f1ff;
+  --color-brand-100: #e0e3ff;
+  --color-brand-200: #c7c9ff;
+  --color-brand-300: #a4a7ff;
+  --color-brand-400: #7f83ff;
+  --color-brand-500: #4f46e5;
+  --color-brand-600: #4338ca;
+  --color-brand-700: #3730a3;
+  --color-brand-800: #2c2772;
+  --color-brand-900: #232052;
+  --color-brand-950: #18163a;
 
-  --color-blue-light-25: #f5fbff;
-  --color-blue-light-50: #f0f9ff;
-  --color-blue-light-100: #e0f2fe;
-  --color-blue-light-200: #b9e6fe;
-  --color-blue-light-300: #7cd4fd;
-  --color-blue-light-400: #36bffa;
-  --color-blue-light-500: #0ba5ec;
-  --color-blue-light-600: #0086c9;
-  --color-blue-light-700: #026aa2;
-  --color-blue-light-800: #065986;
-  --color-blue-light-900: #0b4a6f;
-  --color-blue-light-950: #062c41;
+  --color-blue-light-25: #f4f9ff;
+  --color-blue-light-50: #eef8ff;
+  --color-blue-light-100: #d6ecff;
+  --color-blue-light-200: #b5dcff;
+  --color-blue-light-300: #86c8ff;
+  --color-blue-light-400: #51b0f4;
+  --color-blue-light-500: #248fdd;
+  --color-blue-light-600: #1c75bc;
+  --color-blue-light-700: #1b649f;
+  --color-blue-light-800: #18527f;
+  --color-blue-light-900: #16466a;
+  --color-blue-light-950: #0f2f48;
 
-  --color-gray-25: #fcfcfd;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f2f4f7;
-  --color-gray-200: #e4e7ec;
-  --color-gray-300: #d0d5dd;
+  --color-gray-25: #fbfcfe;
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #eef2f6;
+  --color-gray-200: #e3e8ef;
+  --color-gray-300: #cdd5df;
   --color-gray-400: #98a2b3;
-  --color-gray-500: #667085;
-  --color-gray-600: #475467;
-  --color-gray-700: #344054;
-  --color-gray-800: #1d2939;
-  --color-gray-900: #101828;
-  --color-gray-950: #0c111d;
-  --color-gray-dark: #1a2231;
+  --color-gray-500: #697586;
+  --color-gray-600: #4b5565;
+  --color-gray-700: #364152;
+  --color-gray-800: #202939;
+  --color-gray-900: #111827;
+  --color-gray-950: #0b1220;
+  --color-gray-dark: #131a27;
 
   --color-orange-25: #fffaf5;
   --color-orange-50: #fff6ed;
@@ -148,7 +148,7 @@ layer(base);
   --shadow-theme-xl: 0px 20px 24px -4px rgba(16, 24, 40, 0.08),
     0px 8px 8px -4px rgba(16, 24, 40, 0.03);
   --shadow-datepicker: -5px 0 0 #262d3c, 5px 0 0 #262d3c;
-  --shadow-focus-ring: 0px 0px 0px 4px rgba(70, 95, 255, 0.12);
+  --shadow-focus-ring: 0px 0px 0px 4px rgba(79, 70, 229, 0.16);
   --shadow-slider-navigation: 0px 1px 2px 0px rgba(16, 24, 40, 0.1),
     0px 1px 3px 0px rgba(16, 24, 40, 0.1);
   --shadow-tooltip: 0px 4px 6px -2px rgba(16, 24, 40, 0.05),
@@ -183,16 +183,86 @@ layer(base);
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50 dark:bg-gray-900;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+body {
+  font-family: var(--font-outfit);
+  font-size: 16px;
+  line-height: 1.6;
+  background-color: var(--color-gray-25);
+  color: var(--color-gray-900);
+}
+
+.dark body {
+  background-color: var(--color-gray-950);
+  color: var(--color-gray-100);
+}
+
+/* Improved visual hierarchy */
+h1 {
+  @apply text-3xl font-bold text-gray-800 dark:text-white/90;
+}
+
+h2 {
+  @apply text-2xl font-semibold text-gray-800 dark:text-white/90;
+}
+
+  h3 {
+    @apply text-xl font-semibold text-gray-700 dark:text-white/90;
+  }
+
+  /* Dark mode readability + surface softness */
+  :root.dark, .dark {
+    color-scheme: dark;
+  }
+
+  /* Lift text contrast in dark mode when legacy gray classes are used */
+  .dark .text-gray-500 { color: var(--color-gray-300) !important; }
+  .dark .text-gray-600 { color: var(--color-gray-200) !important; }
+  .dark .text-gray-700 { color: var(--color-gray-100) !important; }
+  .dark .text-gray-800 { color: var(--color-gray-50) !important; }
+  .dark .text-slate-500 { color: var(--color-gray-300) !important; }
+  .dark .text-slate-600 { color: var(--color-gray-200) !important; }
+  .dark .text-slate-700 { color: var(--color-gray-100) !important; }
+  .dark .text-slate-400 { color: var(--color-gray-300) !important; }
+  .dark .text-slate-800 { color: var(--color-gray-50) !important; }
+  .dark .text-slate-900 { color: var(--color-gray-50) !important; }
+
+  /* Soften bright surfaces in dark mode */
+  .dark .bg-white,
+  .dark .bg-gray-50,
+  .dark .bg-gray-100,
+  .dark .bg-gray-200 {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: var(--color-gray-100);
+  }
+
+  /* Dark mode table theming */
+  .dark .bg-slate-50,
+  .dark .bg-slate-100 {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: var(--color-gray-100);
+  }
+
+  .dark .border-slate-200,
+  .dark .border-slate-100,
+  .dark .border-gray-200,
+  .dark .border-gray-100,
+  .dark .border-white {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+  .dark .divide-y.divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .dark .hover\:bg-slate-50:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
   }
 }
 
 /* Utility Classes */
 @utility menu-item {
-  @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
+  @apply relative flex items-center w-full gap-3 px-4 py-3 font-medium rounded-lg text-base;
 }
 
 @utility menu-item-active {
@@ -209,7 +279,7 @@ layer(base);
 
 @utility menu-item-icon-size {
   & svg {
-    @apply !size-6;
+    @apply !size-7;
   }
 }
 
@@ -218,7 +288,7 @@ layer(base);
 }
 
 @utility menu-dropdown-item {
-  @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-theme-sm font-medium;
+  @apply relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-base font-medium;
 }
 
 @utility menu-dropdown-item-active {
@@ -227,6 +297,15 @@ layer(base);
 
 @utility menu-dropdown-item-inactive {
   @apply text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5;
+}
+
+/* Form spacing improvements for older users */
+form {
+  @apply space-y-5;
+}
+
+form > div {
+  @apply mb-1;
 }
 
 @utility no-scrollbar {

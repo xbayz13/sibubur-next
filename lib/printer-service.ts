@@ -7,6 +7,7 @@
  */
 
 import { bluetoothPrinterService } from './bluetooth-printer';
+import { Order, Transaction } from '@/types';
 
 export type PrinterMethod = 'bluetooth' | 'serial' | 'server' | 'browser';
 
@@ -111,11 +112,18 @@ class UniversalPrinterService {
     }
 
     try {
-      const port = await (navigator as any).serial.requestPort();
+      const serialNavigator = navigator as Navigator & { serial?: Serial };
+      const port = await serialNavigator.serial?.requestPort();
+      if (!port) {
+        throw new Error('Tidak ada printer Serial yang ditemukan.');
+      }
       await port.open({ baudRate: 9600 }); // Common baud rate for thermal printers
 
       this.serialPort = port;
-      const writer = port.writable.getWriter();
+      const writer = port.writable?.getWriter();
+      if (!writer) {
+        throw new Error('Serial port is not writable');
+      }
       this.serialWriter = writer;
       this.currentMethod = 'serial';
 
@@ -124,13 +132,18 @@ class UniversalPrinterService {
         this.serialPort = null;
         this.serialWriter = null;
       });
-    } catch (error: any) {
-      if (error.name === 'NotFoundError') {
-        throw new Error('Tidak ada printer Serial yang ditemukan.');
-      } else if (error.name === 'SecurityError') {
-        throw new Error('Akses Serial ditolak. Pastikan browser memiliki izin.');
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'name' in error) {
+        const errName = (error as { name?: string }).name;
+        if (errName === 'NotFoundError') {
+          throw new Error('Tidak ada printer Serial yang ditemukan.');
+        }
+        if (errName === 'SecurityError') {
+          throw new Error('Akses Serial ditolak. Pastikan browser memiliki izin.');
+        }
       }
-      throw new Error(`Gagal menghubungkan ke printer Serial: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Gagal menghubungkan ke printer Serial.';
+      throw new Error(`Gagal menghubungkan ke printer Serial: ${message}`);
     }
   }
 
@@ -169,13 +182,17 @@ class UniversalPrinterService {
 
     try {
       await this.serialWriter.write(data);
-    } catch (error: any) {
-      if (error.message?.includes('closed')) {
-        this.serialPort = null;
-        this.serialWriter = null;
-        throw new Error('Printer Serial terputus. Silakan hubungkan kembali.');
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        const msg = (error as { message?: string }).message;
+        if (msg?.includes('closed')) {
+          this.serialPort = null;
+          this.serialWriter = null;
+          throw new Error('Printer Serial terputus. Silakan hubungkan kembali.');
+        }
+        throw new Error(`Gagal mengirim data ke printer: ${msg}`);
       }
-      throw new Error(`Gagal mengirim data ke printer: ${error.message}`);
+      throw new Error('Gagal mengirim data ke printer.');
     }
   }
 
@@ -201,9 +218,9 @@ class UniversalPrinterService {
    * Print formatted receipt
    */
   async printReceipt(
-    order: any,
+    order: Order,
     type: 'kitchen' | 'customer',
-    transaction?: any
+    transaction?: Transaction
   ): Promise<void> {
     const connection = this.getConnectionStatus();
 
@@ -220,7 +237,7 @@ class UniversalPrinterService {
         await this.printReceiptSerial(order, type, transaction);
         break;
       case 'server':
-        await this.printReceiptServer(order, type, transaction);
+        await this.printReceiptServer();
         break;
       default:
         throw new Error('Metode printing tidak didukung.');
@@ -231,9 +248,9 @@ class UniversalPrinterService {
    * Print receipt via Serial
    */
   private async printReceiptSerial(
-    order: any,
+    order: Order,
     type: 'kitchen' | 'customer',
-    transaction?: any
+    transaction?: Transaction
   ): Promise<void> {
     if (!this.serialWriter) {
       throw new Error('Printer Serial tidak terhubung.');
@@ -342,11 +359,7 @@ class UniversalPrinterService {
   /**
    * Print receipt via server (requires backend API)
    */
-  private async printReceiptServer(
-    order: any,
-    type: 'kitchen' | 'customer',
-    transaction?: any
-  ): Promise<void> {
+  private async printReceiptServer(): Promise<void> {
     // This would call a backend API endpoint to print
     // For now, we'll throw an error indicating it needs backend implementation
     throw new Error(
@@ -389,8 +402,3 @@ class UniversalPrinterService {
 
 // Export singleton instance
 export const printerService = new UniversalPrinterService();
-
-
-
-
-

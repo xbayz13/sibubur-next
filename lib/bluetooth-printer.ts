@@ -15,14 +15,20 @@
  * - escpos-printer-bt: Alternative implementation (optional)
  */
 
-// Try to import escpos-buffer (optional, will fallback if not available)
-let Printer: any = null;
-try {
-  const escposBuffer = require('escpos-buffer');
-  Printer = escposBuffer.Printer || escposBuffer.default;
-} catch (error) {
-  console.warn('escpos-buffer not available, using manual ESC/POS commands');
-}
+import { Order, Transaction } from '@/types';
+
+type EscposPrinterCtor = new () => { encode: () => Uint8Array };
+let EscposPrinter: EscposPrinterCtor | null = null;
+
+import('escpos-buffer')
+  .then((escposBuffer) => {
+    const maybePrinter = (escposBuffer as unknown as { Printer?: EscposPrinterCtor; default?: EscposPrinterCtor }).Printer
+      || (escposBuffer as unknown as { default?: EscposPrinterCtor }).default;
+    EscposPrinter = maybePrinter || null;
+  })
+  .catch(() => {
+    console.warn('escpos-buffer not available, using manual ESC/POS commands');
+  });
 
 export interface BluetoothPrinter {
   device: BluetoothDevice;
@@ -221,17 +227,24 @@ class BluetoothPrinterService {
       });
 
       return device;
-    } catch (error: any) {
-      if (error.name === 'NotFoundError') {
-        throw new Error('Tidak ada printer Bluetooth yang ditemukan. Pastikan printer dalam keadaan menyala dan dapat ditemukan.');
-      } else if (error.name === 'SecurityError') {
-        throw new Error('Akses Bluetooth ditolak. Pastikan browser memiliki izin dan printer sudah dipasangkan (paired).');
-      } else if (error.name === 'InvalidStateError') {
-        throw new Error('Bluetooth sedang digunakan. Tutup koneksi lain terlebih dahulu.');
-      } else if (error.name === 'NetworkError') {
-        throw new Error('Gagal terhubung ke printer. Pastikan printer dalam jangkauan dan tidak terhubung ke perangkat lain.');
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'name' in error) {
+        const errName = (error as { name?: string }).name;
+        if (errName === 'NotFoundError') {
+          throw new Error('Tidak ada printer Bluetooth yang ditemukan. Pastikan printer dalam keadaan menyala dan dapat ditemukan.');
+        }
+        if (errName === 'SecurityError') {
+          throw new Error('Akses Bluetooth ditolak. Pastikan browser memiliki izin dan printer sudah dipasangkan (paired).');
+        }
+        if (errName === 'InvalidStateError') {
+          throw new Error('Bluetooth sedang digunakan. Tutup koneksi lain terlebih dahulu.');
+        }
+        if (errName === 'NetworkError') {
+          throw new Error('Gagal terhubung ke printer. Pastikan printer dalam jangkauan dan tidak terhubung ke perangkat lain.');
+        }
       }
-      throw new Error(`Gagal mencari printer: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Gagal mencari printer';
+      throw new Error(`Gagal mencari printer: ${message}`);
     }
   }
 
@@ -301,7 +314,7 @@ class BluetoothPrinterService {
           }
         } catch (error) {
           // Try next service
-          console.log(`Service ${uuid.toString(16)} not found, trying next...`);
+          console.log(`Service ${uuid.toString(16)} not found, trying next...`, error);
         }
       }
 
@@ -314,6 +327,7 @@ class BluetoothPrinterService {
             console.log(`Using first available service: ${service.uuid}`);
           }
         } catch (error) {
+          console.error('Service Bluetooth tidak ditemukan pada printer. Pastikan printer mendukung BLE dan sudah dipasangkan.', error);
           throw new Error('Service Bluetooth tidak ditemukan pada printer. Pastikan printer mendukung BLE dan sudah dipasangkan.');
         }
       }
@@ -342,7 +356,7 @@ class BluetoothPrinterService {
           }
         } catch (error) {
           // Try next characteristic
-          console.log(`Characteristic ${uuid.toString(16)} not found, trying next...`);
+          console.log(`Characteristic ${uuid.toString(16)} not found, trying next...`, error);
         }
       }
 
@@ -358,6 +372,7 @@ class BluetoothPrinterService {
             console.log(`Using first writable characteristic: ${characteristic.uuid}`);
           }
         } catch (error) {
+          console.error('Karakteristik Bluetooth tidak ditemukan pada printer.', error);
           throw new Error('Karakteristik Bluetooth tidak ditemukan pada printer.');
         }
       }
@@ -384,7 +399,7 @@ class BluetoothPrinterService {
       });
 
       return this.printer;
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.printer = null;
       throw error;
     } finally {
@@ -460,12 +475,16 @@ class BluetoothPrinterService {
         // Small delay between chunks to prevent buffer overflow
         await new Promise((resolve) => setTimeout(resolve, 20));
       }
-    } catch (error: any) {
-      if (error.message?.includes('not connected')) {
-        this.printer = null;
-        throw new Error('Printer terputus. Silakan hubungkan kembali.');
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'message' in error) {
+        const msg = (error as { message?: string }).message;
+        if (msg?.includes('not connected')) {
+          this.printer = null;
+          throw new Error('Printer terputus. Silakan hubungkan kembali.');
+        }
+        throw new Error(`Gagal mengirim data ke printer: ${msg}`);
       }
-      throw new Error(`Gagal mengirim data ke printer: ${error.message}`);
+      throw new Error('Gagal mengirim data ke printer.');
     }
   }
 
@@ -480,13 +499,13 @@ class BluetoothPrinterService {
    * Generate ESC/POS buffer using escpos-buffer package (if available)
    * Falls back to manual commands if package is not available
    */
-  private generateEscPosBuffer(commands: (printer: any) => any): Uint8Array | null {
-    if (!Printer) {
+  private generateEscPosBuffer(commands: (printer: InstanceType<EscposPrinterCtor>) => void): Uint8Array | null {
+    if (!EscposPrinter) {
       return null; // Will use fallback method
     }
     
     try {
-      const printer = new Printer();
+      const printer = new EscposPrinter();
       commands(printer);
       return printer.encode();
     } catch (error) {
@@ -520,8 +539,9 @@ class BluetoothPrinterService {
       
       // Cut paper
       await this.write(ESCPOS_COMMANDS.CUT);
-    } catch (error: any) {
-      throw new Error(`Gagal mencetak: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal mencetak';
+      throw new Error(`Gagal mencetak: ${message}`);
     }
   }
 
@@ -530,7 +550,7 @@ class BluetoothPrinterService {
    */
   private convertHtmlToPlainText(html: string): string {
     // Remove HTML tags and convert to plain text
-    let text = html
+    const text = html
       .replace(/<[^>]*>/g, '') // Remove HTML tags
       .replace(/&nbsp;/g, ' ')
       .replace(/&amp;/g, '&')
@@ -571,9 +591,9 @@ class BluetoothPrinterService {
    * Uses escpos-buffer for better command generation
    */
   async printFormattedReceipt(
-    order: any,
+    order: Order,
     type: 'kitchen' | 'customer',
-    transaction?: any
+    transaction?: Transaction
   ): Promise<void> {
     if (!this.isConnected()) {
       throw new Error('Printer tidak terhubung.');
@@ -595,7 +615,7 @@ class BluetoothPrinterService {
 
       // Fallback to manual ESC/POS commands (current implementation)
       await this.printFormattedReceiptFallback(order, type, transaction);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Fallback to original method if escpos-buffer fails
       console.warn('Error using escpos-buffer, falling back to manual commands:', error);
       await this.printFormattedReceiptFallback(order, type, transaction);
@@ -606,9 +626,9 @@ class BluetoothPrinterService {
    * Fallback method using manual ESC/POS commands
    */
   private async printFormattedReceiptFallback(
-    order: any,
+    order: Order,
     type: 'kitchen' | 'customer',
-    transaction?: any
+    transaction?: Transaction
   ): Promise<void> {
     let receipt = '';
 
@@ -735,4 +755,3 @@ class BluetoothPrinterService {
 
 // Export singleton instance
 export const bluetoothPrinterService = new BluetoothPrinterService();
-

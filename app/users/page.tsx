@@ -11,11 +11,12 @@ import { storesService } from '@/lib/services/stores';
 import { User, Role, Store } from '@/types';
 import DataTable from '@/components/MasterData/DataTable';
 import Button from '@/components/ui/Button';
+import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import Modal from '@/components/ui/Modal';
+import Label from '@/components/form/Label';
 import Input from '@/components/form/Input';
 import Select from '@/components/form/Select';
-import Label from '@/components/form/Label';
-import Pagination from '@/components/ui/Pagination';
 
 export default function UsersPage() {
   const { showToast } = useToast();
@@ -25,6 +26,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -33,6 +35,15 @@ export default function UsersPage() {
   pageRef.current = page;
   const showToastRef = useRef(showToast);
   showToastRef.current = showToast;
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
   // Load roles and stores once on mount (for form dropdowns)
   useEffect(() => {
@@ -44,8 +55,8 @@ export default function UsersPage() {
         ]);
         setRoles(rolesRes.data);
         setStores(storesRes.data);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Gagal memuat data'), 'error');
       }
     };
     loadStaticData();
@@ -60,8 +71,8 @@ export default function UsersPage() {
       setTotal(res.total);
       setTotalPages(res.totalPages);
       if (pageOverride !== undefined) setPage(pageOverride);
-    } catch (error: any) {
-      showToastRef.current(error.response?.data?.message || 'Gagal memuat data pengguna', 'error');
+    } catch (error: unknown) {
+      showToastRef.current(getErrorMessage(error, 'Gagal memuat data pengguna'), 'error');
     } finally {
       setLoading(false);
     }
@@ -82,16 +93,20 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (user: User) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus pengguna ${user.username}?`)) {
-      return;
-    }
+    setDeleteConfirm(user);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await usersService.delete(user.id);
+      await usersService.delete(deleteConfirm.id);
       showToast('Pengguna berhasil dihapus', 'success');
       await loadUsers(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus pengguna', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menghapus pengguna'), 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -107,8 +122,8 @@ export default function UsersPage() {
       setShowForm(false);
       setSelectedUser(null);
       await loadUsers(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan pengguna', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal menyimpan pengguna'), 'error');
     }
   };
 
@@ -193,14 +208,24 @@ export default function UsersPage() {
                 setSelectedUser(null);
               }}
             />
-          )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+           )}
+           <ConfirmationModal
+             isOpen={!!deleteConfirm}
+             title="Hapus Pengguna?"
+             message={`Hapus pengguna "${deleteConfirm?.username}"?`}
+             confirmText="Ya, Hapus"
+             cancelText="Batal"
+             onConfirm={confirmDelete}
+             onCancel={() => setDeleteConfirm(null)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }
 
-interface UserFormProps {
+ interface UserFormProps {
   user: User | null;
   roles: Role[];
   stores: Store[];
@@ -350,4 +375,3 @@ function UserForm({ user, roles, stores, onSubmit, onCancel }: UserFormProps) {
     </Modal>
   );
 }
-

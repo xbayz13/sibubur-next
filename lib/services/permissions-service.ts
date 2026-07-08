@@ -1,5 +1,5 @@
 import apiClient from '../api';
-import { Permission } from '@/types';
+// Note: Permission type not needed directly; keep imports minimal
 
 // Service to check user permissions
 export const permissionsService = {
@@ -20,7 +20,7 @@ export const permissionsService = {
 
       // Return permissions from profile response
       return profileData.permissions || [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch user permissions:', error);
       
       // If 401 or 404, the user doesn't exist (token is invalid)
@@ -53,7 +53,7 @@ export const permissionsService = {
       const profileResponse = await apiClient.get('/auth/profile');
       const roleName = profileResponse.data.roleName;
       return roleName === 'SuperAdmin' || roleName === 'Owner';
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If 401 or 404, the user doesn't exist (token is invalid)
       // The API interceptor should handle redirecting to login
       console.error('Failed to check SuperAdmin status:', error);
@@ -61,4 +61,3 @@ export const permissionsService = {
     }
   },
 };
-

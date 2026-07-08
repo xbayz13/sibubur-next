@@ -33,6 +33,23 @@ interface ChartData {
 
 const DASHBOARD_STALE_TIME = 60 * 1000; // 1 minute - cache dashboard data
 
+type ApiError = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as ApiError;
+    if (apiError.response?.data?.message) return apiError.response.data.message;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+};
+
 async function fetchDashboardData(): Promise<{ stats: DailyStats; chartData: ChartData[] }> {
   const today = new Date().toISOString().split('T')[0];
   const dates: string[] = [];
@@ -81,7 +98,7 @@ export default function Home() {
   const [lastWeatherUpdate, setLastWeatherUpdate] = useState<Date | null>(null);
 
   // SWR: cache dashboard data, revalidate after 1 min, show stale data while revalidating
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading } = useSWR(
     'dashboard',
     fetchDashboardData,
     {
@@ -96,7 +113,8 @@ export default function Home() {
 
   useEffect(() => {
     if (error) {
-      showToast(error?.response?.data?.message || 'Gagal memuat data dashboard', 'error');
+      const message = getErrorMessage(error, 'Gagal memuat data dashboard');
+      showToast(message, 'error');
     }
   }, [error, showToast]);
 
@@ -104,7 +122,6 @@ export default function Home() {
     loadWeatherData();
     const weatherInterval = setInterval(loadWeatherData, 4 * 60 * 60 * 1000);
     return () => clearInterval(weatherInterval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadWeatherData = async () => {
@@ -117,7 +134,7 @@ export default function Home() {
       setCurrentWeather(current);
       setTomorrowMorningForecast(tomorrowMorning);
       setLastWeatherUpdate(new Date());
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load weather data:', error);
       // Don't show toast for weather errors to avoid spam
     } finally {
@@ -141,19 +158,24 @@ export default function Home() {
     <ProtectedRoute>
       <MainLayout>
         <div className="space-y-4 sm:space-y-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">Dashboard</h1>
-            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Selamat datang di sistem SiBubur POS</p>
-          </div>
+           <div>
+             <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-1">Dashboard</h1>
+             <p className="text-base text-gray-500 dark:text-gray-400">Ringkasan operasional hari ini</p>
+           </div>
 
-          {/* Weather Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-white/90">Prakiraan Cuaca</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                Sumber: <span className="font-medium">BMKG</span> (Badan Meteorologi, Klimatologi, dan Geofisika)
-              </p>
-            </div>
+           {/* Ringkasan Hari Ini */}
+           <div>
+             <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-4">Ringkasan Hari Ini</h2>
+           </div>
+
+           {/* Weather Section */}
+           <div className="space-y-4">
+             <div className="flex items-center justify-between">
+               <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">Prakiraan Cuaca</h2>
+               <p className="text-sm text-gray-500 dark:text-gray-400">
+                 Sumber: <span className="font-medium">BMKG</span>
+               </p>
+             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Current Weather */}
               <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 dark:border-blue-500/20">
@@ -245,15 +267,17 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+           {/* Statistik Utama */}
+           <div>
+             <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-4">Statistik Utama</h2>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <Card className="border-success-200 bg-success-50 dark:bg-success-500/10 dark:border-success-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm text-success-700 dark:text-success-400 font-medium">Total Penjualan Hari Ini</p>
-                  <p className="text-xl sm:text-2xl font-bold text-success-900 dark:text-success-300 mt-1 sm:mt-2 truncate">
-                    Rp {Number(stats.revenue).toLocaleString('id-ID')}
-                  </p>
+                   <p className="text-sm text-success-700 dark:text-success-400 font-medium">Total Penjualan Hari Ini</p>
+                   <p className="text-2xl sm:text-3xl font-bold text-success-900 dark:text-success-300 mt-1 sm:mt-2 truncate">
+                     Rp {Number(stats.revenue).toLocaleString('id-ID')}
+                   </p>
                 </div>
                 <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">💰</div>
               </div>
@@ -262,8 +286,8 @@ export default function Home() {
             <Card className="border-brand-200 bg-brand-50 dark:bg-brand-500/10 dark:border-brand-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm text-brand-700 dark:text-brand-400 font-medium">Pesanan Hari Ini</p>
-                  <p className="text-xl sm:text-2xl font-bold text-brand-900 dark:text-brand-300 mt-1 sm:mt-2">{stats.orders}</p>
+                   <p className="text-sm text-brand-700 dark:text-brand-400 font-medium">Pesanan Hari Ini</p>
+                   <p className="text-2xl sm:text-3xl font-bold text-brand-900 dark:text-brand-300 mt-1 sm:mt-2">{stats.orders}</p>
                 </div>
                 <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">📝</div>
               </div>
@@ -272,8 +296,8 @@ export default function Home() {
             <Card className="border-theme-purple-500/30 bg-theme-purple-500/10 dark:bg-theme-purple-500/20 dark:border-theme-purple-500/30">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">Produksi Hari Ini</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white/90 mt-1 sm:mt-2">{stats.productions}</p>
+                   <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">Produksi Hari Ini</p>
+                   <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white/90 mt-1 sm:mt-2">{stats.productions}</p>
                 </div>
                 <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">🍲</div>
               </div>
@@ -282,19 +306,23 @@ export default function Home() {
             <Card className="border-error-200 bg-error-50 dark:bg-error-500/10 dark:border-error-500/20">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm text-error-700 dark:text-error-400 font-medium">Persediaan Rendah</p>
-                  <p className="text-xl sm:text-2xl font-bold text-error-900 dark:text-error-300 mt-1 sm:mt-2">{stats.lowStock}</p>
+                   <p className="text-sm text-error-700 dark:text-error-400 font-medium">Persediaan Rendah</p>
+                   <p className="text-2xl sm:text-3xl font-bold text-error-900 dark:text-error-300 mt-1 sm:mt-2">{stats.lowStock}</p>
                 </div>
                 <div className="text-2xl sm:text-3xl ml-2 flex-shrink-0">⚠️</div>
               </div>
-            </Card>
-          </div>
+             </Card>
+             </div>
+           </div>
 
-          {/* Charts - lazy loaded to reduce initial bundle */}
-          <DashboardCharts chartData={chartData} />
+           {/* Grafik Penjualan 7 Hari Terakhir */}
+           <div>
+             <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-4">Grafik Penjualan 7 Hari Terakhir</h2>
+             <DashboardCharts chartData={chartData} />
+           </div>
 
-          {/* Recent Activity */}
-          <Card title="Ringkasan Hari Ini">
+           {/* Ringkasan Tambahan */}
+           <Card title="Ringkasan Tambahan">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Rata-rata per Pesanan</div>

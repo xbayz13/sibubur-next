@@ -10,7 +10,7 @@ interface SerialPort extends EventTarget {
   close(): Promise<void>;
   addEventListener(
     type: 'connect' | 'disconnect',
-    listener: (this: this, ev: Event) => any,
+    listener: (this: this, ev: Event) => void,
     useCapture?: boolean
   ): void;
 }
@@ -34,7 +34,7 @@ interface Serial extends EventTarget {
   requestPort(options?: SerialPortRequestOptions): Promise<SerialPort>;
   addEventListener(
     type: 'connect' | 'disconnect',
-    listener: (this: this, ev: SerialConnectionEvent) => any,
+    listener: (this: this, ev: SerialConnectionEvent) => void,
     useCapture?: boolean
   ): void;
 }
@@ -55,7 +55,6 @@ interface SerialConnectionEvent extends Event {
 interface Navigator {
   serial?: Serial;
 }
-
 
 
 

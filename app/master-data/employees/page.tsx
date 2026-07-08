@@ -8,10 +8,12 @@ import { useToast } from '@/components/ToastContainer';
 import { employeesService } from '@/lib/services/employees';
 import { storesService } from '@/lib/services/stores';
 import { Employee, Store } from '@/types';
-import DataTable from '@/components/MasterData/DataTable';
 import EmployeeForm from '@/components/MasterData/EmployeeForm';
+import DataTable from '@/components/MasterData/DataTable';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
+type EmployeeStatus = 'active' | 'inactive';
 
 export default function EmployeesPage() {
   const { showToast } = useToast();
@@ -20,6 +22,7 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Employee | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -35,8 +38,9 @@ export default function EmployeesPage() {
       try {
         const res = await storesService.getAll({ limit: 100 });
         setStores(res.data);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data toko', 'error');
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Gagal memuat data toko';
+        showToast(message, 'error');
       }
     };
     loadStores();
@@ -51,8 +55,9 @@ export default function EmployeesPage() {
       setTotal(res.total);
       setTotalPages(res.totalPages);
       if (pageToLoad !== undefined) setPage(pageToLoad);
-    } catch (error: any) {
-      showToastRef.current(error.response?.data?.message || 'Gagal memuat data karyawan', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal memuat data karyawan';
+      showToastRef.current(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -75,7 +80,7 @@ export default function EmployeesPage() {
   const handleSubmit = async (employeeData: {
     name: string;
     storeId?: number;
-    status?: 'active' | 'inactive';
+    status?: EmployeeStatus;
     dailySalary?: number;
   }) => {
     try {
@@ -89,20 +94,28 @@ export default function EmployeesPage() {
       setShowForm(false);
       setEditingEmployee(null);
       await loadEmployees(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menyimpan karyawan', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal menyimpan karyawan';
+      showToast(message, 'error');
     }
   };
 
   const handleDelete = async (employee: Employee) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus karyawan "${employee.name}"?`)) return;
+    setDeleteConfirm(employee);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await employeesService.delete(employee.id);
+      await employeesService.delete(deleteConfirm.id);
       showToast('Karyawan berhasil dihapus', 'success');
       await loadEmployees(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal menghapus karyawan', 'error');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal menghapus karyawan';
+      showToast(message, 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -143,8 +156,8 @@ export default function EmployeesPage() {
               },
               {
                 header: 'Status',
-                accessor: (item) => {
-                  const status = (item as any).status;
+               accessor: (item) => {
+                  const status = item.status as EmployeeStatus | undefined;
                   return status === 'active' ? (
                     <span className="px-2 py-1 bg-success-100 text-success-800 dark:bg-success-500/20 dark:text-success-400 rounded-full text-xs">
                       Aktif
@@ -158,8 +171,8 @@ export default function EmployeesPage() {
               },
               {
                 header: 'Gaji Harian',
-                accessor: (item) => {
-                  const salary = (item as any).dailySalary;
+               accessor: (item) => {
+                  const salary = item.dailySalary;
                   return salary ? `Rp ${Number(salary).toLocaleString('id-ID')}` : '-';
                 },
               },
@@ -178,6 +191,7 @@ export default function EmployeesPage() {
 
           {showForm && (
             <EmployeeForm
+              key={editingEmployee?.id ?? 'new-employee'}
               employee={editingEmployee}
               stores={stores}
               onSubmit={handleSubmit}
@@ -187,9 +201,19 @@ export default function EmployeesPage() {
               }}
             />
           )}
+
+          <ConfirmationModal
+            isOpen={!!deleteConfirm}
+            title="Hapus Karyawan?"
+            message={`Hapus karyawan "${deleteConfirm?.name}"?`}
+            confirmText="Ya, Hapus"
+            cancelText="Batal"
+            onConfirm={confirmDelete}
+            onCancel={() => setDeleteConfirm(null)}
+            variant="danger"
+          />
         </div>
       </MainLayout>
     </ProtectedRoute>
   );
 }
-

@@ -11,6 +11,7 @@ import {
   Legend,
   PointElement,
   LineElement,
+  type TooltipItem,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import Card from '@/components/ui/Card';
@@ -102,7 +103,7 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
             titleFont: { size: 14, weight: 'bold' },
             bodyFont: { size: 13 },
             callbacks: {
-              label: function (context: any) {
+              label: function (context: TooltipItem<'bar'>) {
                 if (context.dataset.label === 'Pendapatan (Rp)') {
                   return `Rp ${Number(context.parsed.y).toLocaleString('id-ID')}`;
                 }
@@ -115,7 +116,7 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: function (value: any) {
+              callback: function (value: string | number) {
                 if (typeof value === 'number' && value >= 1000000) {
                   return `Rp ${(value / 1000000).toFixed(1)}M`;
                 } else if (typeof value === 'number' && value >= 1000) {
@@ -150,7 +151,7 @@ export default function DashboardCharts({ chartData }: DashboardChartsProps) {
             titleFont: { size: 14, weight: 'bold' },
             bodyFont: { size: 13 },
             callbacks: {
-              label: function (context: any) {
+              label: function (context: TooltipItem<'bar'>) {
                 return `${context.parsed.y} pesanan`;
               },
             },

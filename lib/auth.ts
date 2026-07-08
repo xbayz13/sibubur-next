@@ -23,10 +23,10 @@ export const authService = {
     };
 
     try {
-      // Decode JWT token to get user info (basic decoding without verification)
       const tokenParts = loginResponse.data.access_token.split('.');
       if (tokenParts.length === 3) {
-        const payload = JSON.parse(atob(tokenParts[1]));
+        const base64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(atob(base64));
         user = {
           id: payload.sub || 0,
           username: payload.username || credentials.username,
@@ -39,8 +39,8 @@ export const authService = {
           } : undefined,
         };
       }
-    } catch (e) {
-      console.warn('Could not decode token, using basic info:', e);
+    } catch {
+      // ignore decode errors, use fallback user
     }
 
     // Try to fetch full user profile (optional - if it fails, we still have basic info)
@@ -50,6 +50,8 @@ export const authService = {
         username: string;
         name?: string;
         roleId?: number;
+        storeId?: number | null;
+        role?: User['role'];
       }>('/auth/profile');
       
       // Update user with profile data if available
@@ -58,14 +60,22 @@ export const authService = {
           id: profileResponse.data.id || user.id,
           username: profileResponse.data.username || user.username,
           name: profileResponse.data.name || user.name,
-          roleId: (profileResponse.data as any).roleId || user.roleId,
-          storeId: (profileResponse.data as any).storeId ?? user.storeId,
-          role: (profileResponse.data as any).role || user.role,
+          roleId: profileResponse.data.roleId || user.roleId,
+          storeId: profileResponse.data.storeId ?? user.storeId,
+          role: profileResponse.data.role || user.role,
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Profile fetch is optional, so we continue with decoded token info
-      console.warn('Could not fetch user profile (optional):', error?.response?.status || error.message);
+      let detail: string | number | undefined;
+      if (typeof error === 'object' && error !== null) {
+        const maybeResponse = (error as { response?: { status?: number } }).response;
+        detail = maybeResponse?.status;
+      }
+      if (!detail && error instanceof Error) {
+        detail = error.message;
+      }
+      console.warn('Could not fetch user profile (optional):', detail ?? error);
     }
 
     localStorage.setItem('user', JSON.stringify(user));
@@ -101,4 +111,3 @@ export const authService = {
     return !!this.getToken();
   },
 };
-

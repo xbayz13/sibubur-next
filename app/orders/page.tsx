@@ -10,12 +10,13 @@ import { productsService } from '@/lib/services/products';
 import { storesService } from '@/lib/services/stores';
 import { paymentMethodsService } from '@/lib/services/payment-methods';
 import { transactionsService } from '@/lib/services/transactions';
-import { Order, Product, Store, PaymentMethod, CreateOrderDto } from '@/types';
+import { Order, Product, Store, PaymentMethod, CreateOrderDto, Transaction } from '@/types';
 import OrderForm from '@/components/Orders/OrderForm';
 import OrderList from '@/components/Orders/OrderList';
 import PaymentModal from '@/components/Orders/PaymentModal';
 import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import Pagination from '@/components/ui/Pagination';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { isAutoPrintKitchenEnabled, isAutoPrintCustomerEnabled, shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
 
 export default function OrdersPage() {
@@ -30,14 +31,26 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<Order | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const [receiptType, setReceiptType] = useState<'kitchen' | 'customer'>('customer');
-  const [receiptTransaction, setReceiptTransaction] = useState<any>(null);
+  const [receiptTransaction, setReceiptTransaction] = useState<Transaction | undefined>(
+    undefined
+  );
   const [selectedStoreId, setSelectedStoreId] = useState<number | undefined>();
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const limit = 20;
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const response = (error as { response?: { data?: { message?: string } } }).response;
+      if (response?.data?.message) return response.data.message;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
 
   // Load static data (products, stores, paymentMethods) only once
   useEffect(() => {
@@ -53,8 +66,8 @@ export default function OrdersPage() {
         setStores(storesRes.data);
         setPaymentMethods(paymentMethodsRes.data);
         setLoading(false);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data', 'error');
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Gagal memuat data'), 'error');
         setLoading(false);
       }
     };
@@ -82,8 +95,8 @@ export default function OrdersPage() {
         setOrders(res.data);
         setTotal(res.total);
         setTotalPages(res.totalPages);
-      } catch (error: any) {
-        showToast(error.response?.data?.message || 'Gagal memuat data pesanan', 'error');
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Gagal memuat data pesanan'), 'error');
         setOrders([]);
       } finally {
         setOrdersLoading(false);
@@ -106,8 +119,8 @@ export default function OrdersPage() {
       setTotal(res.total);
       setTotalPages(res.totalPages);
       if (resetToPage1) setPage(1);
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memuat data pesanan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memuat data pesanan'), 'error');
     } finally {
       setOrdersLoading(false);
     }
@@ -126,8 +139,8 @@ export default function OrdersPage() {
         setReceiptType('kitchen');
         setShowReceipt(true);
       }
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal membuat pesanan', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal membuat pesanan'), 'error');
     }
   };
 
@@ -151,7 +164,7 @@ export default function OrdersPage() {
       const updatedOrder = await ordersService.getById(selectedOrder.id);
 
       // Add change to transaction data
-      const transactionWithChange = {
+      const transactionWithChange: Transaction = {
         ...transaction,
         change: Math.max(0, change),
       };
@@ -169,8 +182,8 @@ export default function OrdersPage() {
       
       setSelectedOrder(null);
       await reloadOrders(); // Reload orders after payment (order stays on current page)
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal memproses pembayaran', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal memproses pembayaran'), 'error');
     }
   };
 
@@ -181,14 +194,21 @@ export default function OrdersPage() {
   };
 
   const handleCancelOrder = async (orderId: number) => {
-    if (!confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) return;
+    const order = orders.find((o) => o.id === orderId) || null;
+    setDeleteConfirm(order);
+  };
+
+  const confirmCancelOrder = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await ordersService.cancel(orderId);
+      await ordersService.cancel(deleteConfirm.id);
       showToast('Pesanan berhasil dibatalkan', 'success');
-      await reloadOrders(); // Reload orders after cancel
-    } catch (error: any) {
-      showToast(error.response?.data?.message || 'Gagal membatalkan pesanan', 'error');
+      await reloadOrders();
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal membatalkan pesanan'), 'error');
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -299,17 +319,28 @@ export default function OrdersPage() {
                 order={receiptOrder}
                 type={receiptType}
                 onClose={() => {
-                  setShowReceipt(false);
-                  setReceiptOrder(null);
-                  setReceiptTransaction(null);
-                }}
-                transaction={receiptTransaction}
+                setShowReceipt(false);
+                setReceiptOrder(null);
+                setReceiptTransaction(undefined);
+              }}
+              transaction={receiptTransaction}
                 autoPrint={receiptType === 'kitchen'}
               />
             )
-          )}
-        </div>
-      </MainLayout>
-    </ProtectedRoute>
-  );
-}
+           )}
+
+           <ConfirmationModal
+             isOpen={!!deleteConfirm}
+             title="Batalkan Pesanan?"
+             message={`Batalkan pesanan #${deleteConfirm?.id}?`}
+             confirmText="Ya, Batalkan"
+             cancelText="Batal"
+             onConfirm={confirmCancelOrder}
+             onCancel={() => setDeleteConfirm(null)}
+             variant="danger"
+           />
+         </div>
+       </MainLayout>
+     </ProtectedRoute>
+   );
+ }

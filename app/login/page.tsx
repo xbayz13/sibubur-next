@@ -38,14 +38,10 @@ export default function LoginPage() {
         router.push('/');
         router.refresh();
       }, 500);
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        'Login gagal. Periksa kembali username dan password Anda.';
+    } catch {
+      const errorMessage = 'Login gagal. Periksa kembali username dan password Anda.';
       setError(errorMessage);
       showToast(errorMessage, 'error');
-      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
@@ -151,7 +147,7 @@ export default function LoginPage() {
 
                     <div>
                       <Button type="submit" className="w-full" size="sm" disabled={loading}>
-                        {loading ? 'Masuk...' : 'Masuk'}
+                         {loading ? 'Memuat...' : 'Masuk'}
                       </Button>
                     </div>
                   </div>

@@ -25,6 +25,14 @@ export default function ReceiptPrint({
   const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'message' in error) {
+      const message = (error as { message?: string }).message;
+      if (message) return message;
+    }
+    return fallback;
+  };
+
   // Check printer connection status
   useEffect(() => {
     const checkConnection = () => {
@@ -257,8 +265,8 @@ export default function ReceiptPrint({
       await printerService.printReceipt(order, type, transaction);
       const methodName = connection.method === 'bluetooth' ? 'Bluetooth' : 'Serial/USB';
       showToast(`Struk berhasil dikirim ke printer ${methodName}`, 'success');
-    } catch (error: any) {
-      showToast(error.message || 'Gagal mencetak ke printer', 'error');
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal mencetak ke printer'), 'error');
     } finally {
       setIsPrinting(false);
     }
@@ -479,4 +487,3 @@ export default function ReceiptPrint({
     </div>
   );
 }
-

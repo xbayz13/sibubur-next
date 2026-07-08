@@ -23,7 +23,7 @@ export default function Card({
       {...props}
     >
       {(title || description || headerActions) && (
-        <div className="flex items-center justify-between border-b border-gray-200 p-5 dark:border-gray-800">
+        <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-800">
           <div>
             {title && (
               <h3 className="font-semibold text-gray-800 text-title-sm dark:text-white/90">
@@ -39,7 +39,7 @@ export default function Card({
           {headerActions && <div>{headerActions}</div>}
         </div>
       )}
-      <div className="p-5">{children}</div>
+      <div className="p-6">{children}</div>
     </div>
   );
 }
