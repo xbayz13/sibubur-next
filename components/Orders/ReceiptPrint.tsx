@@ -13,6 +13,9 @@ interface ReceiptPrintProps {
   autoPrint?: boolean;
 }
 
+// Escape user-controlled values before injecting into the print window's document.write template.
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
 export default function ReceiptPrint({
   order,
   type,
@@ -70,7 +73,7 @@ export default function ReceiptPrint({
         printWindow.document.write(`
           <html>
             <head>
-              <title>${isKitchen ? 'Struk Dapur' : 'Struk Pelanggan'} - ${order.orderNumber}</title>
+              <title>${isKitchen ? 'Struk Dapur' : 'Struk Pelanggan'} - ${escapeHtml(order.orderNumber)}</title>
               <style>
                 * {
                   margin: 0;
