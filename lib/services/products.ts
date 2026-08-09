@@ -7,12 +7,13 @@ type ProductWithAddons = Product & {
 
 const transformProduct = (product: ProductWithAddons) => ({
   ...product,
-  addons: product.productAddons?.map((pap) => ({
-    id: pap.addon?.id,
-    name: pap.addon?.name,
-    price: pap.addonPriceOverride || pap.addon?.price,
-    description: pap.addon?.description,
-  })) || [],
+  addons:
+    product.productAddons?.map((pap) => ({
+      id: pap.addon?.id,
+      name: pap.addon?.name,
+      price: pap.addonPriceOverride || pap.addon?.price,
+      description: pap.addon?.description,
+    })) || [],
 });
 
 export interface ProductsGetAllParams {
@@ -41,17 +42,7 @@ export const productsService = {
 
   async getById(id: number): Promise<Product> {
     const response = await apiClient.get<Product>(`/products/${id}`);
-    const product = response.data as ProductWithAddons;
-    // Transform productAddons to addons for easier use
-    return {
-      ...product,
-      addons: product.productAddons?.map((pap) => ({
-        id: pap.addon.id,
-        name: pap.addon.name,
-        price: pap.addonPriceOverride || pap.addon.price,
-        description: pap.addon.description,
-      })) || [],
-    };
+    return transformProduct(response.data as ProductWithAddons);
   },
 
   async getCategories(): Promise<ProductCategory[]> {
@@ -95,29 +86,11 @@ export const productsService = {
       addonId,
       addonPriceOverride,
     });
-    const product = response.data as ProductWithAddons;
-    return {
-      ...product,
-      addons: product.productAddons?.map((pap) => ({
-        id: pap.addon.id,
-        name: pap.addon.name,
-        price: pap.addonPriceOverride || pap.addon.price,
-        description: pap.addon.description,
-      })) || [],
-    };
+    return transformProduct(response.data as ProductWithAddons);
   },
 
   async removeAddon(productId: number, addonId: number): Promise<Product> {
     const response = await apiClient.delete<ProductWithAddons>(`/products/${productId}/addons/${addonId}`);
-    const product = response.data as ProductWithAddons;
-    return {
-      ...product,
-      addons: product.productAddons?.map((pap) => ({
-        id: pap.addon.id,
-        name: pap.addon.name,
-        price: pap.addonPriceOverride || pap.addon.price,
-        description: pap.addon.description,
-      })) || [],
-    };
+    return transformProduct(response.data as ProductWithAddons);
   },
 };

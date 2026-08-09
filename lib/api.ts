@@ -2,8 +2,6 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 
 // API URL configuration
 // Set via NEXT_PUBLIC_API_URL environment variable
-// Development: http://localhost:3000
-// Production: http://72.61.208.109:3000
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 // Create axios instance
