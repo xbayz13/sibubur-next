@@ -4,7 +4,7 @@ import { Order, CreateOrderDto, UpdateOrderDto, PaginatedResponse } from '@/type
 export interface OrdersGetAllParams {
   storeId?: number;
   date?: string;
-  status?: 'open' | 'paid' | 'cancelled';
+  status?: 'open' | 'paid' | 'canceled';
   page?: number;
   limit?: number;
 }
