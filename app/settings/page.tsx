@@ -5,8 +5,8 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { useToast } from '@/components/ToastContainer';
 import { printerService, PrinterConnection } from '@/lib/printer-service';
 import { bluetoothPrinterService, BrowserCompatibility } from '@/lib/bluetooth-printer';
-import { getPrintSettings, savePrintSettings, type PrintSettings } from '@/lib/print-settings';
-import { getInstantPaymentSettings, saveInstantPaymentSettings, type InstantPaymentSettings } from '@/lib/instant-payment-settings';
+import { getPrintSettings, savePrintSettings, DEFAULT_SETTINGS as DEFAULT_PRINT_SETTINGS, type PrintSettings } from '@/lib/print-settings';
+import { getInstantPaymentSettings, saveInstantPaymentSettings, DEFAULT_SETTINGS as DEFAULT_INSTANT_PAYMENT_SETTINGS, type InstantPaymentSettings } from '@/lib/instant-payment-settings';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
@@ -25,8 +25,9 @@ export default function SettingsPage() {
   const [browserCompatibility, setBrowserCompatibility] = useState<BrowserCompatibility | null>(null);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const [printSettings, setPrintSettings] = useState<PrintSettings>(getPrintSettings());
-  const [instantPaymentSettings, setInstantPaymentSettings] = useState<InstantPaymentSettings>(getInstantPaymentSettings());
+  const [userAgent, setUserAgent] = useState<string>('Unknown');
+  const [printSettings, setPrintSettings] = useState<PrintSettings>(DEFAULT_PRINT_SETTINGS);
+  const [instantPaymentSettings, setInstantPaymentSettings] = useState<InstantPaymentSettings>(DEFAULT_INSTANT_PAYMENT_SETTINGS);
 
   const getErrorMessage = (error: unknown, fallback: string) => {
     if (error && typeof error === 'object' && 'message' in error) {
@@ -37,6 +38,8 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
+    // Client-only values (after mount — SSR renders defaults above)
+    setUserAgent(navigator.userAgent.split(' ')[0]);
     // Load print settings
     setPrintSettings(getPrintSettings());
     // Load instant payment settings
@@ -636,9 +639,7 @@ export default function SettingsPage() {
             <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                 <p>
                   <span className="font-medium">Browser:</span>{' '}
-                  {typeof navigator !== 'undefined'
-                    ? navigator.userAgent.split(' ')[0]
-                    : 'Unknown'}
+                  {userAgent}
                 </p>
                 <p>
                   <span className="font-medium">Web Bluetooth:</span>{' '}

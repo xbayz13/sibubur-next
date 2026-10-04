@@ -11,7 +11,7 @@ export interface PrintSettings {
   autoPrintCustomer: boolean;
 }
 
-const DEFAULT_SETTINGS: PrintSettings = {
+export const DEFAULT_SETTINGS: PrintSettings = {
   autoPrintKitchen: true,
   autoPrintCustomer: true,
 };

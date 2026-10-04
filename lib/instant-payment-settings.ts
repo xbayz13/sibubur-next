@@ -10,7 +10,7 @@ export interface InstantPaymentSettings {
   enabled: boolean;
 }
 
-const DEFAULT_SETTINGS: InstantPaymentSettings = {
+export const DEFAULT_SETTINGS: InstantPaymentSettings = {
   enabled: false,
 };
 
