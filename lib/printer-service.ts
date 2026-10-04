@@ -215,6 +215,13 @@ class UniversalPrinterService {
   }
 
   /**
+   * Subscribe to Bluetooth disconnect events (returns unsubscribe function)
+   */
+  onBluetoothDisconnect(callback: () => void): () => void {
+    return bluetoothPrinterService.onDisconnect(callback);
+  }
+
+  /**
    * Print formatted receipt
    */
   async printReceipt(

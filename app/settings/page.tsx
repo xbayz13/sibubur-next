@@ -57,6 +57,12 @@ export default function SettingsPage() {
       setSelectedMethod(currentConnection.method as 'bluetooth' | 'serial');
     }
 
+    // Instant disconnect update — polling below stays as safety net
+    const unsubscribeBluetooth = printerService.onBluetoothDisconnect(() => {
+      setConnection(null);
+      showToast('Printer terputus', 'error');
+    });
+
     // Poll for connection status (3s to reduce CPU usage from frequent re-renders)
     const interval = setInterval(() => {
       const status = printerService.getConnectionStatus();
@@ -87,12 +93,16 @@ export default function SettingsPage() {
 
       return () => {
         clearInterval(interval);
+        unsubscribeBluetooth();
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         window.removeEventListener('appinstalled', handleAppInstalled);
       };
     }
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      unsubscribeBluetooth();
+    };
   }, [showToast]);
 
   const handleConnect = async () => {

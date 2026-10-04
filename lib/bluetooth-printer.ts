@@ -98,6 +98,8 @@ export const ESCPOS_COMMANDS = {
 class BluetoothPrinterService {
   private printer: BluetoothPrinter | null = null;
   private isConnecting = false;
+  private connectedDevice: BluetoothDevice | null = null;
+  private disconnectCallbacks = new Set<() => void>();
 
   /**
    * Check if Web Bluetooth API is supported
@@ -184,7 +186,12 @@ class BluetoothPrinterService {
    */
   private storePrinter(id: string, name: string): void {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('bluetooth_printer', JSON.stringify({ id, name }));
+    try {
+      localStorage.setItem('bluetooth_printer', JSON.stringify({ id, name }));
+    } catch (error) {
+      // localStorage optional — private mode / quota full must not fail the connection
+      console.warn('[Bluetooth] Gagal simpan printer ke localStorage (non-kritis):', error);
+    }
   }
 
   /**
@@ -192,7 +199,11 @@ class BluetoothPrinterService {
    */
   clearStoredPrinter(): void {
     if (typeof window === 'undefined') return;
-    localStorage.removeItem('bluetooth_printer');
+    try {
+      localStorage.removeItem('bluetooth_printer');
+    } catch (error) {
+      console.warn('[Bluetooth] Gagal hapus printer dari localStorage (non-kritis):', error);
+    }
   }
 
   /**
@@ -252,15 +263,19 @@ class BluetoothPrinterService {
    * Connect to Bluetooth printer
    */
   async connect(device?: BluetoothDevice): Promise<BluetoothPrinter> {
+    console.log('[Bluetooth] Connecting...', { device: device?.name ?? '(picking device...)' });
+
     if (this.isConnecting) {
       throw new Error('Sedang menghubungkan ke printer...');
     }
 
     if (this.printer && this.printer.server.connected) {
+      console.log('[Bluetooth] Already connected — skipping reconnect', { device: this.printer.name });
       return this.printer;
     }
 
     this.isConnecting = true;
+    const connectStartMs = typeof performance !== 'undefined' ? performance.now() : Date.now();
 
     try {
       let targetDevice = device;
@@ -308,13 +323,9 @@ class BluetoothPrinterService {
       for (const uuid of serviceUUIDs) {
         try {
           service = await server.getPrimaryService(uuid);
-          if (service) {
-            console.log(`Found service: ${uuid.toString(16)}`);
-            break;
-          }
-        } catch (error) {
-          // Try next service
-          console.log(`Service ${uuid.toString(16)} not found, trying next...`, error);
+          if (service) break;
+        } catch {
+          // Sequential scan — miss is normal control flow, not logged
         }
       }
 
@@ -324,7 +335,7 @@ class BluetoothPrinterService {
           const services = await server.getPrimaryServices();
           if (services.length > 0) {
             service = services[0];
-            console.log(`Using first available service: ${service.uuid}`);
+            console.warn(`[Bluetooth] Fallback: using first available service ${service.uuid}`);
           }
         } catch (error) {
           console.error('Service Bluetooth tidak ditemukan pada printer. Pastikan printer mendukung BLE dan sudah dipasangkan.', error);
@@ -351,12 +362,10 @@ class BluetoothPrinterService {
           const characteristics = await service.getCharacteristics(uuid);
           if (characteristics.length > 0) {
             characteristic = characteristics[0];
-            console.log(`Found characteristic: ${uuid.toString(16)}`);
             break;
           }
-        } catch (error) {
-          // Try next characteristic
-          console.log(`Characteristic ${uuid.toString(16)} not found, trying next...`, error);
+        } catch {
+          // Sequential scan — miss is normal control flow, not logged
         }
       }
 
@@ -364,12 +373,13 @@ class BluetoothPrinterService {
         // Try to get all characteristics as fallback
         try {
           const characteristics = await service.getCharacteristics();
-          // Find write characteristic (has write property)
-          characteristic = characteristics.find(
-            (char) => char.properties.write || char.properties.writeWithoutResponse
-          ) || null;
+          // Prefer acknowledged write, then writeWithoutResponse
+          characteristic =
+            characteristics.find((char) => char.properties.write) ||
+            characteristics.find((char) => char.properties.writeWithoutResponse) ||
+            null;
           if (characteristic) {
-            console.log(`Using first writable characteristic: ${characteristic.uuid}`);
+            console.warn(`[Bluetooth] Fallback: using first writable characteristic ${characteristic.uuid}`);
           }
         } catch (error) {
           console.error('Karakteristik Bluetooth tidak ditemukan pada printer.', error);
@@ -381,10 +391,9 @@ class BluetoothPrinterService {
         throw new Error('Karakteristik Bluetooth tidak ditemukan pada printer. Pastikan printer mendukung BLE write.');
       }
 
-      // Store printer info
+      // Store printer info — this.printer must be set BEFORE localStorage:
+      // persistence is optional, connection state is not
       const printerName = targetDevice.name || 'Bluetooth Printer';
-      this.storePrinter(targetDevice.id, printerName);
-
       this.printer = {
         device: targetDevice,
         server,
@@ -392,10 +401,26 @@ class BluetoothPrinterService {
         name: printerName,
         id: targetDevice.id,
       };
+      this.storePrinter(targetDevice.id, printerName);
 
-      // Listen for disconnection
-      targetDevice.addEventListener('gattserverdisconnected', () => {
-        this.printer = null;
+      // Single shared handler — remove from any previous device to avoid listener leak
+      if (this.connectedDevice && this.connectedDevice !== targetDevice) {
+        this.connectedDevice.removeEventListener('gattserverdisconnected', this.handleGattDisconnected);
+      }
+      targetDevice.removeEventListener('gattserverdisconnected', this.handleGattDisconnected);
+      targetDevice.addEventListener('gattserverdisconnected', this.handleGattDisconnected);
+      this.connectedDevice = targetDevice;
+
+      const durationMs = Math.round(
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - connectStartMs
+      );
+      const writeMethod = characteristic.properties.write ? 'writeValue' : 'writeValueWithoutResponse';
+      console.log('[Bluetooth] Connected', {
+        device: printerName,
+        service: service.uuid,
+        characteristic: characteristic.uuid,
+        writeMethod,
+        durationMs,
       });
 
       return this.printer;
@@ -438,6 +463,31 @@ class BluetoothPrinterService {
   }
 
   /**
+   * Subscribe to Bluetooth disconnect events. Returns unsubscribe function.
+   * Does not fire for manual disconnect() — UI handles that itself.
+   */
+  onDisconnect(callback: () => void): () => void {
+    this.disconnectCallbacks.add(callback);
+    return () => {
+      this.disconnectCallbacks.delete(callback);
+    };
+  }
+
+  private handleGattDisconnected = (): void => {
+    const wasConnected = this.printer !== null;
+    this.printer = null;
+    // Manual disconnect already nulls this.printer — skip to avoid double toast
+    if (!wasConnected) return;
+    this.disconnectCallbacks.forEach((callback) => {
+      try {
+        callback();
+      } catch {
+        // One bad listener must not break the others
+      }
+    });
+  };
+
+  /**
    * Write data to printer
    */
   private async write(data: string | Uint8Array): Promise<void> {
@@ -456,24 +506,30 @@ class BluetoothPrinterService {
         dataToWrite = data;
       }
 
-      // Write in chunks if data is too large
-      // BLE characteristic write limit is typically 20 bytes, but some support up to 512
-      const chunkSize = this.printer.characteristic.properties.writeWithoutResponse ? 20 : 20;
-      const writeMethod = this.printer.characteristic.properties.writeWithoutResponse
-        ? 'writeValueWithoutResponse'
-        : 'writeValue';
+      const { properties } = this.printer.characteristic;
+      const useWriteWithResponse = Boolean(properties.write);
+      // With response: large chunks + GATT acknowledgment (preferred).
+      // Without response: standard 20-byte MTU chunks, fire-and-forget.
+      const chunkSize = useWriteWithResponse ? 512 : 20;
+      const interChunkDelayMs = useWriteWithResponse ? 5 : 20;
 
-      for (let i = 0; i < dataToWrite.length; i += chunkSize) {
-        const chunk = dataToWrite.slice(i, i + chunkSize);
-        
-        if (writeMethod === 'writeValueWithoutResponse') {
-          await this.printer.characteristic.writeValueWithoutResponse(chunk);
+      console.log('[Bluetooth] Write', {
+        characteristic: this.printer.characteristic.uuid,
+        writeMethod: useWriteWithResponse ? 'writeValue' : 'writeValueWithoutResponse',
+        bytes: dataToWrite.length,
+        chunkSize,
+      });
+
+      try {
+        await this.writeInChunks(dataToWrite, chunkSize, interChunkDelayMs, useWriteWithResponse);
+      } catch (writeError) {
+        // Small-MTU stacks may reject large chunks — retry with 20-byte chunks before failing
+        if (useWriteWithResponse && this.printer?.server.connected) {
+          console.warn('[Bluetooth] Fallback: write chunk besar gagal, retry dengan chunk 20 byte');
+          await this.writeInChunks(dataToWrite, 20, interChunkDelayMs, useWriteWithResponse);
         } else {
-          await this.printer.characteristic.writeValue(chunk);
+          throw writeError;
         }
-        
-        // Small delay between chunks to prevent buffer overflow
-        await new Promise((resolve) => setTimeout(resolve, 20));
       }
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'message' in error) {
@@ -485,6 +541,29 @@ class BluetoothPrinterService {
         throw new Error(`Gagal mengirim data ke printer: ${msg}`);
       }
       throw new Error('Gagal mengirim data ke printer.');
+    }
+  }
+
+  private async writeInChunks(
+    data: Uint8Array,
+    chunkSize: number,
+    delayMs: number,
+    useWriteWithResponse: boolean
+  ): Promise<void> {
+    const characteristic = this.printer?.characteristic;
+    if (!characteristic) {
+      throw new Error('Printer tidak terhubung. Silakan hubungkan terlebih dahulu.');
+    }
+    for (let i = 0; i < data.length; i += chunkSize) {
+      const chunk = data.slice(i, i + chunkSize);
+      if (useWriteWithResponse) {
+        await characteristic.writeValue(chunk);
+      } else {
+        await characteristic.writeValueWithoutResponse(chunk);
+      }
+      if (delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
   }
 
