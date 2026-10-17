@@ -97,10 +97,10 @@ export default function ProductionList({
                   {production.weather ? (
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getWeatherColor(
-                        production.weather.condition
+                        production.weather.weatherJson?.condition || production.weather.condition
                       )}`}
                     >
-                      {getWeatherLabel(production.weather.condition)}
+                      {getWeatherLabel(production.weather.weatherJson?.condition || production.weather.condition)}
                     </span>
                   ) : (
                     <span className="text-sm text-slate-500 dark:text-gray-400">-</span>
