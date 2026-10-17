@@ -12,12 +12,16 @@ import { reportsService } from '@/lib/services/reports';
 import { Production, Store, Supply } from '@/types';
 import ProductionForm from '@/components/Productions/ProductionForm';
 import ProductionList from '@/components/Productions/ProductionList';
+import ProductionEditModal from '@/components/Productions/ProductionEditModal';
 import Pagination from '@/components/ui/Pagination';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
 type ProductionRecommendation = {
   recommendedAmount: number;
+  recommendedKgBeras?: number;
   avgSalesForDayOfWeek: number;
+  targetDayOfWeek: number;
+  avgConversionRatio?: number;
   targetWeather?: {
     condition?: string;
     description?: string;
@@ -45,6 +49,7 @@ export default function ProductionsPage() {
   );
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<Production | null>(null);
+  const [editingProduction, setEditingProduction] = useState<Production | null>(null);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -183,6 +188,19 @@ export default function ProductionsPage() {
     }
   };
 
+  const handleUpdateProduction = async (
+    id: number,
+    data: { portionsSold: number; remainingPortions: number }
+  ) => {
+    try {
+      await productionsService.update(id, data);
+      showToast('Produksi berhasil diupdate', 'success');
+      await reloadProductions();
+    } catch (error: unknown) {
+      showToast(getErrorMessage(error, 'Gagal update produksi'), 'error');
+    }
+  };
+
   if (loading) {
     return (
       <ProtectedRoute>
@@ -234,6 +252,7 @@ export default function ProductionsPage() {
               <div className="text-center py-4 text-slate-600 dark:text-gray-300">Memuat rekomendasi...</div>
             ) : recommendations ? (
               <div className="space-y-4">
+                {/* Main recommendation - BIG NUMBER */}
                 <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-indigo-100 dark:border-gray-800">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-indigo-900 dark:text-indigo-100">
@@ -244,60 +263,91 @@ export default function ProductionsPage() {
                         day: 'numeric' 
                       })}
                     </h3>
-                    <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-300">
-                      {recommendations.recommendedAmount} porsi
-                    </span>
+                    {/* DUAL UNIT DISPLAY */}
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-indigo-600 dark:text-indigo-300">
+                        {recommendations.recommendedAmount} porsi
+                      </div>
+                      {recommendations.recommendedKgBeras && (
+                        <div className="text-lg text-indigo-500 dark:text-indigo-400">
+                          (≈ {recommendations.recommendedKgBeras.toFixed(1)} kg beras)
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
-                      <div className="text-slate-600 dark:text-gray-300">Rata-rata Penjualan (Hari Sama)</div>
-                      <div className="text-lg font-semibold text-slate-800 dark:text-gray-50">
-                        {recommendations.avgSalesForDayOfWeek} porsi
-                      </div>
+                  {/* Weather for target day */}
+                  {recommendations.targetWeather && (
+                    <div className="text-sm text-slate-600 dark:text-gray-300 mb-3">
+                      Cuaca besok: <span className="font-medium capitalize">{recommendations.targetWeather.condition}</span>
                     </div>
-                    {recommendations.targetWeather && (
-                      <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
-                        <div className="text-slate-600 dark:text-gray-300">Cuaca</div>
-                        <div className="text-lg font-semibold text-slate-800 dark:text-gray-50 capitalize">
-                          {recommendations.targetWeather.condition}
-                          {recommendations.targetWeather.description && (
-                            <span className="text-sm font-normal text-slate-600 dark:text-gray-300 ml-2">
-                              ({recommendations.targetWeather.description})
-                            </span>
-                          )}
+                  )}
+
+                  {/* Collapsible detail */}
+                  <details className="mt-4">
+                    <summary className="cursor-pointer text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200">
+                      Detail Perhitungan
+                    </summary>
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
+                          <div className="text-slate-600 dark:text-gray-300">Rata-rata Penjualan</div>
+                          <div className="text-lg font-semibold text-slate-800 dark:text-gray-50">
+                            {recommendations.avgSalesForDayOfWeek} porsi/hari
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-gray-400">
+                            {recommendations.targetDayOfWeek === 0 ? 'Minggu' : 
+                             recommendations.targetDayOfWeek === 1 ? 'Senin' :
+                             recommendations.targetDayOfWeek === 2 ? 'Selasa' :
+                             recommendations.targetDayOfWeek === 3 ? 'Rabu' :
+                             recommendations.targetDayOfWeek === 4 ? 'Kamis' :
+                             recommendations.targetDayOfWeek === 5 ? 'Jumat' : 'Sabtu'}
+                          </div>
+                        </div>
+
+                        {recommendations.avgConversionRatio && (
+                          <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
+                            <div className="text-slate-600 dark:text-gray-300">Conversion Ratio</div>
+                            <div className="text-lg font-semibold text-slate-800 dark:text-gray-50">
+                              {recommendations.avgConversionRatio.toFixed(1)} porsi/kg
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
+                          <div className="text-slate-600 dark:text-gray-300">Pengali Cuaca</div>
+                          <div className="text-lg font-semibold text-slate-800 dark:text-gray-50">
+                            {(recommendations.weatherMultiplier * 100).toFixed(0)}%
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
+                          <div className="text-slate-600 dark:text-gray-300">Data Historis</div>
+                          <div className="text-sm text-slate-700 dark:text-gray-100">
+                            {recommendations.historicalData.productionCount} produksi
+                            <br />
+                            {recommendations.historicalData.orderCount} pesanan
+                            <div className="text-xs text-slate-500 dark:text-gray-400 mt-1">
+                              (dari {recommendations.historicalData.lookbackDays} hari terakhir)
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
-                    <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
-                      <div className="text-slate-600 dark:text-gray-300">Data Historis</div>
-                      <div className="text-sm text-slate-700 dark:text-gray-100">
-                        {recommendations.historicalData.productionCount} produksi, {recommendations.historicalData.orderCount} pesanan
-                        <br />
-                        <span className="text-xs text-slate-500 dark:text-gray-400">
-                          (dari {recommendations.historicalData.lookbackDays} hari terakhir)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="bg-slate-50 dark:bg-gray-900/60 p-3 rounded">
-                      <div className="text-slate-600 dark:text-gray-300">Pengali Cuaca</div>
-                      <div className="text-lg font-semibold text-slate-800 dark:text-gray-50">
-                        {(recommendations.weatherMultiplier * 100).toFixed(0)}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-indigo-100 dark:border-gray-800">
-                  <h4 className="font-medium text-indigo-900 dark:text-indigo-100 mb-2">Detail Rekomendasi:</h4>
-                  <ul className="space-y-1 text-sm text-slate-700 dark:text-gray-100">
-                    {recommendations.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-indigo-500 dark:text-indigo-300 mt-1">•</span>
-                        <span>{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
+                      {/* Recommendations list */}
+                      <div className="mt-3">
+                        <h4 className="font-medium text-indigo-900 dark:text-indigo-100 mb-2">Tips:</h4>
+                        <ul className="space-y-1 text-slate-700 dark:text-gray-100">
+                          {recommendations.recommendations.map((rec: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-indigo-500 dark:text-indigo-300 mt-1">•</span>
+                              <span>{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               </div>
             ) : (
@@ -337,6 +387,7 @@ export default function ProductionsPage() {
             <ProductionList
               productions={productions}
               onDelete={handleDeleteProduction}
+              onEdit={setEditingProduction}
             />
             <Pagination
               page={page}
@@ -369,8 +420,16 @@ export default function ProductionsPage() {
              onCancel={() => setDeleteConfirm(null)}
              variant="danger"
            />
+
+           {editingProduction && (
+             <ProductionEditModal
+               production={editingProduction}
+               onSave={handleUpdateProduction}
+               onClose={() => setEditingProduction(null)}
+             />
+           )}
          </div>
        </MainLayout>
      </ProtectedRoute>
    );
- }
+}

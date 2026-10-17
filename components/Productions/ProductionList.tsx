@@ -5,11 +5,13 @@ import { Production } from '@/types';
 interface ProductionListProps {
   productions: Production[];
   onDelete: (id: number) => void;
+  onEdit: (production: Production) => void;
 }
 
 export default function ProductionList({
   productions,
   onDelete,
+  onEdit,
 }: ProductionListProps) {
   const getWeatherLabel = (condition?: string) => {
     const labels: { [key: string]: string } = {
@@ -125,6 +127,12 @@ export default function ProductionList({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    onClick={() => onEdit(production)}
+                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => onDelete(production.id)}
                     className="text-rose-600 hover:text-rose-900 dark:text-rose-300 dark:hover:text-rose-200"

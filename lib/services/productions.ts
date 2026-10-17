@@ -17,6 +17,8 @@ export interface UpdateProductionDto {
   storeId?: number;
   weatherId?: number;
   porridgeAmount?: number;
+  portionsSold?: number;
+  remainingPortions?: number;
   supplies?: Array<{
     supplyId: number;
     quantity: number;

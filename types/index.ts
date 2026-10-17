@@ -197,6 +197,7 @@ export interface Production {
   date: string;
   porridgeAmount?: number;
   productionKgBeras?: number;
+  portionsSold?: number;
   remainingPortions?: number;
   weather?: Weather;
   author?: {

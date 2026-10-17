@@ -1,16 +1,13 @@
 'use client';
 
 import { DailyReport, Transaction, Expense } from '@/types';
-import { ProductionRecommendation } from '@/lib/services/reports';
 import { useState } from 'react';
 
 interface DailyReportViewProps {
-  report: DailyReport & { recommendations?: ProductionRecommendation };
+  report: DailyReport;
 }
 
 export default function DailyReportView({ report }: DailyReportViewProps) {
-  const [showRecommendationDetail, setShowRecommendationDetail] = useState(false);
-
   const getWeatherLabel = (condition?: string) => {
     const labels: { [key: string]: string } = {
       sunny: 'Cerah',
@@ -64,108 +61,6 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
            </div>
         </div>
       </div>
-
-      {/* Recommendations */}
-      {report.recommendations && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-indigo-900 mb-3">
-            Rekomendasi Produksi untuk{' '}
-            {new Date(
-              new Date(report.date).getTime() + 24 * 60 * 60 * 1000
-            ).toLocaleDateString('id-ID')}
-          </h3>
-          <div className="space-y-2">
-            {report.recommendations.recommendations.map((recommendation, index) => (
-              <p key={`${index}-${recommendation}`} className="text-sm text-indigo-800">
-                • {recommendation}
-              </p>
-            ))}
-          </div>
-          <div className="mt-4 pt-4 border-t border-indigo-200">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-indigo-700">Rekomendasi Produksi:</span>
-              <span className="text-xl font-bold text-indigo-900">
-                {report.recommendations.recommendedAmount} porsi
-                {report.recommendations.recommendedKgBeras != null && (
-                  <span className="text-sm font-normal text-indigo-600 ml-2">
-                    (≈ {Number(report.recommendations.recommendedKgBeras).toFixed(1)} kg beras)
-                  </span>
-                )}
-              </span>
-            </div>
-            {report.recommendations.avgConversionRatio != null && (
-              <div className="flex justify-between items-center mt-2">
-                <span className="text-sm text-indigo-700">Conversion ratio:</span>
-                <span className="text-sm font-medium text-indigo-800">
-                  {Number(report.recommendations.avgConversionRatio).toFixed(1)} porsi/kg
-                  {report.recommendations.historicalData?.lookbackDays != null && (
-                    <span className="text-indigo-500 ml-1">
-                      ({report.recommendations.historicalData.lookbackDays} hari)
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Collapsible Detail Perhitungan */}
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={() => setShowRecommendationDetail((v) => !v)}
-              className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
-            >
-              <span className={showRecommendationDetail ? 'rotate-90' : ''} style={{ display: 'inline-block', transition: 'transform 0.2s' }}>▶</span>
-              Detail Perhitungan
-            </button>
-            {showRecommendationDetail && (
-              <div className="mt-3 p-4 bg-white border border-indigo-100 rounded-lg text-sm space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Rata-rata penjualan hari ini:</span>
-                  <span className="font-medium text-slate-900">{report.recommendations.avgSalesForDayOfWeek} porsi</span>
-                </div>
-                {report.recommendations.avgRatio != null && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">Rasio produksi/penjualan:</span>
-                    <span className="font-medium text-slate-900">{Number(report.recommendations.avgRatio).toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Multiplier cuaca:</span>
-                  <span className="font-medium text-slate-900">
-                    {Number(report.recommendations.weatherMultiplier).toFixed(2)}
-                    {report.recommendations.targetWeather?.condition && (
-                      <span className="text-slate-500 ml-1">
-                        ({getWeatherLabel(report.recommendations.targetWeather.condition)})
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Buffer safety stock:</span>
-                  <span className="font-medium text-slate-900">10%</span>
-                </div>
-                <div className="border-t border-slate-200 pt-2 mt-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-600">Formula:</span>
-                    <span className="font-medium text-slate-900 text-xs">
-                      {report.recommendations.avgSalesForDayOfWeek} × {report.recommendations.avgRatio != null ? Number(report.recommendations.avgRatio).toFixed(2) : '?'} × {Number(report.recommendations.weatherMultiplier).toFixed(2)} × 1.1 = {report.recommendations.recommendedAmount} porsi
-                    </span>
-                  </div>
-                  {report.recommendations.recommendedKgBeras != null && report.recommendations.avgConversionRatio != null && (
-                    <div className="flex justify-between mt-1">
-                      <span className="text-slate-600">Konversi:</span>
-                      <span className="font-medium text-slate-900 text-xs">
-                        {report.recommendations.recommendedAmount} ÷ {Number(report.recommendations.avgConversionRatio).toFixed(1)} = {Number(report.recommendations.recommendedKgBeras).toFixed(1)} kg beras
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Production Information */}
       {report.production && (
