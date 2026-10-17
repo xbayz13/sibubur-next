@@ -3,9 +3,12 @@ import { DailyReport, MonthlyReport, YearlyReport } from '@/types';
 
 export interface ProductionRecommendation {
   recommendedAmount: number;
+  recommendedKgBeras?: number;
   baseRecommendation: number;
   weatherMultiplier: number;
   avgSalesForDayOfWeek: number | string;
+  avgRatio?: number;
+  avgConversionRatio?: number;
   targetDayOfWeek: number;
   targetWeather?: {
     id: number;
