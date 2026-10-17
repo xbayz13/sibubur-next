@@ -60,7 +60,7 @@ export default function ProductionList({
                 Cuaca
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-gray-300 uppercase tracking-wider">
-                Persediaan
+                Sisa Terbuang
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-gray-300 uppercase tracking-wider">
                 Dicatat Oleh
