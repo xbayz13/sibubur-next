@@ -196,6 +196,8 @@ export interface Production {
   store: Store;
   date: string;
   porridgeAmount?: number;
+  productionKgBeras?: number;
+  remainingPortions?: number;
   weather?: Weather;
   author?: {
     id: number;

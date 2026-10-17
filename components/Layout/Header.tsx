@@ -156,7 +156,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 md:border-b">
+    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 border-b shadow-sm">
       <div className="flex flex-col items-center justify-between grow md:flex-row md:px-6">
         <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 md:justify-normal md:border-b-0 md:px-0 md:py-4">
           <button

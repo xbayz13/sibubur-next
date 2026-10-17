@@ -176,9 +176,14 @@ export default function DailyReportView({ report }: DailyReportViewProps) {
               <div className="text-sm text-slate-600">Jumlah Bubur</div>
               <div className="text-lg font-semibold text-slate-900">
                 {report.production.porridgeAmount
-                  ? `${Number(report.production.porridgeAmount).toLocaleString('id-ID')} kg`
+                  ? `${Number(report.production.porridgeAmount).toLocaleString('id-ID')} porsi`
                   : '-'}
               </div>
+              {report.production.productionKgBeras != null && (
+                <div className="text-sm text-slate-500 mt-1">
+                  ({Number(report.production.productionKgBeras).toFixed(1)} kg beras)
+                </div>
+              )}
             </div>
             {report.production.weather && (
               <div>
