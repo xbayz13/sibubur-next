@@ -88,8 +88,8 @@ export default function ProductionList({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-slate-900 dark:text-gray-100">
-                    {production.porridgeAmount
-                      ? `${Number(production.porridgeAmount).toLocaleString('id-ID')} kg`
+                    {production.productionKgBeras
+                      ? `${Number(production.productionKgBeras).toFixed(1)} kg`
                       : '-'}
                   </div>
                 </td>
@@ -108,7 +108,9 @@ export default function ProductionList({
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-slate-900 dark:text-gray-100">
-                    {production.productionSupplies && production.productionSupplies.length > 0 ? (
+                    {production.remainingPortions != null ? (
+                      <span>{production.remainingPortions} porsi</span>
+                    ) : production.productionSupplies && production.productionSupplies.length > 0 ? (
                       <div className="space-y-1">
                         {production.productionSupplies.map((ps, idx) => (
                           <div key={idx} className="text-xs">
@@ -117,8 +119,8 @@ export default function ProductionList({
                         ))}
                       </div>
                     ) : (
-                       <span className="text-slate-500 dark:text-gray-400">-</span>
-                     )}
+                      <span className="text-slate-500 dark:text-gray-400">0 porsi</span>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
