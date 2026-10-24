@@ -22,6 +22,7 @@ import { isInstantPaymentEnabled } from '@/lib/instant-payment-settings';
 import SearchAutocomplete from '@/components/ui/SearchAutocomplete';
 import { useCartPersistence } from '@/hooks/useCartPersistence';
 import CartFloatingButton from '@/components/Cashier/CartFloatingButton';
+import PaymentModal from '@/components/Orders/PaymentModal';
 
 interface CartItem {
   productId: number;

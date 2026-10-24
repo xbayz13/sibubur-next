@@ -1,146 +1,201 @@
 'use client';
 
 import { useState } from 'react';
-import { Order, PaymentMethod } from '@/types';
+import { PaymentMethod } from '@/types';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import Label from '@/components/ui/Label';
+
+interface Payment {
+  methodId: number;
+  method: string;
+  amount: number;
+  change: number;
+}
 
 interface PaymentModalProps {
-  order: Order;
-  paymentMethods: PaymentMethod[];
-  onProcess: (paymentMethodId: number, amount: number, change: number) => void;
+  isOpen: boolean;
   onClose: () => void;
+  total: number;
+  paymentMethods: PaymentMethod[];
+  onComplete: (payment: Payment) => void;
+  loading?: boolean;
 }
 
 export default function PaymentModal({
-  order,
-  paymentMethods,
-  onProcess,
+  isOpen,
   onClose,
+  total,
+  paymentMethods,
+  onComplete,
+  loading = false,
 }: PaymentModalProps) {
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<number>(
-    paymentMethods[0]?.id || 0
+  const [step, setStep] = useState<'method' | 'confirm'>('method');
+  const [selectedMethod, setSelectedMethod] = useState<number | null>(null);
+  const [amountReceived, setAmountReceived] = useState<number | null>(null);
+
+  const selectedPaymentMethod = paymentMethods.find(m => m.id === selectedMethod);
+  const change = amountReceived ? amountReceived - total : 0;
+  const canProceed = selectedMethod !== null && (
+    selectedPaymentMethod?.name.toLowerCase().includes('transfer') || amountReceived >= total
   );
-  const [amountPaid, setAmountPaid] = useState<string>('');
-  const [error, setError] = useState('');
 
-  const totalAmount = Number(order.totalAmount);
-  const paidAmount = parseFloat(amountPaid) || 0;
-  const change = paidAmount - totalAmount;
+  const handleNext = () => {
+    if (!canProceed) return;
+    setStep('confirm');
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfirm = async () => {
+    if (!selectedPaymentMethod) return;
     
-    if (!selectedPaymentMethod) {
-      setError('Pilih metode pembayaran');
-      return;
-    }
+    const payment: Payment = {
+      methodId: selectedPaymentMethod.id,
+      method: selectedPaymentMethod.name,
+      amount: amountReceived || total,
+      change: change > 0 ? change : 0,
+    };
 
-    if (paidAmount < totalAmount) {
-      setError('Jumlah pembayaran kurang');
-      return;
-    }
-
-    onProcess(selectedPaymentMethod, paidAmount, Math.max(0, change));
+    onComplete(payment);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="bg-white dark:bg-gray-900 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-900 z-10">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+            {step === 'method' ? 'Pilih Metode Pembayaran' : 'Konfirmasi Pembayaran'}
+          </h2>
+          <button 
+            onClick={onClose} 
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Content */}
         <div className="p-6">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">Proses Pembayaran</h2>
-
-          <div className="space-y-4 mb-6">
+          {step === 'method' ? (
+            // Payment Method Selection
             <div>
-              <div className="text-sm text-slate-600">Nomor Order</div>
-              <div className="text-lg font-semibold">{order.orderNumber}</div>
-            </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Total: <span className="text-2xl font-bold text-brand-500">
+                  Rp {total.toLocaleString('id-ID')}
+                </span>
+              </p>
 
-            <div>
-              <div className="text-sm text-slate-600">Total Tagihan</div>
-              <div className="text-2xl font-bold text-blue-600">
-                Rp {totalAmount.toLocaleString('id-ID')}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Metode Pembayaran *
-              </label>
-              <select
-                value={selectedPaymentMethod}
-                onChange={(e) => {
-                  setSelectedPaymentMethod(Number(e.target.value));
-                  setError('');
-                }}
-                className="w-full border border-slate-300 rounded-lg px-4 py-2"
-                required
-              >
-                <option value={0}>Pilih Metode Pembayaran</option>
-                {paymentMethods.map((method) => (
-                  <option key={method.id} value={method.id}>
-                    {method.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Jumlah Bayar *
-              </label>
-              <input
-                type="number"
-                value={amountPaid}
-                onChange={(e) => {
-                  setAmountPaid(e.target.value);
-                  setError('');
-                }}
-                min={totalAmount}
-                step="1000"
-                className="w-full border border-slate-300 rounded-lg px-4 py-2 text-lg"
-                placeholder="0"
-                required
-              />
-              {paidAmount > 0 && (
-                <div className="mt-2">
-                  {change >= 0 ? (
-                    <div className="text-emerald-600 font-semibold">
-                      Kembalian: Rp {change.toLocaleString('id-ID')}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                {paymentMethods.map(method => (
+                  <button
+                    key={method.id}
+                    onClick={() => setSelectedMethod(method.id)}
+                    className={`p-6 border-2 rounded-lg transition ${
+                      selectedMethod === method.id
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-3xl mb-2">
+                        {method.name.toLowerCase().includes('cash') && '💵'}
+                        {method.name.toLowerCase().includes('transfer') && '🏦'}
+                        {method.name.toLowerCase().includes('kartu') && '💳'}
+                        {!method.name.toLowerCase().includes('cash') && !method.name.toLowerCase().includes('transfer') && !method.name.toLowerCase().includes('kartu') && '💰'}
+                      </div>
+                      <p className="font-semibold text-gray-800 dark:text-white">{method.name}</p>
                     </div>
-                  ) : (
-                    <div className="text-rose-600">
-                      Kurang: Rp {Math.abs(change).toLocaleString('id-ID')}
+                  </button>
+                ))}
+              </div>
+
+              {/* Amount input for cash */}
+              {selectedPaymentMethod?.name.toLowerCase().includes('cash') && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <Label htmlFor="amount">Jumlah Diterima</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="0"
+                    value={amountReceived || ''}
+                    onChange={(e) => setAmountReceived(parseFloat(e.target.value) || null)}
+                    className="mb-4"
+                    autoFocus
+                  />
+                  {amountReceived !== null && (
+                    <div className="text-lg font-semibold text-gray-800 dark:text-white">
+                      Kembalian: <span className="text-success-500">
+                        Rp {change.toLocaleString('id-ID')}
+                      </span>
                     </div>
                   )}
                 </div>
               )}
             </div>
-
-            {error && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-2 rounded">
-                {error}
+          ) : (
+            // Confirmation
+            <div>
+              <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg space-y-4 mb-6">
+                <div className="flex justify-between">
+                  <span className="text-gray-700 dark:text-gray-300">Metode:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{selectedPaymentMethod?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700 dark:text-gray-300">Total:</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">
+                    Rp {total.toLocaleString('id-ID')}
+                  </span>
+                </div>
+                {amountReceived && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-700 dark:text-gray-300">Diterima:</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        Rp {amountReceived.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between text-lg">
+                      <span className="text-gray-700 dark:text-gray-300">Kembalian:</span>
+                      <span className="font-bold text-success-500">
+                        Rp {change.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50"
-            >
-              Batal
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-            >
-              Proses Pembayaran
-            </button>
-          </div>
+              <p className="text-gray-600 dark:text-gray-400 text-center">
+                Klik &quot;Selesaikan&quot; untuk menyelesaikan transaksi
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-gray-200 dark:border-gray-800 flex gap-2 justify-end bg-white dark:bg-gray-900 sticky bottom-0">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              if (step === 'confirm') {
+                setStep('method');
+              } else {
+                onClose();
+              }
+            }}
+          >
+            {step === 'confirm' ? 'Kembali' : 'Batal'}
+          </Button>
+          
+          <Button
+            disabled={!canProceed}
+            loading={loading}
+            onClick={step === 'method' ? handleNext : handleConfirm}
+          >
+            {step === 'method' ? 'Lanjutkan' : 'Selesaikan'}
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
-
