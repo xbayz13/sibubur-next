@@ -29,7 +29,7 @@ export default function Select({
   defaultValue,
   ...props
 }: SelectProps) {
-  let selectClasses = `h-12 w-full appearance-none rounded-lg border bg-transparent px-4 py-3.5 pr-11 text-base shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
+  let selectClasses = `h-12 w-full appearance-none rounded-lg border bg-transparent px-4 py-3 pr-11 text-base shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
   if (error) {
     selectClasses += ` border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:text-error-400 dark:border-error-500 dark:focus:border-error-800`;
@@ -72,7 +72,7 @@ export default function Select({
       </div>
       {hint && (
         <p
-          className={`mt-1.5 text-xs ${
+          className={`mt-2 text-xs ${
             error
               ? 'text-error-500'
               : success
