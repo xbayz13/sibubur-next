@@ -20,6 +20,8 @@ import Link from 'next/link';
 import { isAutoPrintKitchenEnabled, isAutoPrintCustomerEnabled, shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
 import { isInstantPaymentEnabled } from '@/lib/instant-payment-settings';
 import SearchAutocomplete from '@/components/ui/SearchAutocomplete';
+import { useCartPersistence } from '@/hooks/useCartPersistence';
+import CartFloatingButton from '@/components/Cashier/CartFloatingButton';
 
 interface CartItem {
   productId: number;
@@ -57,6 +59,9 @@ export default function CashierPage() {
   const [loading, setLoading] = useState(true);
   const [showCart, setShowCart] = useState(false); // Mobile cart visibility
   const storeSetRef = useRef(false); // Track if store has been set
+
+  // Persist cart to localStorage automatically
+  useCartPersistence(cart, setCart, customerName, setCustomerName);
 
   // Load products, stores, and payment methods on mount (these don't depend on selectedStoreId)
   const getErrorMessage = (error: unknown, fallback: string) => {
@@ -817,12 +822,16 @@ export default function CashierPage() {
                   transaction={receiptTransaction}
                   autoPrint={receiptType === 'kitchen'}
                 />
-              )
-            )}
-          </div>
-        </div>
-      </div>
-    </ProtectedRoute>
+               )
+             )}
+             <CartFloatingButton 
+               cartCount={cart.length} 
+               onClick={() => setShowCart(true)} 
+             />
+           </div>
+         </div>
+       </div>
+     </ProtectedRoute>
   );
 }
 
