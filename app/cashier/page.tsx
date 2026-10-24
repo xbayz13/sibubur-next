@@ -19,6 +19,7 @@ import ReceiptPrint from '@/components/Orders/ReceiptPrint';
 import Link from 'next/link';
 import { isAutoPrintKitchenEnabled, isAutoPrintCustomerEnabled, shouldShowKitchenPrintButton, shouldShowCustomerPrintButton } from '@/lib/print-settings';
 import { isInstantPaymentEnabled } from '@/lib/instant-payment-settings';
+import SearchAutocomplete from '@/components/ui/SearchAutocomplete';
 
 interface CartItem {
   productId: number;
@@ -51,7 +52,6 @@ export default function CashierPage() {
   const [receiptTransaction, setReceiptTransaction] = useState<Transaction | undefined>(
     undefined
   );
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null); // Store the created order
   const [loading, setLoading] = useState(true);
@@ -169,18 +169,8 @@ export default function CashierPage() {
       filtered = filtered.filter((p) => p.category?.id === Number(selectedCategory));
     }
 
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.category?.name.toLowerCase().includes(query)
-      );
-    }
-
     return filtered;
-  }, [products, selectedCategory, searchQuery]);
+  }, [products, selectedCategory]);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -512,12 +502,23 @@ export default function CashierPage() {
               {/* Search and Category Filter */}
               <div className="mb-4 sm:mb-6 space-y-3 sm:space-y-4">
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Cari produk..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-slate-300 rounded-lg text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base sm:text-lg"
+                  <SearchAutocomplete
+                    items={products}
+                    searchKeys={['name', 'category.name']}
+                    onSelect={(product) => addToCart(product)}
+                    placeholder="Cari produk... (fuzzy search)"
+                    recentItemsKey="cashier_recent_products"
+                    maxRecentItems={8}
+                    renderItem={(product) => (
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {product.name}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {product.category?.name} • Rp {Number(product.price).toLocaleString('id-ID')}
+                        </div>
+                      </div>
+                    )}
                   />
                   {/* Mobile Cart Toggle Button */}
                   <button
