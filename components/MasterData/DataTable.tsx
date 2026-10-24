@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, useRef, useState, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import BulkActionsBar from '@/components/ui/BulkActionsBar';
 
 interface Column<T> {
   header: string;
@@ -15,6 +16,7 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
+  onBulkDelete?: (items: T[]) => Promise<void>;
   keyExtractor: (item: T) => string | number;
   /** Enable virtualization for large datasets (default: true when data > 30) */
   virtualized?: boolean;
@@ -33,6 +35,7 @@ export default function DataTable<T extends object>({
   columns,
   onEdit,
   onDelete,
+  onBulkDelete,
   keyExtractor,
   virtualized = true,
   maxHeight = DEFAULT_MAX_HEIGHT,
@@ -40,6 +43,67 @@ export default function DataTable<T extends object>({
 }: DataTableProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ item: T; isOpen: boolean } | null>(null);
+  const [selectedRows, setSelectedRows] = useState<Set<string | number>>(new Set());
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const handleSelectAll = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedRows(new Set(data.map(item => keyExtractor(item))));
+    } else {
+      setSelectedRows(new Set());
+    }
+  }, [data, keyExtractor]);
+
+  const handleSelectRow = useCallback((id: string | number) => {
+    const newSet = new Set(selectedRows);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedRows(newSet);
+  }, [selectedRows]);
+
+  const handleBulkExport = useCallback(() => {
+    const selectedData = data.filter(item => selectedRows.has(keyExtractor(item)));
+    
+    if (selectedData.length === 0) return;
+    
+    // Convert to CSV
+    const headers = Object.keys(selectedData[0]);
+    const csv = [
+      headers.join(','),
+      ...selectedData.map(row =>
+        headers.map(header => JSON.stringify((row as Record<string, unknown>)[header])).join(',')
+      )
+    ].join('\n');
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, [data, selectedRows, keyExtractor]);
+
+  const handleConfirmBulkDelete = useCallback(async () => {
+    if (!onBulkDelete) return;
+    
+    const selectedData = data.filter(item => selectedRows.has(keyExtractor(item)));
+    
+    setIsBulkDeleting(true);
+    try {
+      await onBulkDelete(selectedData);
+      setSelectedRows(new Set());
+      setShowBulkDeleteConfirm(false);
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  }, [data, selectedRows, keyExtractor, onBulkDelete]);
 
   const shouldVirtualize =
     virtualized && data.length > virtualizationThreshold;
@@ -65,6 +129,16 @@ export default function DataTable<T extends object>({
 
   const renderRow = (item: T) => (
     <>
+      {onBulkDelete && (
+        <td className="px-4 sm:px-6 py-3 sm:py-4 w-12">
+          <input
+            type="checkbox"
+            checked={selectedRows.has(keyExtractor(item))}
+            onChange={() => handleSelectRow(keyExtractor(item))}
+            className="cursor-pointer"
+          />
+        </td>
+      )}
       {columns.map((column, idx) => (
         <td key={idx} className="px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900">
           <div className="whitespace-nowrap sm:whitespace-normal">
@@ -113,6 +187,16 @@ export default function DataTable<T extends object>({
             <table className="min-w-full divide-y divide-slate-200 border-collapse">
               <thead className="bg-slate-50 sticky top-0 z-10">
                 <tr>
+                  {onBulkDelete && (
+                    <th className="px-4 sm:px-6 py-3 w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.size === data.length && data.length > 0}
+                        onChange={handleSelectAll}
+                        className="cursor-pointer"
+                      />
+                    </th>
+                  )}
                   {columns.map((column, idx) => (
                     <th
                       key={idx}
@@ -165,18 +249,35 @@ export default function DataTable<T extends object>({
           onCancel={() => setDeleteConfirm(null)}
           variant="danger"
         />
+        <BulkActionsBar
+          selectedCount={selectedRows.size}
+          onExport={handleBulkExport}
+          onBulkDelete={onBulkDelete ? () => {} : undefined}
+          onConfirmBulkDelete={handleConfirmBulkDelete}
+          isDeleting={isBulkDeleting}
+        />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden pb-20">
       <div className="overflow-x-auto -mx-4 sm:mx-0">
         <div className="inline-block min-w-full align-middle">
           <div className="overflow-hidden">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr>
+                  {onBulkDelete && (
+                    <th className="px-4 sm:px-6 py-3 w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.size === data.length && data.length > 0}
+                        onChange={handleSelectAll}
+                        className="cursor-pointer"
+                      />
+                    </th>
+                  )}
                   {columns.map((column, idx) => (
                     <th
                       key={idx}
@@ -218,6 +319,13 @@ export default function DataTable<T extends object>({
            }}
            onCancel={() => setDeleteConfirm(null)}
            variant="danger"
+         />
+         <BulkActionsBar
+           selectedCount={selectedRows.size}
+           onExport={handleBulkExport}
+           onBulkDelete={onBulkDelete ? () => {} : undefined}
+           onConfirmBulkDelete={handleConfirmBulkDelete}
+           isDeleting={isBulkDeleting}
          />
        </div>
      </div>
