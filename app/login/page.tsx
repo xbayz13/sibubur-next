@@ -93,7 +93,7 @@ export default function LoginPage() {
                           setCredentials({ ...credentials, username: e.target.value })
                         }
                         required
-                        error={!!error}
+                        error={error || undefined}
                       />
                     </div>
 
@@ -111,7 +111,7 @@ export default function LoginPage() {
                             setCredentials({ ...credentials, password: e.target.value })
                           }
                           required
-                          error={!!error}
+                          error={error || undefined}
                           className="pr-12"
                         />
                         <button

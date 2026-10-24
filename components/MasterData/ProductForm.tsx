@@ -8,6 +8,7 @@ import Select from '@/components/form/Select';
 import Textarea from '@/components/form/Textarea';
 import Label from '@/components/form/Label';
 import Button from '@/components/ui/Button';
+import { validateRequired, validatePrice } from '@/lib/validators';
 
 interface ProductFormProps {
   product?: Product | null;
@@ -34,10 +35,16 @@ export default function ProductForm({
     product?.category?.id || undefined
   );
 
+  // Derive form validity from state - no setState in effect needed
+  const nameValid = validateRequired(name) === null;
+  const priceValid = validatePrice(price) === null;
+  const isFormValid = nameValid && priceValid;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !price) {
-      alert('Nama dan harga wajib diisi');
+    
+    // Double-check validation
+    if (!isFormValid) {
       return;
     }
 
@@ -58,16 +65,17 @@ export default function ProductForm({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <Label htmlFor="name">
-              Nama Produk <span className="text-error-500">*</span>
+            <Label htmlFor="name" required>
+              Nama Produk
             </Label>
             <Input
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
+              validator={validateRequired}
               placeholder="Contoh: Bubur Ayam"
+              hint="Nama produk wajib diisi"
             />
           </div>
 
@@ -86,18 +94,19 @@ export default function ProductForm({
           </div>
 
           <div>
-            <Label htmlFor="price">
-              Harga <span className="text-error-500">*</span>
+            <Label htmlFor="price" required>
+              Harga
             </Label>
             <Input
               id="price"
               type="number"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
+              validator={validatePrice}
               min="0"
               step="100"
-              required
               placeholder="0"
+              hint="Harga dalam Rupiah"
             />
           </div>
 
@@ -121,7 +130,11 @@ export default function ProductForm({
             >
               Batal
             </Button>
-            <Button type="submit" className="flex-1">
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={!isFormValid}
+            >
               {product ? 'Perbarui' : 'Simpan'}
             </Button>
           </div>
