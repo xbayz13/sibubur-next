@@ -9,6 +9,7 @@ import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useToast } from '@/components/ToastContainer';
 import Card from '@/components/ui/Card';
+import Skeleton from '@/components/ui/Skeleton';
 import { reportsService } from '@/lib/services/reports';
 import { suppliesService } from '@/lib/services/supplies';
 import { bmkgService, BMKGWeatherForecast } from '@/lib/services/bmkg';
@@ -147,8 +148,39 @@ export default function Home() {
     return (
       <ProtectedRoute>
         <MainLayout>
-          <div className="flex items-center justify-center h-64">
-            <div className="text-gray-500 dark:text-gray-400">Memuat dashboard...</div>
+          <div className="space-y-4 sm:space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-1">Dashboard</h1>
+              <p className="text-base text-gray-500 dark:text-gray-400">Ringkasan operasional hari ini</p>
+            </div>
+
+            {/* Skeleton Stats Cards */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-4">Statistik Utama</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {[1, 2, 3, 4].map(i => (
+                  <Card key={i}>
+                    <div className="flex items-center justify-between p-6">
+                      <div className="flex-1 space-y-3">
+                        <Skeleton variant="text" width="70%" height="16px" />
+                        <Skeleton variant="text" width="50%" height="32px" />
+                      </div>
+                      <Skeleton variant="circular" width="48px" height="48px" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Skeleton Chart */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-4">Grafik Penjualan 7 Hari Terakhir</h2>
+              <Card>
+                <div className="p-6">
+                  <Skeleton variant="rectangular" height="256px" className="w-full" />
+                </div>
+              </Card>
+            </div>
           </div>
         </MainLayout>
       </ProtectedRoute>

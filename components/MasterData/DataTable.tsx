@@ -4,6 +4,7 @@ import { ReactNode, useRef, useState, useCallback } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import BulkActionsBar from '@/components/ui/BulkActionsBar';
+import Skeleton from '@/components/ui/Skeleton';
 
 interface Column<T> {
   header: string;
@@ -18,6 +19,7 @@ interface DataTableProps<T> {
   onDelete?: (item: T) => void;
   onBulkDelete?: (items: T[]) => Promise<void>;
   keyExtractor: (item: T) => string | number;
+  loading?: boolean;
   /** Enable virtualization for large datasets (default: true when data > 30) */
   virtualized?: boolean;
   /** Max height of scroll container when virtualized (default: 400) */
@@ -37,6 +39,7 @@ export default function DataTable<T extends object>({
   onDelete,
   onBulkDelete,
   keyExtractor,
+  loading = false,
   virtualized = true,
   maxHeight = DEFAULT_MAX_HEIGHT,
   virtualizationThreshold = DEFAULT_VIRTUALIZATION_THRESHOLD,
@@ -296,11 +299,38 @@ export default function DataTable<T extends object>({
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
-                {data.map((item) => (
-                  <tr key={keyExtractor(item)} className="hover:bg-slate-50">
-                    {renderRow(item)}
-                  </tr>
-                ))}
+                {loading ? (
+                  // Skeleton loading rows
+                  [...Array(5)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      {onBulkDelete && (
+                        <td className="px-4 sm:px-6 py-3 sm:py-4 w-12">
+                          <Skeleton variant="text" width="20px" />
+                        </td>
+                      )}
+                      {columns.map((_, colIdx) => (
+                        <td key={colIdx} className="px-4 sm:px-6 py-3 sm:py-4">
+                          <Skeleton variant="text" width={colIdx === 0 ? "80%" : "60%"} />
+                        </td>
+                      ))}
+                      {(onEdit || onDelete) && (
+                        <td className="px-4 sm:px-6 py-3 sm:py-4">
+                          <div className="flex gap-2">
+                            {onEdit && <Skeleton variant="rectangular" width="40px" height="24px" />}
+                            {onDelete && <Skeleton variant="rectangular" width="50px" height="24px" />}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                ) : (
+                  // Normal data rows
+                  data.map((item) => (
+                    <tr key={keyExtractor(item)} className="hover:bg-slate-50">
+                      {renderRow(item)}
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
            </div>
