@@ -346,11 +346,56 @@ form > div {
   background-color: #344054;
 }
 
-/* Improve touch targets on mobile/tablet */
+/* Improve touch targets on mobile/tablet - 44×44px minimum per WCAG/Material Design */
 @media (max-width: 1024px) {
-  button, a {
+  /* Buttons & links */
+  button,
+  a[role="button"],
+  [role="button"] {
     min-height: 44px;
     min-width: 44px;
+  }
+
+  /* Checkboxes & radio buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Icon-only buttons */
+  button:has(> svg:only-child),
+  a:has(> svg:only-child) {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Table actions */
+  td button,
+  td a {
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  /* Form inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  /* Spacing between targets - minimum 8px gap */
+  button + button,
+  a + button,
+  button + a {
+    margin-left: 8px;
   }
 }
 
