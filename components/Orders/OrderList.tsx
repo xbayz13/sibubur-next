@@ -56,53 +56,53 @@ export default function OrderList({
         <div className="inline-block min-w-full align-middle">
           <div className="overflow-hidden">
             <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Nomor Order
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Pelanggan
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
-                    Toko
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
-                    Tanggal
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
+               <thead className="bg-slate-50">
+                 <tr>
+                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                     Nomor Order
+                   </th>
+                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                     Pelanggan
+                   </th>
+                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">
+                     Toko
+                   </th>
+                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                     Total
+                   </th>
+                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                     Status
+                   </th>
+                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider hidden lg:table-cell">
+                     Tanggal
+                   </th>
+                   <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                     Aksi
+                   </th>
+                 </tr>
+               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
                 {orders.map((order) => (
                   <tr key={order.id} className="hover:bg-slate-50">
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="text-sm font-medium text-slate-900">
                         {order.orderNumber}
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="text-sm text-slate-900">
                         {order.customerName || '-'}
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 hidden md:table-cell">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 hidden md:table-cell">
                       <div className="text-sm text-slate-900">{order.store.name}</div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="text-sm font-medium text-slate-900">
                         Rp {Number(order.totalAmount).toLocaleString('id-ID')}
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
                           order.status
@@ -111,11 +111,11 @@ export default function OrderList({
                         {getStatusLabel(order.status)}
                       </span>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden lg:table-cell">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-slate-500 hidden lg:table-cell">
                       {new Date(order.createdAt).toLocaleString('id-ID')}
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium">
-                      <div className="flex flex-wrap gap-1 sm:gap-2">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium">
+                      <div className="flex flex-wrap gap-2 sm:gap-2">
                         {order.status === 'open' && (
                           <>
                             <button
