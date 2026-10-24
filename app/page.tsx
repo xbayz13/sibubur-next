@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import Image from 'next/image';
 import useSWR from 'swr';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
@@ -166,6 +167,52 @@ export default function Home() {
            {/* Ringkasan Hari Ini */}
            <div>
              <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90 mb-4">Ringkasan Hari Ini</h2>
+           </div>
+
+           {/* Quick Actions */}
+           <div className="mb-8">
+             <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90 mb-4">Akses Cepat</h2>
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+               {/* Kasir */}
+               <Link href="/cashier">
+                 <Card className="cursor-pointer hover:shadow-theme-md hover:scale-105 transition-all h-24 flex items-center justify-center">
+                   <div className="flex flex-col items-center gap-2">
+                     <span className="text-2xl">💳</span>
+                     <span className="text-sm font-medium text-center text-gray-800 dark:text-white/90">Kasir</span>
+                   </div>
+                 </Card>
+               </Link>
+
+               {/* Laporan */}
+               <Link href="/reports">
+                 <Card className="cursor-pointer hover:shadow-theme-md hover:scale-105 transition-all h-24 flex items-center justify-center">
+                   <div className="flex flex-col items-center gap-2">
+                     <span className="text-2xl">📊</span>
+                     <span className="text-sm font-medium text-center text-gray-800 dark:text-white/90">Laporan</span>
+                   </div>
+                 </Card>
+               </Link>
+
+               {/* Cek Stok */}
+               <Link href="/supplies">
+                 <Card className="cursor-pointer hover:shadow-theme-md hover:scale-105 transition-all h-24 flex items-center justify-center">
+                   <div className="flex flex-col items-center gap-2">
+                     <span className="text-2xl">📦</span>
+                     <span className="text-sm font-medium text-center text-gray-800 dark:text-white/90">Cek Stok</span>
+                   </div>
+                 </Card>
+               </Link>
+
+               {/* Produksi */}
+               <Link href="/productions">
+                 <Card className="cursor-pointer hover:shadow-theme-md hover:scale-105 transition-all h-24 flex items-center justify-center">
+                   <div className="flex flex-col items-center gap-2">
+                     <span className="text-2xl">🍲</span>
+                     <span className="text-sm font-medium text-center text-gray-800 dark:text-white/90">Produksi</span>
+                   </div>
+                 </Card>
+               </Link>
+             </div>
            </div>
 
            {/* Weather Section */}
