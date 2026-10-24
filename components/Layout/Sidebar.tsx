@@ -192,11 +192,11 @@ export default function Sidebar() {
         {Object.entries(sections).map(([sectionName, items]) => (
           <div key={sectionName}>
             {(isExpanded || isHovered || isMobileOpen) && (
-              <div className="px-3 mb-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
+              <div className="px-4 mb-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
                 {sectionName}
               </div>
             )}
-            <ul className="flex flex-col gap-1">
+            <ul className="flex flex-col gap-2">
               {items.map((nav) => {
                 const globalIndex = navItems.indexOf(nav);
                 return (
@@ -239,7 +239,7 @@ export default function Sidebar() {
                               height: resolvedOpenSubmenu === `${globalIndex}` ? `${subMenuHeight[`${globalIndex}`]}px` : '0px',
                             }}
                           >
-                            <ul className="mt-1 space-y-1 ml-9">
+                            <ul className="mt-2 space-y-2 ml-8">
                               {nav.subItems.map((subItem) => (
                                 <li key={subItem.name}>
                                   <Link
@@ -303,7 +303,7 @@ export default function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+        className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-6 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
           ${
             isExpanded || isMobileOpen
               ? 'w-[290px]'
@@ -321,7 +321,7 @@ export default function Sidebar() {
             !isExpanded && !isHovered ? 'md:justify-center' : 'justify-start'
           }`}
         >
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-4">
             {(isExpanded || isHovered || isMobileOpen) ? (
               <>
                 <Image
@@ -370,7 +370,7 @@ export default function Sidebar() {
         </div>
 
         {/* Footer */}
-        <div className={`border-t border-gray-200 dark:border-gray-800 flex-shrink-0 ${isExpanded || isHovered || isMobileOpen ? 'p-4' : 'p-3'}`}>
+        <div className={`border-t border-gray-200 dark:border-gray-800 flex-shrink-0 ${isExpanded || isHovered || isMobileOpen ? 'p-4' : 'p-4'}`}>
           {(isExpanded || isHovered || isMobileOpen) && (
             <div className="mb-4">
               <p className="text-xs text-gray-400 dark:text-gray-500">Logged in as</p>
@@ -396,7 +396,7 @@ export default function Sidebar() {
             className={`w-full bg-error-500 hover:bg-error-600 rounded-lg transition-colors text-white font-medium flex items-center justify-center ${
               isExpanded || isHovered || isMobileOpen
                 ? 'px-4 py-2 text-sm'
-                : 'px-3 py-3'
+                : 'px-4 py-2'
             }`}
             title={!isExpanded && !isHovered && !isMobileOpen ? 'Logout' : undefined}
           >
