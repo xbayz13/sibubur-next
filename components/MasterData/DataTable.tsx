@@ -66,7 +66,7 @@ export default function DataTable<T extends object>({
   const renderRow = (item: T) => (
     <>
       {columns.map((column, idx) => (
-        <td key={idx} className="px-3 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900">
+        <td key={idx} className="px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900">
           <div className="whitespace-nowrap sm:whitespace-normal">
             {(
               typeof column.accessor === 'function'
@@ -77,7 +77,7 @@ export default function DataTable<T extends object>({
         </td>
       ))}
       {(onEdit || onDelete) && (
-        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
+        <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
           <div className="flex gap-2">
             {onEdit && (
               <button
@@ -116,7 +116,7 @@ export default function DataTable<T extends object>({
                   {columns.map((column, idx) => (
                     <th
                       key={idx}
-                      className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider ${
+                      className={`px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider ${
                         column.className || ''
                       }`}
                     >
@@ -124,7 +124,7 @@ export default function DataTable<T extends object>({
                     </th>
                   ))}
                   {(onEdit || onDelete) && (
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Aksi
                     </th>
                   )}
@@ -180,7 +180,7 @@ export default function DataTable<T extends object>({
                   {columns.map((column, idx) => (
                     <th
                       key={idx}
-                      className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider ${
+                      className={`px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider ${
                         column.className || ''
                       }`}
                     >
@@ -188,7 +188,7 @@ export default function DataTable<T extends object>({
                     </th>
                   ))}
                   {(onEdit || onDelete) && (
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Aksi
                     </th>
                   )}
