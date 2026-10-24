@@ -31,7 +31,7 @@ export default function Card({
               </h3>
             )}
             {description && (
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 {description}
               </p>
             )}
