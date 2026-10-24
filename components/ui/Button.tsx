@@ -21,8 +21,8 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const sizeClasses = {
-    sm: 'px-5 py-3.5 text-base',
-    md: 'px-6 py-4 text-base',
+    sm: 'px-4 py-2 text-sm',   /* 16px horiz (space-4), 8px vert (space-2) */
+    md: 'px-6 py-4 text-base', /* 24px horiz (space-6), 16px vert (space-4) */
   };
 
   const variantClasses = {

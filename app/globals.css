@@ -154,6 +154,17 @@ layer(base);
   --shadow-tooltip: 0px 4px 6px -2px rgba(16, 24, 40, 0.05),
     -8px 0px 20px 8px rgba(16, 24, 40, 0.05);
 
+  /* Strict 6-value spacing scale - no arbitrary values allowed */
+  --space-1: 4px;   /* Tight grouping, badges, small details */
+  --space-2: 8px;   /* Default unit, small padding */
+  --space-3: 12px;  /* Small sections, form groups */
+  --space-4: 16px;  /* Standard padding, common spacing */
+  --space-6: 24px;  /* Large sections, card padding */
+  --space-8: 32px;  /* Page margins, container spacing */
+
+  /* Only these spacing values should be used throughout the codebase */
+  /* DO NOT USE: p-3, p-5, gap-1, gap-3, gap-5, space-y-3, space-y-5, etc. */
+
   --drop-shadow-4xl: 0 35px 35px rgba(0, 0, 0, 0.25),
     0 45px 65px rgba(0, 0, 0, 0.15);
 
@@ -299,9 +310,9 @@ h2 {
   @apply text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5;
 }
 
-/* Form spacing improvements for older users */
+/* Form spacing improvements for older users - USING SPACING SCALE */
 form {
-  @apply space-y-5;
+  @apply space-y-6; /* Changed from space-y-5 to space-6 (24px) */
 }
 
 form > div {
