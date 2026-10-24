@@ -158,7 +158,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 border-b shadow-sm">
       <div className="flex flex-col items-center justify-between grow md:flex-row md:px-6">
-        <div className="flex items-center justify-between w-full gap-2 px-3 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 md:justify-normal md:border-b-0 md:px-0 md:py-4">
+        <div className="flex items-center justify-between w-full gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 md:justify-normal md:border-b-0 md:px-0 md:py-4">
           <button
             className="items-center justify-center w-10 h-10 text-gray-500 border-gray-200 rounded-lg z-99999 dark:border-gray-800 md:flex dark:text-gray-400 md:h-11 md:w-11 md:border"
             onClick={handleToggle}
@@ -208,8 +208,8 @@ export default function Header() {
           </Link>
         </div>
 
-        <div className="flex items-center justify-between w-full gap-4 px-5 py-4 md:flex md:justify-end md:px-0">
-          <div className="flex items-center gap-2 2xsm:gap-3">
+        <div className="flex items-center justify-between w-full gap-4 px-6 py-4 md:flex md:justify-end md:px-0">
+          <div className="flex items-center gap-2 2xsm:gap-4">
             {/* Screen Rotation Button */}
             <button
               onClick={toggleScreenRotation}
