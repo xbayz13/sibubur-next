@@ -7,11 +7,11 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { MENU_ITEMS, getPermissionsForMenuItem, hasAnyPermission } from '@/lib/permissions';
+import Tooltip from '@/components/ui/Tooltip';
 import {
   GridIcon,
   ChevronDownIcon,
   UserCircleIcon,
-  HorizontalDotsIcon,
   TableIcon,
   CashierIcon,
   OpenOrdersIcon,
@@ -88,24 +88,16 @@ export default function Sidebar() {
     });
   }, [isSuperAdmin, permissions, user?.role?.name]);
 
-  // Grouped navigation for better UX (older users)
+  // Grouped navigation for better UX (simplified from 5 → 3 sections)
   const groupedNav = useMemo(
     () => [
       {
-        section: 'Operasional Harian',
-        items: ['Dashboard', 'Kasir', 'Pesanan Terbuka', 'Produksi Harian'],
-      },
-      {
-        section: 'Keuangan & Persediaan',
-        items: ['Transaksi', 'Pengeluaran', 'Persediaan'],
+        section: 'Operasional',
+        items: ['Dashboard', 'Kasir', 'Pesanan Terbuka', 'Produksi Harian', 'Pesanan', 'Transaksi'],
       },
       {
         section: 'Manajemen',
-        items: ['Karyawan', 'Data Master'],
-      },
-      {
-        section: 'Laporan',
-        items: ['Laporan'],
+        items: ['Persediaan', 'Pengeluaran', 'Karyawan', 'Data Master', 'Laporan'],
       },
       {
         section: 'Pengaturan',
@@ -149,6 +141,12 @@ export default function Sidebar() {
   );
 
   const activeSubmenu = useMemo(() => {
+    // Auto-expand Data Master jika di /master-data/*
+    const dataMasterIndex = navItems.findIndex(item => item.name === 'Data Master');
+    if (dataMasterIndex !== -1 && pathname.startsWith('/master-data')) {
+      return `${dataMasterIndex}`;
+    }
+
     for (let index = 0; index < navItems.length; index++) {
       const nav = navItems[index];
       if (nav.subItems?.some((subItem) => isActive(subItem.path))) {
@@ -156,7 +154,7 @@ export default function Sidebar() {
       }
     }
     return null;
-  }, [isActive, navItems]);
+  }, [isActive, navItems, pathname]);
 
   const resolvedOpenSubmenu = openSubmenu ?? activeSubmenu;
 
@@ -203,32 +201,53 @@ export default function Sidebar() {
                   <li key={nav.name}>
                     {nav.subItems ? (
                       <>
-                        <button
-                          onClick={() => handleSubmenuToggle(globalIndex)}
-                          className={`menu-item group ${
-                            resolvedOpenSubmenu === `${globalIndex}` ? 'menu-item-active' : 'menu-item-inactive'
-                          } cursor-pointer ${
-                            !isExpanded && !isHovered ? 'md:justify-center' : 'md:justify-start'
-                          }`}
-                        >
-                          <span
-                            className={`menu-item-icon-size ${
-                              resolvedOpenSubmenu === `${globalIndex}` ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
-                            }`}
-                          >
-                            {nav.icon}
-                          </span>
-                          {(isExpanded || isHovered || isMobileOpen) && (
-                            <>
-                              <span className="menu-item-text">{nav.name}</span>
-                              <ChevronDownIcon
-                                className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                                  resolvedOpenSubmenu === `${globalIndex}` ? 'rotate-180 text-brand-500' : ''
-                                }`}
-                              />
-                            </>
-                          )}
-                        </button>
+                       <>
+                         {(!isExpanded && !isHovered && !isMobileOpen) ? (
+                           <Tooltip content={nav.name} placement="right">
+                             <button
+                               onClick={() => handleSubmenuToggle(globalIndex)}
+                               className={`menu-item group ${
+                                 resolvedOpenSubmenu === `${globalIndex}` ? 'menu-item-active' : 'menu-item-inactive'
+                               } cursor-pointer ${
+                                 !isExpanded && !isHovered ? 'md:justify-center' : 'md:justify-start'
+                               }`}
+                             >
+                               <span
+                                 className={`menu-item-icon-size ${
+                                   resolvedOpenSubmenu === `${globalIndex}` ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
+                                 }`}
+                               >
+                                 {nav.icon}
+                               </span>
+                             </button>
+                           </Tooltip>
+                         ) : (
+                           <button
+                             onClick={() => handleSubmenuToggle(globalIndex)}
+                             className={`menu-item group ${
+                               resolvedOpenSubmenu === `${globalIndex}` ? 'menu-item-active' : 'menu-item-inactive'
+                             } cursor-pointer ${
+                               !isExpanded && !isHovered ? 'md:justify-center' : 'md:justify-start'
+                             }`}
+                           >
+                             <span
+                               className={`menu-item-icon-size ${
+                                 resolvedOpenSubmenu === `${globalIndex}` ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
+                               }`}
+                             >
+                               {nav.icon}
+                             </span>
+                             <>
+                               <span className="menu-item-text">{nav.name}</span>
+                               <ChevronDownIcon
+                                 className={`ml-auto w-5 h-5 transition-transform duration-200 ${
+                                   resolvedOpenSubmenu === `${globalIndex}` ? 'rotate-180 text-brand-500' : ''
+                                 }`}
+                               />
+                             </>
+                           </button>
+                         )}
+                       </>
                         {(isExpanded || isHovered || isMobileOpen) && (
                           <div
                             ref={(el) => {
@@ -261,24 +280,42 @@ export default function Sidebar() {
                       </>
                     ) : (
                       nav.path && (
-                        <Link
-                          href={nav.path}
-                          className={`menu-item group ${
-                            isActive(nav.path) ? 'menu-item-active' : 'menu-item-inactive'
-                          }`}
-                          onClick={closeMobileMenu}
-                        >
-                          <span
-                            className={`menu-item-icon-size ${
-                              isActive(nav.path) ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
+                        (!isExpanded && !isHovered && !isMobileOpen) ? (
+                          <Tooltip content={nav.name} placement="right">
+                            <Link
+                              href={nav.path}
+                              className={`menu-item group ${
+                                isActive(nav.path) ? 'menu-item-active' : 'menu-item-inactive'
+                              }`}
+                              onClick={closeMobileMenu}
+                            >
+                              <span
+                                className={`menu-item-icon-size ${
+                                  isActive(nav.path) ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
+                                }`}
+                              >
+                                {nav.icon}
+                              </span>
+                            </Link>
+                          </Tooltip>
+                        ) : (
+                          <Link
+                            href={nav.path}
+                            className={`menu-item group ${
+                              isActive(nav.path) ? 'menu-item-active' : 'menu-item-inactive'
                             }`}
+                            onClick={closeMobileMenu}
                           >
-                            {nav.icon}
-                          </span>
-                          {(isExpanded || isHovered || isMobileOpen) && (
+                            <span
+                              className={`menu-item-icon-size ${
+                                isActive(nav.path) ? 'menu-item-icon-active' : 'menu-item-icon-inactive'
+                              }`}
+                            >
+                              {nav.icon}
+                            </span>
                             <span className="menu-item-text">{nav.name}</span>
-                          )}
-                        </Link>
+                          </Link>
+                        )
                       )
                     )}
                   </li>
@@ -360,7 +397,9 @@ export default function Sidebar() {
                   {(isExpanded || isHovered || isMobileOpen) ? (
                     'Menu'
                   ) : (
-                    <HorizontalDotsIcon className="size-6" />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
                   )}
                 </h2>
                 {renderMenuItems()}
