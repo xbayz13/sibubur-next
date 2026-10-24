@@ -161,7 +161,7 @@ export default function OrderForm({
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {items.map((item, index) => {
                   const product = products.find((p) => p.id === item.productId);
                   return (
@@ -238,7 +238,7 @@ export default function OrderForm({
                                           key={addon.id}
                                           type="button"
                                           onClick={() => addAddon(index, addon)}
-                                          className={`text-xs px-3 py-1 rounded ${
+                                          className={`text-xs px-4 py-2 rounded ${
                                             addonInItem
                                               ? 'bg-indigo-600 text-white'
                                               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -251,7 +251,7 @@ export default function OrderForm({
                                     })}
                                   </div>
                                   {item.addons.length > 0 && (
-                                    <div className="mt-2 space-y-1">
+                                    <div className="mt-2 space-y-2">
                                       {item.addons.map((addon) => {
                                         const addonProduct = product.addons?.find(
                                           (a) => a.id === addon.addonId
@@ -315,7 +315,7 @@ export default function OrderForm({
               </div>
             )}
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-4 pt-4">
               <button
                 type="button"
                 onClick={onCancel}
