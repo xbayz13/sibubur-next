@@ -22,7 +22,7 @@ import { isInstantPaymentEnabled } from '@/lib/instant-payment-settings';
 import SearchAutocomplete from '@/components/ui/SearchAutocomplete';
 import { useCartPersistence } from '@/hooks/useCartPersistence';
 import CartFloatingButton from '@/components/Cashier/CartFloatingButton';
-import PaymentModal from '@/components/Orders/PaymentModal';
+import PaymentModalComponent from '@/components/Orders/PaymentModal';
 
 interface CartItem {
   productId: number;
@@ -801,10 +801,11 @@ export default function CashierPage() {
 
           {/* Payment Modal */}
           {showPayment && currentOrder && (
-            <PaymentModal
+            <PaymentModalComponent
+              isOpen={true}
               total={Number(currentOrder.totalAmount || 0)}
               paymentMethods={paymentMethods}
-              onProcess={handleProcessPayment}
+              onComplete={(payment) => handleProcessPayment(payment.methodId, payment.amount, payment.change)}
               onClose={() => {
                 setShowPayment(false);
                 setCurrentOrder(null);

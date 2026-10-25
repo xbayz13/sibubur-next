@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { PaymentMethod } from '@/types';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import Input from '@/components/ui/Input';
-import Label from '@/components/ui/Label';
 
 interface Payment {
   methodId: number;
@@ -38,7 +36,7 @@ export default function PaymentModal({
   const selectedPaymentMethod = paymentMethods.find(m => m.id === selectedMethod);
   const change = amountReceived ? amountReceived - total : 0;
   const canProceed = selectedMethod !== null && (
-    selectedPaymentMethod?.name.toLowerCase().includes('transfer') || amountReceived >= total
+    selectedPaymentMethod?.name.toLowerCase().includes('transfer') || (amountReceived !== null && amountReceived >= total)
   );
 
   const handleNext = () => {
@@ -113,14 +111,14 @@ export default function PaymentModal({
               {/* Amount input for cash */}
               {selectedPaymentMethod?.name.toLowerCase().includes('cash') && (
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <Label htmlFor="amount">Jumlah Diterima</Label>
-                  <Input
+                  <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah Diterima</label>
+                  <input
                     id="amount"
                     type="number"
                     placeholder="0"
                     value={amountReceived || ''}
                     onChange={(e) => setAmountReceived(parseFloat(e.target.value) || null)}
-                    className="mb-4"
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-gray-300 dark:border-gray-700 mb-4"
                     autoFocus
                   />
                   {amountReceived !== null && (

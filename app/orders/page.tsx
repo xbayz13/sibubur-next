@@ -302,9 +302,10 @@ export default function OrdersPage() {
 
           {showPaymentModal && selectedOrder && (
             <PaymentModal
-              order={selectedOrder}
+              isOpen={true}
+              total={Number(selectedOrder.totalAmount || 0)}
               paymentMethods={paymentMethods}
-              onProcess={handleProcessPayment}
+              onComplete={(payment) => handleProcessPayment(payment.methodId, payment.amount, payment.change)}
               onClose={() => {
                 setShowPaymentModal(false);
                 setSelectedOrder(null);

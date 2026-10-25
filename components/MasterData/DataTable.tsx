@@ -5,11 +5,16 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import BulkActionsBar from '@/components/ui/BulkActionsBar';
 import Skeleton from '@/components/ui/Skeleton';
+import EditableCell from '@/components/ui/EditableCell';
 
 interface Column<T> {
   header: string;
   accessor: keyof T | ((item: T) => ReactNode);
   className?: string;
+  editable?: boolean;
+  validator?: (value: string) => string | null;
+  onCellEdit?: (item: T, newValue: string) => Promise<void> | void;
+  editType?: 'text' | 'number';
 }
 
 interface DataTableProps<T> {
@@ -102,7 +107,6 @@ export default function DataTable<T extends object>({
     try {
       await onBulkDelete(selectedData);
       setSelectedRows(new Set());
-      setShowBulkDeleteConfirm(false);
     } finally {
       setIsBulkDeleting(false);
     }
@@ -142,17 +146,29 @@ export default function DataTable<T extends object>({
           />
         </td>
       )}
-      {columns.map((column, idx) => (
-        <td key={idx} className="px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900">
-          <div className="whitespace-nowrap sm:whitespace-normal">
-            {(
-              typeof column.accessor === 'function'
-                ? column.accessor(item)
-                : (item[column.accessor] as ReactNode)
-            )}
-          </div>
-        </td>
-      ))}
+      {columns.map((column, idx) => {
+        const value = typeof column.accessor !== 'function' ? String(item[column.accessor] ?? '') : '';
+        const isEditable = column.editable && typeof column.accessor !== 'function' && column.onCellEdit;
+
+        return (
+          <td key={idx} className="px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base text-slate-900">
+            <div className="whitespace-nowrap sm:whitespace-normal">
+              {isEditable ? (
+                <EditableCell
+                  value={value}
+                  onSave={(newValue) => column.onCellEdit!(item, newValue)}
+                  validator={column.validator}
+                  type={column.editType}
+                />
+              ) : typeof column.accessor === 'function' ? (
+                column.accessor(item)
+              ) : (
+                (item[column.accessor] as ReactNode)
+              )}
+            </div>
+          </td>
+        );
+      })}
       {(onEdit || onDelete) && (
         <td className="px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
           <div className="flex gap-2">
@@ -252,13 +268,12 @@ export default function DataTable<T extends object>({
           onCancel={() => setDeleteConfirm(null)}
           variant="danger"
         />
-        <BulkActionsBar
-          selectedCount={selectedRows.size}
-          onExport={handleBulkExport}
-          onBulkDelete={onBulkDelete ? () => {} : undefined}
-          onConfirmBulkDelete={handleConfirmBulkDelete}
-          isDeleting={isBulkDeleting}
-        />
+          <BulkActionsBar
+            selectedCount={selectedRows.size}
+            onExport={handleBulkExport}
+            onBulkDelete={onBulkDelete ? () => {} : undefined}
+            onConfirmBulkDelete={handleConfirmBulkDelete}
+          />
       </div>
     );
   }
@@ -350,13 +365,12 @@ export default function DataTable<T extends object>({
            onCancel={() => setDeleteConfirm(null)}
            variant="danger"
          />
-         <BulkActionsBar
-           selectedCount={selectedRows.size}
-           onExport={handleBulkExport}
-           onBulkDelete={onBulkDelete ? () => {} : undefined}
-           onConfirmBulkDelete={handleConfirmBulkDelete}
-           isDeleting={isBulkDeleting}
-         />
+          <BulkActionsBar
+            selectedCount={selectedRows.size}
+            onExport={handleBulkExport}
+            onBulkDelete={onBulkDelete ? () => {} : undefined}
+            onConfirmBulkDelete={handleConfirmBulkDelete}
+          />
        </div>
      </div>
    );
