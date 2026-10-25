@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { ThemeToggleButton } from '@/components/common/ThemeToggleButton';
 import UserDropdown from '@/components/header/UserDropdown';
+import Breadcrumb from '@/components/ui/Breadcrumb';
 type ScreenWithOrientation = Screen & {
   orientation?: ScreenOrientation & {
     angle?: number;
