@@ -56,7 +56,7 @@ export default function Modal({
     : 'relative w-full rounded-3xl bg-white dark:bg-gray-900';
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto z-99999">
+    <div className="fixed inset-0 flex items-center justify-center z-99999 p-4">
       {!isFullscreen && (
         <div
           className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
@@ -65,7 +65,7 @@ export default function Modal({
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses} ${className}`}
+        className={`${contentClasses} ${className} max-h-[90vh] overflow-y-auto`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { ThemeToggleButton } from '@/components/common/ThemeToggleButton';
 import UserDropdown from '@/components/header/UserDropdown';
-import Breadcrumb from '@/components/ui/Breadcrumb';
 type ScreenWithOrientation = Screen & {
   orientation?: ScreenOrientation & {
     angle?: number;
@@ -157,7 +156,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 flex w-full bg-white border-gray-200 z-99999 dark:border-gray-800 dark:bg-gray-900 border-b shadow-sm">
+    <header className="sticky top-0 flex w-full bg-white/90 backdrop-blur-md border-gray-200/80 z-99999 dark:border-gray-800/80 dark:bg-gray-900/90 border-b shadow-sm transition-smooth py-1">
       <div className="flex flex-col items-center justify-between grow md:flex-row md:px-6">
         <div className="flex items-center justify-between w-full gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-800 sm:gap-4 md:justify-normal md:border-b-0 md:px-0 md:py-4">
           <button

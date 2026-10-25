@@ -276,16 +276,21 @@ h2 {
 }
 
 /* Utility Classes */
+/* Active item accent */
+@utility menu-item-active-border {
+  @apply border-l-4 border-brand-500;
+}
+
 @utility menu-item {
-  @apply relative flex items-center w-full gap-3 px-4 py-3 font-medium rounded-lg text-base;
+  @apply relative flex items-center w-full gap-3 px-4 py-3 font-medium rounded-lg text-base transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)];
 }
 
 @utility menu-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+  @apply bg-brand-50 text-brand-500 border-l-4 border-brand-500 rounded-l-none dark:bg-brand-500/[0.12] dark:text-brand-400;
 }
 
 @utility menu-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
+  @apply text-gray-700 border-l-4 border-transparent hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
 }
 
 @utility menu-item-icon-active {
@@ -404,10 +409,6 @@ form > div {
 }
 
 /* Motion */
-@custom-property --motion-smooth {
-  default: cubic-bezier(0.32, 0.72, 0, 1);
-}
-
 .transition-smooth {
   transition-property: color, background-color, border-color, box-shadow, opacity, transform;
   transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
@@ -415,54 +416,29 @@ form > div {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .transition-smooth {
-    transition: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
+
 @keyframes slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 .animate-slide-in {
-  animation: slide-in 0.3s ease-out;
+  animation: slide-in 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Third-party library styles - Chart.js */
-.apexcharts-legend-text,
-.apexcharts-text {
-  @apply !text-gray-700 dark:!text-gray-400;
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in { animation: none; }
 }
 
-.apexcharts-tooltip.apexcharts-theme-light {
-  @apply gap-1 !rounded-lg !border-gray-200 p-3 !shadow-theme-sm dark:!border-gray-800 dark:!bg-gray-900;
-}
-
-.apexcharts-gridline {
-  @apply !stroke-gray-100 dark:!stroke-gray-800;
-}
-
-/* Table checkbox */
-.tableCheckbox:checked ~ span span {
-  @apply opacity-100;
-}
-
-.tableCheckbox:checked ~ span {
-  @apply border-brand-500 bg-brand-500;
-}
-
-/* Form checkbox */
-.form-check-input:checked ~ span {
-  @apply border-[6px] border-brand-500 bg-brand-500 dark:border-brand-500;
-}
-
-/* Skeleton wave animation */
 @keyframes skeleton-wave {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -476,4 +452,20 @@ form > div {
 
 .dark .animate-skeleton-wave {
   background: linear-gradient(90deg, #2d3748 25%, #4a5568 50%, #2d3748 75%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-skeleton-wave { animation: none; }
+}
+
+/* Dark Mode ApexCharts contrast */
+.dark .apexcharts-canvas .apexcharts-tooltip {
+  @apply !bg-gray-900/90 !backdrop-blur-md !border-gray-800/80 !text-gray-100;
+}
+.dark .apexcharts-canvas .apexcharts-tooltip-title {
+  @apply !bg-gray-800/50 !border-gray-700/50;
+}
+.dark .apexcharts-canvas .apexcharts-xaxistooltip,
+.dark .apexcharts-canvas .apexcharts-yaxistooltip {
+  @apply !bg-gray-800 !border-gray-700 !text-gray-100;
 }

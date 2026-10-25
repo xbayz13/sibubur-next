@@ -8,13 +8,18 @@ interface IconProps {
 
 export const GridIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V8.99998C3.25 10.2426 4.25736 11.25 5.5 11.25H9C10.2426 11.25 11.25 10.2426 11.25 8.99998V5.5C11.25 4.25736 10.2426 3.25 9 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H9C9.41421 4.75 9.75 5.08579 9.75 5.5V8.99998C9.75 9.41419 9.41421 9.74998 9 9.74998H5.5C5.08579 9.74998 4.75 9.41419 4.75 8.99998V5.5ZM5.5 12.75C4.25736 12.75 3.25 13.7574 3.25 15V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H9C10.2426 20.75 11.25 19.7427 11.25 18.5V15C11.25 13.7574 10.2426 12.75 9 12.75H5.5ZM4.75 15C4.75 14.5858 5.08579 14.25 5.5 14.25H9C9.41421 14.25 9.75 14.5858 9.75 15V18.5C9.75 18.9142 9.41421 19.25 9 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V15ZM12.75 5.5C12.75 4.25736 13.7574 3.25 15 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V8.99998C20.75 10.2426 19.7426 11.25 18.5 11.25H15C13.7574 11.25 12.75 10.2426 12.75 8.99998V5.5ZM15 4.75C14.5858 4.75 14.25 5.08579 14.25 5.5V8.99998C14.25 9.41419 14.5858 9.74998 15 9.74998H18.5C18.9142 9.74998 19.25 9.41419 19.25 8.99998V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H15ZM15 12.75C13.7574 12.75 12.75 13.7574 12.75 15V18.5C12.75 19.7426 13.7574 20.75 15 20.75H18.5C19.7426 20.75 20.75 19.7427 20.75 18.5V15C20.75 13.7574 19.7426 12.75 18.5 12.75H15ZM14.25 15C14.25 14.5858 14.5858 14.25 15 14.25H18.5C18.9142 14.25 19.25 14.5858 19.25 15V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15C14.5858 19.25 14.25 18.9142 14.25 18.5V15Z" fill="currentColor" />
+    <path d="M5.5 3.25H9V11.25H5.5V3.25Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M15 3.25H18.5V11.25H15V3.25Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M5.5 12.75H9V20.75H5.5V12.75Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M15 12.75H18.5V20.75H15V12.75Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 export const ListIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M5.5 3.25C4.25736 3.25 3.25 4.25736 3.25 5.5V18.5C3.25 19.7426 4.25736 20.75 5.5 20.75H18.5001C19.7427 20.75 20.7501 19.7426 20.7501 18.5V5.5C20.7501 4.25736 19.7427 3.25 18.5001 3.25H5.5ZM4.75 5.5C4.75 5.08579 5.08579 4.75 5.5 4.75H18.5001C18.9143 4.75 19.2501 5.08579 19.2501 5.5V18.5C19.2501 18.9142 18.9143 19.25 18.5001 19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5V5.5ZM6.25005 9.7143C6.25005 9.30008 6.58583 8.9643 7.00005 8.9643L17 8.96429C17.4143 8.96429 17.75 9.30008 17.75 9.71429C17.75 10.1285 17.4143 10.4643 17 10.4643L7.00005 10.4643C6.58583 10.4643 6.25005 10.1285 6.25005 9.7143ZM6.25005 14.2857C6.25005 13.8715 6.58583 13.5357 7.00005 13.5357H17C17.4143 13.5357 17.75 13.8715 17.75 14.2857C17.75 14.6999 17.4143 15.0357 17 15.0357H7.00005C6.58583 15.0357 6.25005 14.6999 6.25005 14.2857Z" fill="currentColor" />
+    <path d="M5.5 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V18.5C20.75 19.7426 19.7426 20.75 18.5 20.75H5.5C4.25736 20.75 3.25 19.7426 3.25 18.5V5.5C3.25 4.25736 4.25736 3.25 5.5 3.25Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M7 9C17 9 17 9 17 9" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <path d="M7 14.5C17 14.5 17 14.5 17 14.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
   </svg>
 );
 
@@ -32,135 +37,172 @@ export const ChevronLeftIcon: React.FC<IconProps> = ({ className, width = 20, he
 
 export const UserCircleIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 3.5C7.30558 3.5 3.5 7.30558 3.5 12C3.5 14.1526 4.3002 16.1184 5.61936 17.616C6.17279 15.3096 8.24852 13.5955 10.7246 13.5955H13.2746C15.7509 13.5955 17.8268 15.31 18.38 17.6167C19.6996 16.119 20.5 14.153 20.5 12C20.5 7.30558 16.6944 3.5 12 3.5ZM17.0246 18.8566V18.8455C17.0246 16.7744 15.3457 15.0955 13.2746 15.0955H10.7246C8.65354 15.0955 6.97461 16.7744 6.97461 18.8455V18.856C8.38223 19.8895 10.1198 20.5 12 20.5C13.8798 20.5 15.6171 19.8898 17.0246 18.8566ZM2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12ZM11.9991 7.25C10.8847 7.25 9.98126 8.15342 9.98126 9.26784C9.98126 10.3823 10.8847 11.2857 11.9991 11.2857C13.1135 11.2857 14.0169 10.3823 14.0169 9.26784C14.0169 8.15342 13.1135 7.25 11.9991 7.25ZM8.48126 9.26784C8.48126 7.32499 10.0563 5.75 11.9991 5.75C13.9419 5.75 15.5169 7.32499 15.5169 9.26784C15.5169 11.2107 13.9419 12.7857 11.9991 12.7857C10.0563 12.7857 8.48126 11.2107 8.48126 9.26784Z" fill="currentColor" />
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <circle cx="12" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M7 17.5C7 15.5 9 14.5 12 14.5C15 14.5 17 15.5 17 17.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
   </svg>
 );
 
 export const HorizontalDotsIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M5.99915 10.2451C6.96564 10.2451 7.74915 11.0286 7.74915 11.9951V12.0051C7.74915 12.9716 6.96564 13.7551 5.99915 13.7551C5.03265 13.7551 4.24915 12.9716 4.24915 12.0051V11.9951C4.24915 11.0286 5.03265 10.2451 5.99915 10.2451ZM17.9991 10.2451C18.9656 10.2451 19.7491 11.0286 19.7491 11.9951V12.0051C19.7491 12.9716 18.9656 13.7551 17.9991 13.7551C17.0326 13.7551 16.2491 12.9716 16.2491 12.0051V11.9951C16.2491 11.0286 17.0326 10.2451 17.9991 10.2451ZM13.7491 11.9951C13.7491 11.0286 12.9656 10.2451 11.9991 10.2451C11.0326 10.2451 10.2491 11.0286 10.2491 11.9951V12.0051C10.2491 12.9716 11.0326 13.7551 11.9991 13.7551C12.9656 13.7551 13.7491 12.9716 13.7491 12.0051V11.9951Z" fill="currentColor" />
+    <circle cx="6" cy="12" r="1.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <circle cx="12" cy="12" r="1.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <circle cx="18" cy="12" r="1.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 export const TableIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M3.25 5.5C3.25 4.25736 4.25736 3.25 5.5 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V18.5C20.75 19.7426 19.7426 20.75 18.5 20.75H5.5C4.25736 20.75 3.25 19.7426 3.25 18.5V5.5ZM5.5 4.75C5.08579 4.75 4.75 5.08579 4.75 5.5V8.58325L19.25 8.58325V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H5.5ZM19.25 10.0833H15.416V13.9165H19.25V10.0833ZM13.916 10.0833L10.083 10.0833V13.9165L13.916 13.9165V10.0833ZM8.58301 10.0833H4.75V13.9165H8.58301V10.0833ZM4.75 18.5V15.4165H8.58301V19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5ZM10.083 19.25V15.4165L13.916 15.4165V19.25H10.083ZM15.416 19.25V15.4165H19.25V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15.416Z" fill="currentColor" />
+    <rect x="3.25" y="3.25" width="17.5" height="17.5" rx="2.25" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M3.25 8.5H20.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M3.25 13.75H20.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M9.5 3.25V20.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M15 3.25V20.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 export const BoxCubeIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M11.665 3.75618C11.8762 3.65061 12.1247 3.65061 12.3358 3.75618L18.7807 6.97853L12.3358 10.2009C12.1247 10.3064 11.8762 10.3064 11.665 10.2009L5.22014 6.97853L11.665 3.75618ZM4.29297 8.19199V16.0946C4.29297 16.3787 4.45347 16.6384 4.70757 16.7654L11.25 20.0365V11.6512C11.1631 11.6205 11.0777 11.5843 10.9942 11.5425L4.29297 8.19199ZM12.75 20.037L19.2933 16.7654C19.5474 16.6384 19.7079 16.3787 19.7079 16.0946V8.19199L13.0066 11.5425C12.9229 11.5844 12.8372 11.6207 12.75 11.6515V20.037ZM13.0066 2.41453C12.3732 2.09783 11.6277 2.09783 10.9942 2.41453L4.03676 5.89316C3.27449 6.27429 2.79297 7.05339 2.79297 7.90563V16.0946C2.79297 16.9468 3.27448 17.7259 4.03676 18.1071L10.9942 21.5857L11.3296 20.9149L10.9942 21.5857C11.6277 21.9024 12.3732 21.9024 13.0066 21.5857L19.9641 18.1071C20.7264 17.7259 21.2079 16.9468 21.2079 16.0946V7.90563C21.2079 7.05339 20.7264 6.27429 19.9641 5.89316L13.0066 2.41453Z" fill="currentColor" />
+    <path d="M12 3.5L20.5 7.5V16.5L12 20.5L3.5 16.5V7.5L12 3.5Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M12 3.5V12M12 12L3.5 7.5M12 12L20.5 7.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 export const PieChartIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C11.5858 2 11.25 2.33579 11.25 2.75V12C11.25 12.4142 11.5858 12.75 12 12.75H21.25C21.6642 12.75 22 12.4142 22 12C22 6.47715 17.5228 2 12 2ZM12.75 11.25V3.53263C13.2645 3.57761 13.7659 3.66843 14.25 3.80098V3.80099C15.6929 4.19606 16.9827 4.96184 18.0104 5.98959C19.0382 7.01734 19.8039 8.30707 20.199 9.75C20.3316 10.2341 20.4224 10.7355 20.4674 11.25H12.75ZM2 12C2 7.25083 5.31065 3.27489 9.75 2.25415V3.80099C6.14748 4.78734 3.5 8.0845 3.5 12C3.5 16.6944 7.30558 20.5 12 20.5C15.9155 20.5 19.2127 17.8525 20.199 14.25H21.7459C20.7251 18.6894 16.7492 22 12 22C6.47715 22 2 17.5229 2 12Z" fill="currentColor" />
+    <path d="M12 2V12L20.5 12C20.5 6.48 16.52 2 12 2Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M12 2C17.52 2 22 6.48 22 12" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
   </svg>
 );
 
 export const PlugInIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M14 2.75C14 2.33579 14.3358 2 14.75 2C15.1642 2 15.5 2.33579 15.5 2.75V5.73291L17.75 5.73291H19C19.4142 5.73291 19.75 6.0687 19.75 6.48291C19.75 6.89712 19.4142 7.23291 19 7.23291H18.5L18.5 12.2329C18.5 15.5691 15.9866 18.3183 12.75 18.6901V21.25C12.75 21.6642 12.4142 22 12 22C11.5858 22 11.25 21.6642 11.25 21.25V18.6901C8.01342 18.3183 5.5 15.5691 5.5 12.2329L5.5 7.23291H5C4.58579 7.23291 4.25 6.89712 4.25 6.48291C4.25 6.0687 4.58579 5.73291 5 5.73291L6.25 5.73291L8.5 5.73291L8.5 2.75C8.5 2.33579 8.83579 2 9.25 2C9.66421 2 10 2.33579 10 2.75L10 5.73291L14 5.73291V2.75ZM7 7.23291L7 12.2329C7 14.9943 9.23858 17.2329 12 17.2329C14.7614 17.2329 17 14.9943 17 12.2329L17 7.23291L7 7.23291Z" fill="currentColor" />
+    <rect x="8.5" y="2.75" width="7" height="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <rect x="5.5" y="7.25" width="13" height="10" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M12 21.25V18.75" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <circle cx="9" cy="5.75" r="0.5" fill="currentColor" />
+    <circle cx="15" cy="5.75" r="0.5" fill="currentColor" />
   </svg>
 );
 
 export const PageIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M8.50391 4.25C8.50391 3.83579 8.83969 3.5 9.25391 3.5H15.2777C15.4766 3.5 15.6674 3.57902 15.8081 3.71967L18.2807 6.19234C18.4214 6.333 18.5004 6.52376 18.5004 6.72268V16.75C18.5004 17.1642 18.1646 17.5 17.7504 17.5H16.248V17.4993H14.748V17.5H9.25391C8.83969 17.5 8.50391 17.1642 8.50391 16.75V4.25ZM14.748 19H9.25391C8.01126 19 7.00391 17.9926 7.00391 16.75V6.49854H6.24805C5.83383 6.49854 5.49805 6.83432 5.49805 7.24854V19.75C5.49805 20.1642 5.83383 20.5 6.24805 20.5H13.998C14.4123 20.5 14.748 20.1642 14.748 19.75L14.748 19ZM7.00391 4.99854V4.25C7.00391 3.00736 8.01127 2 9.25391 2H15.2777C15.8745 2 16.4468 2.23705 16.8687 2.659L19.3414 5.13168C19.7634 5.55364 20.0004 6.12594 20.0004 6.72268V16.75C20.0004 17.9926 18.9931 19 17.7504 19H16.248L16.248 19.75C16.248 20.9926 15.2407 22 13.998 22H6.24805C5.00541 22 3.99805 20.9926 3.99805 19.75V7.24854C3.99805 6.00589 5.00541 4.99854 6.24805 4.99854H7.00391Z" fill="currentColor" />
+    <path d="M9.25 3.5H17.75C18.1642 3.5 18.5 3.83579 18.5 4.25V17.5C18.5 17.9142 18.1642 18.25 17.75 18.25H6.25C5.83579 18.25 5.5 17.9142 5.5 17.5V4.25C5.5 3.83579 5.83579 3.5 6.25 3.5H9.25" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M9.25 3.5V6.25H15.75V3.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
   </svg>
 );
 
 export const EyeIcon: React.FC<IconProps> = ({ className, width = 20, height = 20 }) => (
   <svg width={width} height={height} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M10.0002 13.8619C7.23361 13.8619 4.86803 12.1372 3.92328 9.70241C4.86804 7.26761 7.23361 5.54297 10.0002 5.54297C12.7667 5.54297 15.1323 7.26762 16.0771 9.70243C15.1323 12.1372 12.7667 13.8619 10.0002 13.8619ZM10.0002 4.04297C6.48191 4.04297 3.49489 6.30917 2.4155 9.4593C2.3615 9.61687 2.3615 9.78794 2.41549 9.94552C3.49488 13.0957 6.48191 15.3619 10.0002 15.3619C13.5184 15.3619 16.5055 13.0957 17.5849 9.94555C17.6389 9.78797 17.6389 9.6169 17.5849 9.45932C16.5055 6.30919 13.5184 4.04297 10.0002 4.04297ZM9.99151 7.84413C8.96527 7.84413 8.13333 8.67606 8.13333 9.70231C8.13333 10.7286 8.96527 11.5605 9.99151 11.5605H10.0064C11.0326 11.5605 11.8646 10.7286 11.8646 9.70231C11.8646 8.67606 11.0326 7.84413 10.0064 7.84413H9.99151Z" fill="currentColor" />
+    <circle cx="10" cy="9.7" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M2.5 9.7C3.5 6 6.5 4 10 4C13.5 4 16.5 6 17.5 9.7C16.5 13.4 13.5 15.4 10 15.4C6.5 15.4 3.5 13.4 2.5 9.7Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 export const EyeCloseIcon: React.FC<IconProps> = ({ className, width = 20, height = 20 }) => (
   <svg width={width} height={height} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M4.63803 3.57709C4.34513 3.2842 3.87026 3.2842 3.57737 3.57709C3.28447 3.86999 3.28447 4.34486 3.57737 4.63775L4.85323 5.91362C3.74609 6.84199 2.89363 8.06395 2.4155 9.45936C2.3615 9.61694 2.3615 9.78801 2.41549 9.94558C3.49488 13.0957 6.48191 15.3619 10.0002 15.3619C11.255 15.3619 12.4422 15.0737 13.4994 14.5598L15.3625 16.4229C15.6554 16.7158 16.1302 16.7158 16.4231 16.4229C16.716 16.13 16.716 15.6551 16.4231 15.3622L4.63803 3.57709ZM12.3608 13.4212L10.4475 11.5079C10.3061 11.5423 10.1584 11.5606 10.0064 11.5606H9.99151C8.96527 11.5606 8.13333 10.7286 8.13333 9.70237C8.13333 9.5461 8.15262 9.39434 8.18895 9.24933L5.91885 6.97923C5.03505 7.69015 4.34057 8.62704 3.92328 9.70247C4.86803 12.1373 7.23361 13.8619 10.0002 13.8619C10.8326 13.8619 11.6287 13.7058 12.3608 13.4212ZM16.0771 9.70249C15.7843 10.4569 15.3552 11.1432 14.8199 11.7311L15.8813 12.7925C16.6329 11.9813 17.2187 11.0143 17.5849 9.94561C17.6389 9.78803 17.6389 9.61696 17.5849 9.45938C16.5055 6.30925 13.5184 4.04303 10.0002 4.04303C9.13525 4.04303 8.30244 4.17999 7.52218 4.43338L8.75139 5.66259C9.1556 5.58413 9.57311 5.54303 10.0002 5.54303C12.7667 5.54303 15.1323 7.26768 16.0771 9.70249Z" fill="currentColor" />
+    <path d="M2 3L18 17" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2.5 9.7C3.5 6 6.5 4 10 4C13.5 4 16.5 6 17.5 9.7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="10" cy="9.7" r="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 // Cashier/Point of Sale Icon
 export const CashierIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M2 4.75C2 3.23122 3.23122 2 4.75 2H19.25C20.7688 2 22 3.23122 22 4.75V19.25C22 20.7688 20.7688 22 19.25 22H4.75C3.23122 22 2 20.7688 2 19.25V4.75ZM4.75 3.5C4.05964 3.5 3.5 4.05964 3.5 4.75V9.25H20.5V4.75C20.5 4.05964 19.9404 3.5 19.25 3.5H4.75ZM3.5 10.75V19.25C3.5 19.9404 4.05964 20.5 4.75 20.5H9.75V10.75H3.5ZM11.25 10.75V20.5H19.25C19.9404 20.5 20.5 19.9404 20.5 19.25V10.75H11.25ZM7.75 14C7.33579 14 7 14.3358 7 14.75C7 15.1642 7.33579 15.5 7.75 15.5H8.25C8.66421 15.5 9 15.1642 9 14.75C9 14.3358 8.66421 14 8.25 14H7.75ZM7 17.25C7 16.8358 7.33579 16.5 7.75 16.5H8.25C8.66421 16.5 9 16.8358 9 17.25C9 17.6642 8.66421 18 8.25 18H7.75C7.33579 18 7 17.6642 7 17.25Z" fill="currentColor" />
+    <rect x="2" y="4.75" width="20" height="14.5" rx="2.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M2 9.25H22" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M9.75 10.75V20.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <circle cx="8" cy="15.5" r="0.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <circle cx="8" cy="18.5" r="0.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 // Open Orders Icon
 export const OpenOrdersIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M4 4C2.89543 4 2 4.89543 2 6V18C2 19.1046 2.89543 20 4 20H20C21.1046 20 22 19.1046 22 18V6C22 4.89543 21.1046 4 20 4H4ZM3.5 6C3.5 5.72386 3.72386 5.5 4 5.5H20C20.2761 5.5 20.5 5.72386 20.5 6V18C20.5 18.2761 20.2761 18.5 20 18.5H4C3.72386 18.5 3.5 18.2761 3.5 18V6ZM7 8.25C7 7.83579 7.33579 7.5 7.75 7.5H16.25C16.6642 7.5 17 7.83579 17 8.25C17 8.66421 16.6642 9 16.25 9H7.75C7.33579 9 7 8.66421 7 8.25ZM7 11.75C7 11.3358 7.33579 11 7.75 11H12.25C12.6642 11 13 11.3358 13 11.75C13 12.1642 12.6642 12.5 12.25 12.5H7.75C7.33579 12.5 7 12.1642 7 11.75ZM7 15.25C7 14.8358 7.33579 14.5 7.75 14.5H14.25C14.6642 14.5 15 14.8358 15 15.25C15 15.6642 14.6642 16 14.25 16H7.75C7.33579 16 7 15.6642 7 15.25Z" fill="currentColor" />
+    <rect x="2" y="5.5" width="20" height="12.5" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M2 9.5H22" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M7.75 7.75H16.25" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <path d="M7.75 12.25H12.25" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <path d="M7.75 15.75H14.25" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
   </svg>
 );
 
 // Production Icon
 export const ProductionIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C12.4142 2 12.75 2.33579 12.75 2.75V5.25H19.25C19.6642 5.25 20 5.58579 20 6C20 6.41421 19.6642 6.75 19.25 6.75H12.75V9.25C12.75 9.66421 12.4142 10 12 10C11.5858 10 11.25 9.66421 11.25 9.25V6.75H4.75C4.33579 6.75 4 6.41421 4 6C4 5.58579 4.33579 5.25 4.75 5.25H11.25V2.75C11.25 2.33579 11.5858 2 12 2ZM7 12C7 11.4477 7.44772 11 8 11H16C16.5523 11 17 11.4477 17 12V20C17 20.5523 16.5523 21 16 21H8C7.44772 21 7 20.5523 7 20V12ZM8.5 12.5V19.5H15.5V12.5H8.5Z" fill="currentColor" />
+    <path d="M12 2V5.25M12 5.25H19.25M12 5.25H4.75" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="7" y="11" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 // Transaction/Payment Icon
 export const TransactionIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M2 7.25C2 5.45507 3.45507 4 5.25 4H18.75C20.5449 4 22 5.45507 22 7.25V16.75C22 18.5449 20.5449 20 18.75 20H5.25C3.45507 20 2 18.5449 2 16.75V7.25ZM5.25 5.5C4.2835 5.5 3.5 6.2835 3.5 7.25V9.5H20.5V7.25C20.5 6.2835 19.7165 5.5 18.75 5.5H5.25ZM3.5 16.75V11H20.5V16.75C20.5 17.7165 19.7165 18.5 18.75 18.5H5.25C4.2835 18.5 3.5 17.7165 3.5 16.75ZM6.5 13.75C6.08579 13.75 5.75 14.0858 5.75 14.5C5.75 14.9142 6.08579 15.25 6.5 15.25H9.5C9.91421 15.25 10.25 14.9142 10.25 14.5C10.25 14.0858 9.91421 13.75 9.5 13.75H6.5Z" fill="currentColor" />
+    <rect x="2" y="7.25" width="20" height="9.5" rx="2.25" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M2 9.5H22" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <rect x="6.5" y="13.75" width="2.5" height="1.5" rx="0.5" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 // Inventory/Supplies Icon
 export const InventoryIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M9.24853 2.82918C9.68606 2.53254 10.2195 2.53254 10.657 2.82918L12 3.67792L13.343 2.82918C13.7805 2.53254 14.3139 2.53254 14.7515 2.82918L20.0256 6.41459C20.4631 6.71123 20.7256 7.21056 20.7256 7.75V18.25C20.7256 19.3546 19.8302 20.25 18.7256 20.25H5.27441C4.16984 20.25 3.27441 19.3546 3.27441 18.25V7.75C3.27441 7.21056 3.53689 6.71123 3.97441 6.41459L9.24853 2.82918ZM10.1258 3.95918C10.0317 3.89754 9.87327 3.89754 9.77918 3.95918L4.50507 7.54459C4.41098 7.60623 4.27441 7.62593 4.27441 7.75V18.25C4.27441 18.5261 4.49827 18.75 4.77441 18.75H19.2256C19.5017 18.75 19.7256 18.5261 19.7256 18.25V7.75C19.7256 7.62593 19.589 7.60623 19.4949 7.54459L14.2208 3.95918C14.1267 3.89754 13.9683 3.89754 13.8742 3.95918L12.5312 4.80792C12.2373 4.99677 11.8627 4.99677 11.5688 4.80792L10.1258 3.95918ZM7.5 10.25C7.5 9.83579 7.83579 9.5 8.25 9.5H15.75C16.1642 9.5 16.5 9.83579 16.5 10.25C16.5 10.6642 16.1642 11 15.75 11H8.25C7.83579 11 7.5 10.6642 7.5 10.25ZM8.25 13C7.83579 13 7.5 13.3358 7.5 13.75C7.5 14.1642 7.83579 14.5 8.25 14.5H15.75C16.1642 14.5 16.5 14.1642 16.5 13.75C16.5 13.3358 16.1642 13 15.75 13H8.25Z" fill="currentColor" />
+    <path d="M12 2.75L20.75 7V18.25C20.75 19.3546 19.8546 20.25 18.75 20.25H5.25C4.14543 20.25 3.25 19.3546 3.25 18.25V7L12 2.75Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M7.75 10C7.75 9.58579 8.08579 9.25 8.5 9.25H15.5C15.9142 9.25 16.25 9.58579 16.25 10C16.25 10.4142 15.9142 10.75 15.5 10.75H8.5C8.08579 10.75 7.75 10.4142 7.75 10Z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M8.5 13.5H15.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
   </svg>
 );
 
 // Expense/Money Out Icon
 export const ExpenseIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM3.5 12C3.5 7.30558 7.30558 3.5 12 3.5C16.6944 3.5 20.5 7.30558 20.5 12C20.5 16.6944 16.6944 20.5 12 20.5C7.30558 20.5 3.5 16.6944 3.5 12ZM12 7.25C12.4142 7.25 12.75 7.58579 12.75 8V11.25H16C16.4142 11.25 16.75 11.5858 16.75 12C16.75 12.4142 16.4142 12.75 16 12.75H12.75V16C12.75 16.4142 12.4142 16.75 12 16.75C11.5858 16.75 11.25 16.4142 11.25 16V12.75H8C7.58579 12.75 7.25 12.4142 7.25 12C7.25 11.5858 7.58579 11.25 8 11.25H11.25V8C11.25 7.58579 11.5858 7.25 12 7.25Z" fill="currentColor" />
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M12 8V16M8 12H16" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 // Report/Chart Icon
 export const ReportIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M3 3.75C3 3.33579 3.33579 3 3.75 3H20.25C20.6642 3 21 3.33579 21 3.75V20.25C21 20.6642 20.6642 21 20.25 21H3.75C3.33579 21 3 20.6642 3 20.25V3.75ZM4.5 4.5V19.5H19.5V4.5H4.5ZM7.5 17.25C7.08579 17.25 6.75 16.9142 6.75 16.5V10.5C6.75 10.0858 7.08579 9.75 7.5 9.75C7.91421 9.75 8.25 10.0858 8.25 10.5V16.5C8.25 16.9142 7.91421 17.25 7.5 17.25ZM11.25 17.25C10.8358 17.25 10.5 16.9142 10.5 16.5V7.5C10.5 7.08579 10.8358 6.75 11.25 6.75C11.6642 6.75 12 7.08579 12 7.5V16.5C12 16.9142 11.6642 17.25 11.25 17.25ZM15 17.25C14.5858 17.25 14.25 16.9142 14.25 16.5V13.5C14.25 13.0858 14.5858 12.75 15 12.75C15.4142 12.75 15.75 13.0858 15.75 13.5V16.5C15.75 16.9142 15.4142 17.25 15 17.25ZM18.75 17.25C18.3358 17.25 18 16.9142 18 16.5V9C18 8.58579 18.3358 8.25 18.75 8.25C19.1642 8.25 19.5 8.58579 19.5 9V16.5C19.5 16.9142 19.1642 17.25 18.75 17.25Z" fill="currentColor" />
+    <rect x="3" y="3" width="18" height="18" rx="0.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M7.5 17.25V10.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <path d="M11.25 17.25V7.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <path d="M15 17.25V13.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
   </svg>
 );
 
 // Database/Folder Icon for Master Data
 export const DatabaseIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M5 3.25C3.48122 3.25 2.25 4.48122 2.25 6V8C2.25 9.51878 3.48122 10.75 5 10.75H19C20.5188 10.75 21.75 9.51878 21.75 8V6C21.75 4.48122 20.5188 3.25 19 3.25H5ZM3.75 6C3.75 5.30964 4.30964 4.75 5 4.75H19C19.6904 4.75 20.25 5.30964 20.25 6V8C20.25 8.69036 19.6904 9.25 19 9.25H5C4.30964 9.25 3.75 8.69036 3.75 8V6ZM5 12.25C3.48122 12.25 2.25 13.4812 2.25 15V17C2.25 18.5188 3.48122 19.75 5 19.75H19C20.5188 19.75 21.75 18.5188 21.75 17V15C21.75 13.4812 20.5188 12.25 19 12.25H5ZM3.75 15C3.75 14.3096 4.30964 13.75 5 13.75H19C19.6904 13.75 20.25 14.3096 20.25 15V17C20.25 17.6904 19.6904 18.25 19 18.25H5C4.30964 18.25 3.75 17.6904 3.75 17V15Z" fill="currentColor" />
+    <rect x="2.25" y="3.25" width="19.5" height="7.5" rx="1.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <rect x="2.25" y="12.25" width="19.5" height="7.5" rx="1.75" stroke="currentColor" strokeWidth="1.5" fill="none" />
   </svg>
 );
 
 // User Icon (different from UserCircle)
 export const UserIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 3C10.3431 3 9 4.34315 9 6C9 7.65685 10.3431 9 12 9C13.6569 9 15 7.65685 15 6C15 4.34315 13.6569 3 12 3ZM10.5 6C10.5 5.17157 11.1716 4.5 12 4.5C12.8284 4.5 13.5 5.17157 13.5 6C13.5 6.82843 12.8284 7.5 12 7.5C11.1716 7.5 10.5 6.82843 10.5 6ZM7 19C7 16.2386 9.23858 14 12 14C14.7614 14 17 16.2386 17 19V20.25C17 20.6642 16.6642 21 16.25 21C15.8358 21 15.5 20.6642 15.5 20.25V19C15.5 17.067 13.933 15.5 12 15.5C10.067 15.5 8.5 17.067 8.5 19V20.25C8.5 20.6642 8.16421 21 7.75 21C7.33579 21 7 20.6642 7 20.25V19Z" fill="currentColor" />
+    <circle cx="12" cy="6" r="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M7 19C7 16.5 9.5 15 12 15C14.5 15 17 16.5 17 19" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 // Key/Shield Icon for Roles & Permissions
 export const KeyIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M15.75 1.5C15.3358 1.5 15 1.83579 15 2.25V4.5H13.5C13.0858 4.5 12.75 4.83579 12.75 5.25V6.75H11.25C10.8358 6.75 10.5 7.08579 10.5 7.5V9.40152C9.30044 9.63835 8.25 10.4274 7.64669 11.5306L2.46967 16.7071C1.90262 17.2742 1.90262 18.1868 2.46967 18.7539L5.24612 21.5303C5.81317 22.0974 6.72575 22.0974 7.29281 21.5303L12.4694 16.3533C13.5726 15.75 14.3617 14.6996 14.5985 13.5H16.5C16.9142 13.5 17.25 13.1642 17.25 12.75V11.25H18.75C19.1642 11.25 19.5 10.9142 19.5 10.5V9H21.75C22.1642 9 22.5 8.66421 22.5 8.25V5.25C22.5 4.83579 22.1642 4.5 21.75 4.5H19.5V2.25C19.5 1.83579 19.1642 1.5 18.75 1.5H15.75ZM13.1373 14.6373C12.8544 14.8177 12.5421 14.9487 12.2136 15.0257L11.3033 15.936L6.17678 21.0626C6.08014 21.1592 5.94976 21.1592 5.85312 21.0626L3.07666 18.2861C2.98002 18.1895 2.98002 18.0591 3.07666 17.9625L8.2032 12.8359L9.1136 11.9255C9.19061 11.597 9.32162 11.2847 9.50201 11.0018C9.87533 10.4096 10.4342 9.96122 11.0948 9.73181L11.25 9.67651V7.5H12.75V6H14.25V4.5H16.5V5.25C16.5 5.66421 16.8358 6 17.25 6H18.75V7.5H20.25V8.25H19.5C19.0858 8.25 18.75 8.58579 18.75 9V10.5H17.25C16.8358 10.5 16.5 10.8358 16.5 11.25V12H14.0985C13.8681 12.6606 13.4197 13.2195 12.8275 13.5928C12.5446 13.7732 12.2323 13.9042 11.9038 13.9812L13.1373 14.6373Z" fill="currentColor" />
+    <circle cx="8" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M11 12L22 1" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <path d="M8 15L3 21L6 21L8 18.5L10.5 21L13 21L8 15Z" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
 // Settings/Gear Icon
 export const SettingsIcon: React.FC<IconProps> = ({ className, width = 24, height = 24 }) => (
   <svg width={width} height={height} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 15.75C14.0711 15.75 15.75 14.0711 15.75 12C15.75 9.92893 14.0711 8.25 12 8.25C9.92893 8.25 8.25 9.92893 8.25 12C8.25 14.0711 9.92893 15.75 12 15.75ZM12 17.25C14.8995 17.25 17.25 14.8995 17.25 12C17.25 9.10051 14.8995 6.75 12 6.75C9.10051 6.75 6.75 9.10051 6.75 12C6.75 14.8995 9.10051 17.25 12 17.25Z" fill="currentColor" />
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C11.5858 2 11.25 2.33579 11.25 2.75V4.75C11.25 5.16421 11.5858 5.5 12 5.5C12.4142 5.5 12.75 5.16421 12.75 4.75V2.75C12.75 2.33579 12.4142 2 12 2ZM12 18.5C11.5858 18.5 11.25 18.8358 11.25 19.25V21.25C11.25 21.6642 11.5858 22 12 22C12.4142 22 12.75 21.6642 12.75 21.25V19.25C12.75 18.8358 12.4142 18.5 12 18.5Z" fill="currentColor" />
-    <path fillRule="evenodd" clipRule="evenodd" d="M19.25 12C19.25 11.5858 19.5858 11.25 20 11.25H22C22.4142 11.25 22.75 11.5858 22.75 12C22.75 12.4142 22.4142 12.75 22 12.75H20C19.5858 12.75 19.25 12.4142 19.25 12ZM2 12C2 11.5858 2.33579 11.25 2.75 11.25H4.75C5.16421 11.25 5.5 11.5858 5.5 12C5.5 12.4142 5.16421 12.75 4.75 12.75H2.75C2.33579 12.75 2 12.4142 2 12Z" fill="currentColor" />
-    <path fillRule="evenodd" clipRule="evenodd" d="M17.5533 4.82678C17.7989 4.58115 18.2011 4.58115 18.4467 4.82678L19.6732 6.0533C19.9189 6.29893 19.9189 6.70107 19.6732 6.9467L18.3431 8.27678C18.0975 8.52241 17.6953 8.52241 17.4497 8.27678C17.2041 8.03115 17.2041 7.62902 17.4497 7.38339L18.1528 6.68033L17.5533 6.08083L16.8503 6.7839C16.6046 7.02952 16.2025 7.02952 15.9569 6.7839C15.7113 6.53827 15.7113 6.13613 15.9569 5.8905L17.5533 4.82678ZM6.78033 16.5503C6.5347 16.3046 6.5347 15.9025 6.78033 15.6569C7.02596 15.4113 7.4281 15.4113 7.67373 15.6569L8.27678 16.2603L8.87628 16.8598L8.17322 17.5628C7.92759 17.8085 7.52546 17.8085 7.27983 17.5628C7.0342 17.3172 7.0342 16.9151 7.27983 16.6694L6.78033 16.5503Z" fill="currentColor" />
-    <path fillRule="evenodd" clipRule="evenodd" d="M17.5533 19.1732C17.7989 18.9276 18.2011 18.9276 18.4467 19.1732L19.6732 20.3997C19.9189 20.6454 19.9189 21.0475 19.6732 21.2931L18.3431 22.6232C18.0975 22.8688 17.6953 22.8688 17.4497 22.6232C17.2041 22.3776 17.2041 21.9754 17.4497 21.7298L18.1528 21.0267L17.5533 20.4272L16.8503 21.1303C16.6046 21.3759 16.2025 21.3759 15.9569 21.1303C15.7113 20.8846 15.7113 20.4825 15.9569 20.2369L17.5533 19.1732ZM6.78033 7.44967C6.5347 7.20404 6.5347 6.8019 6.78033 6.55627C7.02596 6.31064 7.4281 6.31064 7.67373 6.55627L8.27678 7.15932L8.87628 7.75882L8.17322 8.46188C7.92759 8.70751 7.52546 8.70751 7.27983 8.46188C7.0342 8.21625 7.0342 7.81411 7.27983 7.56848L6.78033 7.44967Z" fill="currentColor" />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M12 2V4.5M12 19.5V22M22 12H19.5M4.5 12H2M19.07 4.93L17.65 6.35M6.35 17.65L4.93 19.07M19.07 19.07L17.65 17.65M6.35 6.35L4.93 4.93" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
